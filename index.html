@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas Travel</title>
+    <link rel="stylesheet" href="HomePage.css">
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+</head>
+<body>
+<header>
+    <div class="logo-heading">
+        <img src="AtlasTravel.jpg" alt="Atlas Travel Logo" class="logo">
+        <h1>Atlas Travel</h1>
+    </div>
+    <div class="scrollmenu">
+        <a href="index.html">Home</a>
+        <a href="#" id="signInBtn">Sign In</a>
+        <a href="#" id="signUpBtn">Sign Up</a>
+    </div>
+</header>
+
+<div class="center-button-container">
+    <button class="center-button">Find My Holiday</button>
+</div>
+
+<!-- Login Form -->
+<div class="form-container hidden" id="loginFormContainer">
+    <form id="loginForm">
+        <h2 id="formTitle">Login</h2>
+        <input type="text" id="username" name="username" placeholder="Username" required>
+        <input type="password" id="password" name="password" placeholder="Password" required>
+        <button type="submit" class="form-button">Submit</button>
+        <button type="button" class="form-button" id="cancelBtn">Cancel</button>
+        <div class="social-login">
+            <button id="googleSignInBtn" class="form-button">Sign in with Google</button>
+            <button id="facebookSignInBtn" class="form-button">Sign in with Facebook</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // JavaScript to handle login form visibility and submission
+    const signInBtn = document.getElementById('signInBtn');
+    const signUpBtn = document.getElementById('signUpBtn');
+    const loginFormContainer = document.getElementById('loginFormContainer');
+    const loginForm = document.getElementById('loginForm');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const formTitle = document.getElementById('formTitle');
+
+    signInBtn.addEventListener('click', () => {
+        loginFormContainer.classList.remove('hidden');
+        formTitle.textContent = 'Sign In';
+    });
+
+    signUpBtn.addEventListener('click', () => {
+        loginFormContainer.classList.remove('hidden');
+        formTitle.textContent = 'Sign Up';
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        loginFormContainer.classList.add('hidden');
+    });
+
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        fetch('http://localhost:3000/save-login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+        })
+            .then((response) => response.text())
+            .then((data) => {
+                alert(data); // Success message from the server
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+
+        loginForm.reset();
+        loginFormContainer.classList.add('hidden');
+    });
+
+    // Google Sign-In
+    function onGoogleSignIn(googleUser) {
+        const profile = googleUser.getBasicProfile();
+        const id_token = googleUser.getAuthResponse().id_token;
+
+        fetch('http://localhost:3000/google-login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token: id_token }),
+        })
+            .then((response) => response.text())
+            .then((data) => {
+                alert(data); // Success message from the server
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+
+        loginFormContainer.classList.add('hidden');
+    }
+
+    gapi.load('auth2', function() {
+        gapi.auth2.init({
+            client_id: 'YOUR_GOOGLE_CLIENT_ID',
+        }).then(function(auth2) {
+            document.getElementById('googleSignInBtn').addEventListener('click', function() {
+                auth2.signIn().then(onGoogleSignIn);
+            });
+        });
+    });
+
+    // Facebook Sign-In
+    window.fbAsyncInit = function() {
+        FB.init({
+            appId: 'YOUR_FACEBOOK_APP_ID',
+            cookie: true,
+            xfbml: true,
+            version: 'v10.0'
+        });
+
+        document.getElementById('facebookSignInBtn').addEventListener('click', function() {
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    const accessToken = response.authResponse.accessToken;
+
+                    fetch('http://localhost:3000/facebook-login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ token: accessToken }),
+                    })
+                        .then((response) => response.text())
+                        .then((data) => {
+                            alert(data); // Success message from the server
+                        })
+                        .catch((error) => {
+                            console.error('Error:', error);
+                        });
+
+                    loginFormContainer.classList.add('hidden');
+                }
+            }, { scope: 'public_profile,email' });
+        });
+    };
+</script>
+</body>
+</html>
+
+ The HTML code includes a header, a button to open the login form, and a hidden login form. The form includes text inputs for the username and password, two buttons to submit and cancel the form, and two buttons to sign in with Google and Facebook. The JavaScript code handles the visibility and submission of the login form, and the sign-in functionality with Google and Facebook.
+ Step 4: Create the Server-Side Code
+ Now that we have the client-side code ready, let’s create the server-side code to handle the login requests. We will use Node.js and Express to create the server.
+ First, create a new directory for the project and navigate to it:
+ mkdir social-login
+cd social-login
+
+ Next, create a new Node.js project and install the required dependencies:
+ npm init -y
+npm install express body-parser cors
+
+ Create a new file named  server.js  and add the following code:
+ // server.js
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const app = express();
+
+app.use(cors());
+app.use(bodyParser.json());
+
+app.post('/save-login', (req, res) => {
+    const { username, password } = req.body;
+    console.log(`Username: ${username}, Password: ${password}`);
+    res.send('Login successful');
+});
+
+app.post('/google-login', (req, res) => {
+    const { token } = req.body;
+    console.log(`Google Token: ${token}`);
+    res.send('Google login successful');
+});
+
+app.post('/facebook-login', (req, res) => {
+    const { token } = req.body;
+    console.log(`Facebook Token: ${token}`);
+    res.send('Facebook login successful');
+});
+
+app.listen(3000, () => {
+    console.log('Server running on http://localhost:3000');
+});
+
+ This code sets up an Express server with three POST routes to handle the login requests:
+
+ /save-login  - Handles the form submission with the username and password.
+ /google-login  - Handles the Google sign-in request.
+ /facebook-login  - Handles the Facebook sign-in request.
+
+ The server logs the received data and sends a success message back to the client.
+ Step 5: Start the Server
+ To start the server, run the following command in the terminal:
+ node server.js
+
+ The server will start and listen on  http://localhost:300
+
