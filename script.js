@@ -1,49 +1,38 @@
-// Select elements
-const signInBtn = document.getElementById('signInBtn');
-const signUpBtn = document.getElementById('signUpBtn');
-const loginFormContainer = document.getElementById('loginFormContainer');
-const loginForm = document.getElementById('loginForm');
-const closeForm = document.getElementById('closeForm');
-const formTitle = document.getElementById('formTitle');
+document.addEventListener('DOMContentLoaded', async () => {
+    let auth0Client = null;
 
-// Function to open the login form
-function openForm(type) {
-    formTitle.textContent = type === 'signIn' ? 'Sign In' : 'Sign Up';
-    loginFormContainer.classList.remove('hidden');
-    document.body.classList.add('modal-active');
-}
+    const configureClient = async () => {
+        auth0Client = await createAuth0Client({
+            domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
+            client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
+            redirect_uri: window.location.origin
+        });
+    };
 
-// Function to close the login form
-function closeLoginForm() {
-    loginFormContainer.classList.add('hidden');
-    document.body.classList.remove('modal-active');
-}
+    const loginWithGitHub = async () => {
+        await auth0Client.loginWithRedirect({
+            redirect_uri: window.location.origin + "/callback",
+            connection: 'github'
+        });
+    };
 
-// Event listeners for buttons
-signInBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    openForm('signIn');
-});
+    const handleAuthCallback = async () => {
+        const isAuthenticated = await auth0Client.isAuthenticated();
+        if (isAuthenticated) {
+            const user = await auth0Client.getUser();
+            console.log('User info:', user);
+            window.location.href = "indexsignedin.html";
+        } else {
+            const query = window.location.search;
+            if (query.includes("code=") && query.includes("state=")) {
+                await auth0Client.handleRedirectCallback();
+                window.location.href = "indexsignedin.html";
+            }
+        }
+    };
 
-signUpBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    openForm('signUp');
-});
+    document.getElementById('githubSignInBtn').addEventListener('click', loginWithGitHub);
 
-closeForm.addEventListener('click', closeLoginForm);
-
-// Handle form submission
-loginForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    // Capture user input
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-
-    // Simulate saving to a file (console output for now)
-    console.log(`Username: ${username}, Password: ${password}`);
-
-    // Reset form and close
-    loginForm.reset();
-    closeLoginForm();
+    await configureClient();
+    handleAuthCallback();
 });
