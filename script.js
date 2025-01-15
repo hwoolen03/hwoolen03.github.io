@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     let auth0Client = null;
-    const redirectUri = "https://hwoolen03.github.io/callback";
+    const redirectUri = "https://hwoolen03.github.io";
 
     const configureClient = async () => {
         auth0Client = await createAuth0Client({
