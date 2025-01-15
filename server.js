@@ -1,47 +1,53 @@
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const User = require('./models/User'); // Assuming you have a User model
+
 const app = express();
-const PORT = process.env.PORT || 3000; // Use dynamic port assignment
+const port = 3000;
 
-// Middleware to parse URL-encoded bodies (for login form submission)
-app.use(express.urlencoded({ extended: true }));
+// Middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// Middleware to serve static files from the AtlasTravel folder
-app.use(express.static(path.join(__dirname)));
-
-// Route to serve the main HTML file (index.html)
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// Connect to MongoDB
+mongoose.connect('mongodb://localhost:27017/atlas_travel', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
 });
 
-// Login route to save login details to logins.txt
-app.post('/save-login', (req, res) => {
-    const { username, password } = req.body;
+// Registration endpoint
+app.post('/register', async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
 
-    // Log the form data for debugging
-    console.log('Received username:', username);
-    console.log('Received password:', password);
-
-    // Check if username and password are available
-    if (!username || !password) {
-        return res.status(400).send('Username or password is missing.');
-    }
-
-    // Create log data and append it to logins.txt
-    const logData = `Username: ${username}, Password: ${password}\n`;
-
-    // Append login data to logins.txt
-    fs.appendFile('logins.txt', logData, (err) => {
-        if (err) {
-            res.status(500).send('Error saving login data');
-        } else {
-            res.send('Login data saved successfully');
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: 'User already exists' });
         }
-    });
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create new user
+        const newUser = new User({
+            username,
+            email,
+            password: hashedPassword,
+        });
+
+        // Save user to database
+        await newUser.save();
+
+        res.status(201).json({ message: 'User registered successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
-// Start the server on the specified port
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+// Start server
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
 });
