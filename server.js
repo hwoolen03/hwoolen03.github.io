@@ -1,48 +1,41 @@
-// Import necessary modules
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 const app = express();
-const PORT = 3000;
 
-// Middleware to parse URL-encoded bodies (for login form submission)
-app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+app.use(bodyParser.json());
 
-// Middleware to serve static files from the AtlasTravel folder
-app.use(express.static(path.join(__dirname)));
+const users = []; // In-memory storage for simplicity
 
-// Route to serve the main HTML file (index.html)
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Login route to save login details to logins.txt
 app.post('/save-login', (req, res) => {
     const { username, password } = req.body;
-
-    // Log the form data for debugging
-    console.log('Received username:', username);
-    console.log('Received password:', password);
-
-    // Check if username and password are available
-    if (!username || !password) {
-        return res.status(400).send('Username or password is missing.');
-    }
-
-    // Create log data and append it to logins.txt
-    const logData = `Username: ${username}, Password: ${password}\n`;
-
-    // Append login data to logins.txt
-    fs.appendFile('logins.txt', logData, (err) => {
-        if (err) {
-            res.status(500).send('Error saving login data');
+    const user = users.find(u => u.username === username);
+    
+    if (user) {
+        if (user.password === password) {
+            res.json({ success: true, message: 'Login successful' });
         } else {
-            res.send('Login data saved successfully');
+            res.json({ success: false, message: 'Incorrect password' });
         }
-    });
+    } else {
+        users.push({ username, password });
+        res.json({ success: true, message: 'Registration successful' });
+    }
 });
 
-// Start the server on port 3000
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+app.post('/google-login', (req, res) => {
+    const { token } = req.body;
+    // Here you would validate the Google token and extract user info, for simplicity we simulate success
+    res.json({ success: true, message: 'Google login successful' });
+});
+
+app.post('/facebook-login', (req, res) => {
+    const { token } = req.body;
+    // Here you would validate the Facebook token and extract user info, for simplicity we simulate success
+    res.json({ success: true, message: 'Facebook login successful' });
+});
+
+app.listen(3000, () => {
+    console.log('Server running on http://localhost:3000');
 });
