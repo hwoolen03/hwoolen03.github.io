@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            redirectUri = "https://dev-h4hncqco2n4yrt6z.us.auth0.com/login/callback"
+            redirectUri: redirectUri // Corrected syntax
         });
         console.log("Auth0 client configured:", auth0Client);
     };
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginWithGitHub = async () => {
         console.log("GitHub login button clicked");
         await auth0Client.loginWithRedirect({
-            redirectUri = "https://dev-h4hncqco2n4yrt6z.us.auth0.com/login/callback",
+            redirectUri: redirectUri, // Corrected syntax
             connection: 'github'
         });
     };
