@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            redirectUri: redirectUri // Corrected syntax
+            redirectUri: "https://dev-h4hncqco2n4yrt6z.us.auth0.com/login/callback" // Corrected syntax
         });
         console.log("Auth0 client configured:", auth0Client);
     };
