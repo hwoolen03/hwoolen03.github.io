@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const loginWithGitHub = async () => {
         await auth0Client.loginWithRedirect({
-            redirect_uri: window.location.origin + "/callback",
+            redirect_uri: "https://dev-h4hncqco2n4yrt6z.us.auth0.com/login/callback" + "/callback",
             connection: 'github'
         });
     };
