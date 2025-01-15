@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginWithGitHub = async () => {
         console.log("GitHub login button clicked");
         await auth0Client.loginWithRedirect({
-            redirectUri: redirectUri, // Corrected syntax
+            redirectUri:"https://hwoolen03.github.io/", // Corrected syntax
             connection: 'github'
         });
     };
