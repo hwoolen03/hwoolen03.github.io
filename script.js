@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     let auth0Client = null;
-    const  redirectUri = "https://dev-h4hncqco2n4yrt6z.us.auth0.com/login/callback";
+    const  redirectUri = "https://dev-h4hncqco2n4yrt6z.us.auth0.com/login/callback"
 
     const configureClient = async () => {
         auth0Client = await createAuth0Client({
