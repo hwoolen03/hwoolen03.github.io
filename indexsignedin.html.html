@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas Travel - Signed In</title>
+    <link rel="stylesheet" href="HomePageIn.css">
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js"></script>
+</head>
+<body>
+<header>
+    <div class="logo-heading">
+        <img src="AtlasTravel.jpg" alt="Atlas Travel Logo" class="logo">
+        <h1>Atlas Travel</h1>
+    </div>
+    <nav class="scrollmenu">
+        <a href="home.html">Home</a>
+        <a href="myaccount.html">My Account</a>
+        <button id="signOutBtn" class="form-button">Sign Out</button>
+    </nav>
+</header>
+
+<div class="center-button-container">
+    <button class="center-button">Find My Holiday</button>
+</div>
+
+<!-- Registration Form -->
+<div class="form-container hidden" id="registrationFormContainer">
+    <form id="registrationForm">
+        <h2 id="registrationFormTitle">Register</h2>
+        <input type="text" id="regUsername" name="regUsername" placeholder="Username" required>
+        <input type="email" id="regEmail" name="regEmail" placeholder="Email" required>
+        <input type="password" id="regPassword" name="regPassword" placeholder="Password" required>
+        <button type="submit" class="form-button">Register</button>
+        <button type="button" class="form-button" id="regCancelBtn">Cancel</button>
+    </form>
+</div>
+
+<script>
+    let auth0Client = null;
+
+    const configureClient = async () => {
+        auth0Client = await auth0.createAuth0Client({
+            domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
+            client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
+            redirect_uri: window.location.origin
+        });
+    };
+
+    const signOut = async () => {
+        await auth0Client.logout({
+            returnTo: window.location.origin
+        });
+        window.location.href = "index.html";
+    };
+
+    const register = async (username, email, password) => {
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+        if (response.ok) {
+            alert('Registration successful!');
+        } else {
+            alert('Registration failed.');
+        }
+    };
+
+    const handleRegistration = (event) => {
+        event.preventDefault();
+        const username = document.getElementById('regUsername').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
+        register(username, email, password);
+    };
+
+    const handleAuthCallback = async () => {
+        const isAuthenticated = await auth0Client.isAuthenticated();
+        if (isAuthenticated) {
+            window.location.href = "indexsignedin.html";
+        } else {
+            const query = window.location.search;
+            if (query.includes("code=") && query.includes("state=")) {
+                await auth0Client.handleRedirectCallback();
+                window.location.href = "indexsignedin.html";
+            }
+        }
+    };
+
+    const registrationFormContainer = document.getElementById('registrationFormContainer');
+    const registrationForm = document.getElementById('registrationForm');
+    const regCancelBtn = document.getElementById('regCancelBtn');
+    const signOutBtn = document.getElementById('signOutBtn');
+
+    regCancelBtn.addEventListener('click', () => {
+        registrationFormContainer.classList.add('hidden');
+    });
+
+    registrationForm.addEventListener('submit', handleRegistration);
+
+    signOutBtn.addEventListener('click', signOut);
+
+    window.onload = async () => {
+        await configureClient();
+        handleAuthCallback();
+    };
+</script>
+</body>
+</html>
