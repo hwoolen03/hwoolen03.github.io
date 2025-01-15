@@ -68,6 +68,12 @@
         });
     };
 
+    const login = async () => {
+        await auth0Client.loginWithRedirect({
+            redirect_uri: window.location.origin + "/callback"
+        });
+    };
+
     const loginWithGoogle = async () => {
         await auth0Client.loginWithRedirect({
             redirect_uri: window.location.origin + "/callback",
@@ -83,8 +89,16 @@
     };
 
     const register = async (username, email, password) => {
-        // Implement registration logic with Auth0 or your backend
-        console.log("Registering user:", username, email, password);
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+        if (response.ok) {
+            alert('Registration successful!');
+        } else {
+            alert('Registration failed.');
+        }
     };
 
     const handleRegistration = (event) => {
@@ -128,6 +142,7 @@
     const registrationForm = document.getElementById('registrationForm');
     const regCancelBtn = document.getElementById('regCancelBtn');
 
+    signInBtn.addEventListener('click', login);
     googleSignInBtn.addEventListener('click', loginWithGoogle);
     googleSignInBtnReg.addEventListener('click', loginWithGoogle);
     facebookSignInBtn.addEventListener('click', loginWithFacebook);
