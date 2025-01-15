@@ -31,8 +31,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    // NEW
+    const updateUI = async () => {
+        const isAuthenticated = await auth0Client.isAuthenticated();
+
+        document.getElementById("btn-logout").disabled = !isAuthenticated;
+        document.getElementById("btn-login").disabled = isAuthenticated;
+    };
+
     document.getElementById('githubSignInBtn').addEventListener('click', loginWithGitHub);
 
     await configureClient();
     handleAuthCallback();
+
+    // NEW
+    window.onload = async () => {
+        await configureClient();
+        updateUI();
+    };
 });
