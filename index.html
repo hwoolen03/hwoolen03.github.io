@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atlas Travel</title>
     <link rel="stylesheet" href="HomePage.css">
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
-    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js"></script>
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
 </head>
 <body>
 <header>
@@ -16,8 +14,7 @@
         <h1>Atlas Travel</h1>
     </div>
     <div class="auth-buttons">
-        <button id="googleSignInBtn" class="form-button">Sign in with Google</button>
-        <button id="facebookSignInBtn" class="form-button">Sign in with Facebook</button>
+        <button id="githubSignInBtn" class="form-button">Sign in with GitHub</button>
     </div>
 </header>
 
@@ -41,46 +38,18 @@
     let auth0Client = null;
 
     const configureClient = async () => {
-        auth0Client = await auth0.createAuth0Client({
-            domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
-            client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
+        auth0Client = await createAuth0Client({
+            domain: "YOUR_AUTH0_DOMAIN",
+            client_id: "YOUR_AUTH0_CLIENT_ID",
             redirect_uri: window.location.origin
         });
     };
 
-    const loginWithGoogle = async () => {
+    const loginWithGitHub = async () => {
         await auth0Client.loginWithRedirect({
             redirect_uri: window.location.origin + "/callback",
-            connection: 'google-oauth2'
+            connection: 'github'
         });
-    };
-
-    const loginWithFacebook = async () => {
-        await auth0Client.loginWithRedirect({
-            redirect_uri: window.location.origin + "/callback",
-            connection: 'facebook'
-        });
-    };
-
-    const register = async (username, email, password) => {
-        const response = await fetch('/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
-        });
-        if (response.ok) {
-            alert('Registration successful!');
-        } else {
-            alert('Registration failed.');
-        }
-    };
-
-    const handleRegistration = (event) => {
-        event.preventDefault();
-        const username = document.getElementById('regUsername').value;
-        const email = document.getElementById('regEmail').value;
-        const password = document.getElementById('regPassword').value;
-        register(username, email, password);
     };
 
     const handleAuthCallback = async () => {
@@ -96,20 +65,9 @@
         }
     };
 
-    const googleSignInBtn = document.getElementById('googleSignInBtn');
-    const facebookSignInBtn = document.getElementById('facebookSignInBtn');
-    const registrationFormContainer = document.getElementById('registrationFormContainer');
-    const registrationForm = document.getElementById('registrationForm');
-    const regCancelBtn = document.getElementById('regCancelBtn');
+    const githubSignInBtn = document.getElementById('githubSignInBtn');
 
-    googleSignInBtn.addEventListener('click', loginWithGoogle);
-    facebookSignInBtn.addEventListener('click', loginWithFacebook);
-
-    regCancelBtn.addEventListener('click', () => {
-        registrationFormContainer.classList.add('hidden');
-    });
-
-    registrationForm.addEventListener('submit', handleRegistration);
+    githubSignInBtn.addEventListener('click', loginWithGitHub);
 
     window.onload = async () => {
         await configureClient();
