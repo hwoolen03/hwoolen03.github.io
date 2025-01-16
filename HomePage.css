@@ -81,6 +81,12 @@ h1 {
     justify-content: center;
     align-items: center;
     height: 100vh;
+    position: relative;
+}
+
+.holiday-text-container {
+    position: absolute;
+    left: calc(50% - 150px); /* Adjust the 150px value to position the text correctly */
 }
 
 .holiday-text {
