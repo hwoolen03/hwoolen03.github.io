@@ -35,12 +35,14 @@ header {
     position: absolute;
     top: 0;
     width: 90%;
+    height: 60px; /* Adjust the height to match the height of the sign-in buttons */
 }
 
 .logo-heading {
     display: flex;
     align-items: center;
     gap: 15px;
+    height: 100%; /* Ensure it takes the full height of the header */
 }
 
 .logo {
@@ -103,9 +105,10 @@ h1 {
     right: 0;
     top: 20px;
     display: flex;
-    flex-direction: row; /* Change to row to position buttons next to each other */
-    align-items: center; /* Align buttons to the right */
+    flex-direction: row; /* Ensure buttons are in a row */
+    align-items: center; /* Align buttons horizontally */
     padding: 20px;
+    height: 60px; /* Adjust the height to match the header height */
 }
 
 .auth-buttons button {
