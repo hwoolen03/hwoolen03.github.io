@@ -103,7 +103,7 @@ h1 {
     right: 0;
     top: 20px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* Change to row to position buttons next to each other */
     align-items: flex-end; /* Align buttons to the right */
     padding: 20px;
 }
@@ -125,16 +125,6 @@ h1 {
     color: black;
 }
 
-
-
-.form-container.hidden {
-    display: none;
-}
-
-
-
-
-
 /* Responsive Design */
 @media (max-width: 768px) {
     h1 {
@@ -149,8 +139,6 @@ h1 {
         width: 100px;
     }
 }
-
-
 
 
 
