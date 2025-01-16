@@ -80,15 +80,8 @@ h1 {
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: column; /* Stack items vertically */
     height: 100vh;
-    text-align: center; /* Ensure text is centered */
-}
-
-.holiday-text {
-    color: white;
-    font-size: 24px;
-    margin-bottom: 20px; /* Margin below the text */
+    position: relative;
 }
 
 .center-button {
@@ -148,11 +141,6 @@ h1 {
 
     .logo {
         width: 100px;
-    }
-
-    .holiday-text {
-        font-size: 20px;
-        margin-right: 10px;
     }
 
     .center-button {
