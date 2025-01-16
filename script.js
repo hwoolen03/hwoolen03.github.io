@@ -19,22 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    const loginWithGoogle = async () => {
-        console.log("Google login button clicked");
-        await auth0Client.loginWithRedirect({
-            redirect_uri: redirectUri,
-            connection: 'google-oauth2'
-        });
-    };
-
-    const loginWithFacebook = async () => {
-        console.log("Facebook login button clicked");
-        await auth0Client.loginWithRedirect({
-            redirect_uri: redirectUri,
-            connection: 'facebook'
-        });
-    };
-
     const handleAuthCallback = async () => {
         const query = window.location.search;
         if (query.includes("code=") && query.includes("state=")) {
@@ -49,28 +33,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("Update UI - Is authenticated:", isAuthenticated);
 
         document.getElementById("btn-logout").disabled = !isAuthenticated;
-        document.getElementById("btn-login-github").disabled = isAuthenticated;
-        document.getElementById("btn-login-google").disabled = isAuthenticated;
-        document.getElementById("btn-login-facebook").disabled = isAuthenticated;
+        document.getElementById("btn-login").disabled = isAuthenticated;
 
         if (isAuthenticated) {
             window.location.href = "indexsignedin.html";
         }
     };
 
-    const logout = () => {
-        console.log("Logout button clicked");
-        auth0Client.logout({
-            returnTo: redirectUri
-        });
-    };
-
-    document.getElementById('btn-login-github').addEventListener('click', loginWithGitHub);
-    document.getElementById('btn-login-google').addEventListener('click', loginWithGoogle);
-    document.getElementById('btn-login-facebook').addEventListener('click', loginWithFacebook);
-    document.getElementById('btn-logout').addEventListener('click', logout);
+    document.getElementById('githubSignInBtn').addEventListener('click', loginWithGitHub);
 
     await configureClient();
     await handleAuthCallback();
     updateUI();
 });
+
