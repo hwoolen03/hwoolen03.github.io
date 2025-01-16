@@ -98,6 +98,12 @@ h1 {
 }
 
 /* Auth Buttons Styling */
+.auth-buttons {
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    padding: 20px;
+}
+
 .auth-buttons button {
     background-color: transparent;
     border: 2px solid white;
@@ -107,7 +113,7 @@ h1 {
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin: 3px;
+    margin: 5px;
 }
 
 .auth-buttons button:hover {
@@ -183,9 +189,6 @@ h1 {
         width: 100px;
     }
 }
-
-
-
 
 
 
