@@ -101,7 +101,7 @@ h1 {
 .auth-buttons {
     display: flex;
     justify-content: flex-end; /* Align buttons to the right */
-    padding: 20px;
+    padding: 30px;
 }
 
 .auth-buttons button {
