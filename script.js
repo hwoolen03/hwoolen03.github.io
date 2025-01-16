@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const configureClient = async () => {
         auth0Client = await createAuth0Client({
-            domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
-            client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
+            domain: "YOUR_AUTH0_DOMAIN",
+            client_id: "YOUR_AUTH0_CLIENT_ID",
             redirect_uri: redirectUri
         });
         console.log("Auth0 client configured:", auth0Client);
@@ -16,6 +16,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         await auth0Client.loginWithRedirect({
             redirect_uri: redirectUri,
             connection: 'github'
+        });
+    };
+
+    const loginWithGoogle = async () => {
+        console.log("Google login button clicked");
+        await auth0Client.loginWithRedirect({
+            redirect_uri: redirectUri,
+            connection: 'google-oauth2'
+        });
+    };
+
+    const loginWithFacebook = async () => {
+        console.log("Facebook login button clicked");
+        await auth0Client.loginWithRedirect({
+            redirect_uri: redirectUri,
+            connection: 'facebook'
         });
     };
 
@@ -33,14 +49,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("Update UI - Is authenticated:", isAuthenticated);
 
         document.getElementById("btn-logout").disabled = !isAuthenticated;
-        document.getElementById("btn-login").disabled = isAuthenticated;
+        document.getElementById("btn-login-github").disabled = isAuthenticated;
+        document.getElementById("btn-login-google").disabled = isAuthenticated;
+        document.getElementById("btn-login-facebook").disabled = isAuthenticated;
 
         if (isAuthenticated) {
             window.location.href = "indexsignedin.html";
         }
     };
 
-    document.getElementById('githubSignInBtn').addEventListener('click', loginWithGitHub);
+    const logout = () => {
+        console.log("Logout button clicked");
+        auth0Client.logout({
+            returnTo: redirectUri
+        });
+    };
+
+    document.getElementById('btn-login-github').addEventListener('click', loginWithGitHub);
+    document.getElementById('btn-login-google').addEventListener('click', loginWithGoogle);
+    document.getElementById('btn-login-facebook').addEventListener('click', loginWithFacebook);
+    document.getElementById('btn-logout').addEventListener('click', logout);
 
     await configureClient();
     await handleAuthCallback();
