@@ -85,8 +85,8 @@ h1 {
 }
 
 .holiday-text-container {
-    position: relative;
-    left: -150px; /* Adjust the 150px value to position the text correctly */
+    position: absolute;
+    left: calc(50% - 150px); /* Adjust the 150px value to position the text correctly */
 }
 
 .holiday-text {
