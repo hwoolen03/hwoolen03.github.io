@@ -97,6 +97,24 @@ h1 {
     color: black;
 }
 
+/* Auth Buttons Styling */
+.auth-buttons button {
+    background-color: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 5px;
+}
+
+.auth-buttons button:hover {
+    background-color: white;
+    color: black;
+}
+
 /* Login Form Styling */
 .form-container {
     position: fixed;
@@ -165,3 +183,18 @@ h1 {
         width: 100px;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
