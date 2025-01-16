@@ -21,6 +21,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
+    const loginWithGoogle = async () => {
+        console.log("Google login button clicked");
+        await auth0Client.loginWithRedirect({
+            redirect_uri: redirectUri,
+            connection: 'google-oauth2'
+        });
+    };
+
+    const loginWithFacebook = async () => {
+        console.log("Facebook login button clicked");
+        await auth0Client.loginWithRedirect({
+            redirect_uri: redirectUri,
+            connection: 'facebook'
+        });
+    };
+
     const handleAuthCallback = async () => {
         const query = window.location.search;
         console.log("Handling auth callback with query:", query);
@@ -49,8 +65,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-github').addEventListener('click', loginWithGitHub);
     console.log("Added event listener to GitHub login button");
 
+    document.getElementById('btn-login-google').addEventListener('click', loginWithGoogle);
+    console.log("Added event listener to Google login button");
+
+    document.getElementById('btn-login-facebook').addEventListener('click', loginWithFacebook);
+    console.log("Added event listener to Facebook login button");
+
     await configureClient();
     await handleAuthCallback();
     updateUI();
 });
-
