@@ -103,6 +103,7 @@ h1 {
     right: 0;
     top: 20px;
     display: flex;
+    flex-direction: row; /* Change to row to position buttons next to each other */
     align-items: flex-end; /* Align buttons to the right */
     padding: 20px;
 }
@@ -138,8 +139,4 @@ h1 {
         width: 100px;
     }
 }
-
-
-
-
 
