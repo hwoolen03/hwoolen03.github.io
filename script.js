@@ -29,11 +29,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    const loginWithFacebook = async () => {
-        console.log("Facebook login button clicked");
+    const loginWithFigma = async () => {
+        console.log("Figma login button clicked");
         await auth0Client.loginWithRedirect({
             redirect_uri: redirectUri,
-            connection: 'facebook'
+            connection: 'figma'
         });
     };
 
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById("btn-logout").style.display = isAuthenticated ? "block" : "none";
         document.getElementById("btn-login-github").style.display = isAuthenticated ? "none" : "block";
         document.getElementById("btn-login-google").style.display = isAuthenticated ? "none" : "block";
-        document.getElementById("btn-login-facebook").style.display = isAuthenticated ? "none" : "block";
+        document.getElementById("btn-login-figma").style.display = isAuthenticated ? "none" : "block";
 
         if (isAuthenticated) {
             window.location.href = "indexsignedin.html";
@@ -68,8 +68,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-google').addEventListener('click', loginWithGoogle);
     console.log("Added event listener to Google login button");
 
-    document.getElementById('btn-login-facebook').addEventListener('click', loginWithFacebook);
-    console.log("Added event listener to Facebook login button");
+    document.getElementById('btn-login-figma').addEventListener('click', loginWithFigma);
+    console.log("Added event listener to Figma login button");
 
     await configureClient();
     await handleAuthCallback();
