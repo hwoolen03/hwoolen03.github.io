@@ -39,7 +39,7 @@ const handleAuthCallback = async () => {
             if (isAuthenticated) {
                 const user = await auth0Client.getUser();
                 const authMethod = user.sub.split('|')[0];
-                document.getElementById('signOutBtn').textContent = `Hi ${user.name}, you are signed in with ${authMethod}. Would you like to sign out?`;
+                document.getElementById('signOutBtn').textContent = `Hello ${user.name}, you are signed in using ${authMethod}. Would you like to sign out?`;
                 console.log("User is authenticated:", user);
             } else {
                 const query = window.location.search;
