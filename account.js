@@ -17,11 +17,15 @@ const configureClient = async () => {
 // Sign out the user
 const signOut = async () => {
     try {
-        await auth0Client.logout({
-            returnTo: window.location.origin
-        });
-        console.log("User signed out successfully");
-        window.location.href = "index.html";
+        if (auth0Client) {
+            await auth0Client.logout({
+                returnTo: window.location.origin
+            });
+            console.log("User signed out successfully");
+            window.location.href = "index.html";
+        } else {
+            console.error("Auth0 client is not initialized");
+        }
     } catch (error) {
         console.error("Error signing out user:", error);
     }
@@ -30,19 +34,23 @@ const signOut = async () => {
 // Handle authentication callback
 const handleAuthCallback = async () => {
     try {
-        const isAuthenticated = await auth0Client.isAuthenticated();
-        if (isAuthenticated) {
-            const user = await auth0Client.getUser();
-            const authMethod = user.sub.split('|')[0];
-            document.getElementById('signOutBtn').textContent = `Hi ${user.name}, you are signed in with ${authMethod}. Would you like to sign out?`;
-            console.log("User is authenticated:", user);
-        } else {
-            const query = window.location.search;
-            if (query.includes("code=") && query.includes("state=")) {
-                await auth0Client.handleRedirectCallback();
-                window.location.href = "indexsignedin.html";
-                console.log("Handled redirect callback");
+        if (auth0Client) {
+            const isAuthenticated = await auth0Client.isAuthenticated();
+            if (isAuthenticated) {
+                const user = await auth0Client.getUser();
+                const authMethod = user.sub.split('|')[0];
+                document.getElementById('signOutBtn').textContent = `Hi ${user.name}, you are signed in with ${authMethod}. Would you like to sign out?`;
+                console.log("User is authenticated:", user);
+            } else {
+                const query = window.location.search;
+                if (query.includes("code=") && query.includes("state=")) {
+                    await auth0Client.handleRedirectCallback();
+                    window.location.href = "indexsignedin.html";
+                    console.log("Handled redirect callback");
+                }
             }
+        } else {
+            console.error("Auth0 client is not initialized");
         }
     } catch (error) {
         console.error("Error handling authentication callback:", error);
@@ -50,16 +58,15 @@ const handleAuthCallback = async () => {
 };
 
 // Add event listener for the sign-out button
-const signOutBtn = document.getElementById('signOutBtn');
-if (signOutBtn) {
-    signOutBtn.addEventListener('click', signOut);
-    console.log("Sign-out button event listener added");
-} else {
-    console.error("Sign-out button not found");
-}
-
-// Initialize the Auth0 client and handle authentication callback on page load
 window.onload = async () => {
     await configureClient();
     handleAuthCallback();
+
+    const signOutBtn = document.getElementById('signOutBtn');
+    if (signOutBtn) {
+        signOutBtn.addEventListener('click', signOut);
+        console.log("Sign-out button event listener added");
+    } else {
+        console.error("Sign-out button not found");
+    }
 };
