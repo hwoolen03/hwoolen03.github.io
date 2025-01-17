@@ -1,13 +1,97 @@
+/* General Reset */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+/* Background Animation */
+body {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradient 10s ease infinite;
+    height: 100vh;
+    margin: 0;
+}
+
+@keyframes gradient {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Header Styling */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    position: absolute;
+    top: 0;
+    width: 90%;
+    height: 60px; /* Adjust the height to match the height of the sign-in buttons */
+}
+
+.logo-heading {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    height: 100%; /* Ensure it takes the full height of the header */
+}
+
+.logo {
+    width: 120px;
+    height: auto;
+}
+
+h1 {
+    font-size: 40px;
+    color: whitesmoke;
+    margin: 0;
+}
+
+/* Navigation Menu */
+.scrollmenu {
+    display: flex;
+    gap: 15px;
+}
+
+.scrollmenu a {
+    display: inline-block;
+    color: white;
+    padding: 10px;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.scrollmenu a:hover {
+    background-color: dimgrey;
+}
+
 /* Button Styling */
 .center-button-container {
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column; /* Stack items vertically */
     height: 100vh;
+    text-align: center; /* Ensure text is centered */
 }
 
-.center-button,
-.auth-buttons button {
+.holiday-text {
+    color: white;
+    font-size: 24px;
+    margin-bottom: 20px; /* Margin below the text */
+}
+
+.center-button {
     background-color: transparent;
     border: 2px solid white;
     color: white;
@@ -16,11 +100,9 @@
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin: 5px;
 }
 
-.center-button:hover,
-.auth-buttons button:hover {
+.center-button:hover {
     background-color: white;
     color: black;
 }
@@ -34,5 +116,47 @@
     flex-direction: row; /* Ensure buttons are in a row */
     align-items: center; /* Align buttons horizontally */
     padding: 20px;
-    height: 60px; /* Add !important to override any other styles */
+    height: 60px; /* Adjust the height to match the header height */
+}
+
+.auth-buttons button {
+    background-color: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 5px;
+}
+
+.auth-buttons button:hover {
+    background-color: white;
+    color: black;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 30px;
+    }
+
+    .scrollmenu a {
+        font-size: 16px;
+    }
+
+    .logo {
+        width: 100px;
+    }
+
+    .holiday-text {
+        font-size: 20px;
+        margin-right: 10px;
+    }
+
+    .center-button {
+        padding: 10px 20px;
+        font-size: 16px;
+    }
 }
