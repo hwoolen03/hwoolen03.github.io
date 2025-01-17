@@ -105,7 +105,8 @@ h1 {
     display: flex;
     gap: 10px;
     align-items: center;
-    margin-left: 20px; /* Add left margin to move buttons to the left */
+    margin-left: auto; /* Ensures buttons are aligned to the right */
+    margin-right: 20px; /* Add left margin to move buttons to the left */
 }
 
 /* Responsive Design */
