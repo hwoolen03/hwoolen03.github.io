@@ -28,13 +28,14 @@ body {
 
 /* Header Styling */
 header {
-    display: flex;
+      display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 20px;
     position: absolute;
     top: 0;
-    width: 100%;
+    width: 90%;
+    height: 60px; /*
 }
 
 .logo-heading {
