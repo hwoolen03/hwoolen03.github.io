@@ -35,16 +35,16 @@ header {
     position: absolute;
     top: 0;
     width: 90%;
-    height: 60px; /*
+    height: 60px; 
 }
 
 .logo-heading {
     display: flex;
     align-items: center;
     gap: 15px;
-}
+    height: 100%; 
 
-.logo {
+    .logo {
     width: 120px;
     height: auto;
 }
