@@ -18,12 +18,12 @@ body {
 @property --c1 {
   syntax: '<color>';
   inherits: true;
-  initial-value: #3B8183; /* Turquoise */
+  initial-value: black;
 }
 @property --c2 {
   syntax: '<color>';
   inherits: true;
-  initial-value: #3B8183; /* Turquoise */
+  initial-value: #000033; /* Darkest blue */
 }
 
 html {
@@ -47,29 +47,29 @@ html {
   0%,15% {
     --a: 135deg;
     --p: 20%;
-    --c1: black;
-    --c2: #3B8183; /* Turquoise */
+    --c1: #000033; /* Darkest blue */
+    --c2: black;
     background-position: 0 0,var(--s) var(--s);
   }
   45%,50% {
     --a: 90deg;
     --p: 25%;
-    --c1: black;
-    --c2: #3B8183; /* Turquoise */
+    --c1: #000033; /* Darkest blue */
+    --c2: black;
     background-position: 0 0,var(--s) var(--s);
   }
   50.01%,55% {
     --a: 90deg;
     --p: 25%;
-    --c2: black;
-    --c1: #3B8183; /* Turquoise */
+    --c2: #000033; /* Darkest blue */
+    --c1: black;
     background-position: var(--s) 0,0 var(--s);
   }
   85%,100% {
     --a: 135deg;
     --p: 20%;
-    --c2: black;
-    --c1: #3B8183; /* Turquoise */
+    --c2: #000033; /* Darkest blue */
+    --c1: black;
     background-position: var(--s) 0,0 var(--s);
   }
 }
