@@ -35,7 +35,7 @@ header {
     position: absolute;
     top: 0;
     width: 90%;
-    height: 60px; 
+    height: 60px;
 }
 
 .logo-heading {
@@ -91,10 +91,10 @@ h1 {
     right: 0;
     top: 20px;
     display: flex;
-    flex-direction: row; /* Ensure buttons are in a row */
-    align-items: center; /* Align buttons horizontally */
+    flex-direction: row;
+    align-items: center;
     padding: 20px;
-    height: 60px; /* Add !important to override any other styles */
+    height: 60px;
 }
 
 /* Responsive Design */
@@ -117,8 +117,8 @@ h1 {
 .holiday-text {
     color: white;
     font-size: 24px;
-    font-family: sans-serif; /* Apply Sans serif font */
-    margin-top: 10px; /* Adjust margin to move text further up */
+    font-family: sans-serif;
+    margin-top: 10px;
 }
 
 /* Additional Media Queries for Mobile Optimization */
