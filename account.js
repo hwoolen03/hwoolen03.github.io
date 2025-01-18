@@ -41,9 +41,6 @@ const handleAuthCallback = async () => {
                 const user = await auth0Client.getUser();
                 console.log("User:", user);
                 const userName = user.name;
-                const authMethod = user.sub.split('|')[0];
-                
-                document.getElementById('signOutBtn').textContent = `Hello ${userName}, you are signed in using ${authMethod}. Would you like to sign out?`;
                 
                 // Create and display the welcome message
                 const welcomeMessage = `Welcome to the Power of Atlas ${userName}`;
