@@ -161,6 +161,7 @@ h1 {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5); /* Adjust the opacity as needed */
     z-index: 1;
+    pointer-events: none; /* Added to allow interactions with underlying elements */
 }
 
 .background-video {
