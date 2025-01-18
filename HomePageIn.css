@@ -29,13 +29,14 @@ body {
 /* Header Styling */
 header {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
     padding: 20px;
     position: absolute;
     top: 0;
     width: 100%;
-    height: 60px;
+    height: auto;
 }
 
 .logo-heading {
@@ -57,12 +58,26 @@ h1 {
     font-family: Arial, sans-serif;
 }
 
+.auth-buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 20px;
+}
+
+.holiday-text {
+    color: white;
+    font-size: 24px;
+    font-family: sans-serif;
+    margin: 10px 0;
+}
+
 /* Button Styling */
 .center-button-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: calc(100vh - 180px); /* Adjust height to account for header */
     flex-direction: column;
 }
 
@@ -85,18 +100,6 @@ h1 {
     color: black;
 }
 
-/* Auth Buttons Styling */
-.auth-buttons {
-    position: fixed;
-    right: 0;
-    top: 20px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding: 20px;
-    height: 60px;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
     h1 {
@@ -114,18 +117,9 @@ h1 {
     }
 }
 
-.holiday-text {
-    color: white;
-    font-size: 24px;
-    font-family: sans-serif;
-    margin-top: 10px;
-}
-
 /* Additional Media Queries for Mobile Optimization */
 @media (max-width: 480px) {
     header {
-        flex-direction: column;
-        align-items: flex-start;
         padding: 10px;
     }
 
@@ -141,8 +135,8 @@ h1 {
     }
 
     .center-button-container {
-        height: auto;
         padding: 20px;
+        height: auto;
     }
 
     .center-button,
