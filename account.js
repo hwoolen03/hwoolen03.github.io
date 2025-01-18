@@ -36,8 +36,10 @@ const handleAuthCallback = async () => {
     try {
         if (auth0Client) {
             const isAuthenticated = await auth0Client.isAuthenticated();
+            console.log("Is Authenticated:", isAuthenticated);
             if (isAuthenticated) {
                 const user = await auth0Client.getUser();
+                console.log("User:", user);
                 const userName = user.name;
                 const authMethod = user.sub.split('|')[0];
                 
@@ -50,7 +52,13 @@ const handleAuthCallback = async () => {
                 h2Element.style.textAlign = 'center';
 
                 const findMyHolidayButton = document.getElementById('findMyHolidayButton');
-                findMyHolidayButton.parentNode.insertBefore(h2Element, findMyHolidayButton);
+                console.log("Find My Holiday Button:", findMyHolidayButton);
+                if (findMyHolidayButton) {
+                    findMyHolidayButton.parentNode.insertBefore(h2Element, findMyHolidayButton);
+                    console.log("Welcome message inserted");
+                } else {
+                    console.error("Find My Holiday Button not found");
+                }
 
                 console.log("User is authenticated:", user);
             } else {
