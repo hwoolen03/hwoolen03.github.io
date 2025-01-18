@@ -11,7 +11,7 @@ body {
     --p: calc(var(--s) / 2);
     --c1: pink;
     --c2: dodgerblue;
-    --c3: white;
+    --c3: black;
     --bg: var(--c3);
     --d: 4000ms;
     --e: cubic-bezier(0.76, 0, 0.24, 1);
