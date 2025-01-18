@@ -41,24 +41,17 @@ const handleAuthCallback = async () => {
                 const user = await auth0Client.getUser();
                 console.log("User:", user);
                 const userName = user.name;
-                
+
                 // Create and display the welcome message
                 const welcomeMessage = `Welcome to the Power of Atlas ${userName}`;
-                const h2Element = document.createElement('h2');
-                h2Element.textContent = welcomeMessage;
-                h2Element.style.textAlign = 'center';
-                h2Element.style.margin = '0 auto';
+                const h2Element = document.querySelector('.holiday-text');
+                if (h2Element) {
+                    h2Element.textContent = welcomeMessage;
+                }
 
                 const findMyHolidayButton = document.getElementById('findMyHolidayButton');
                 console.log("Find My Holiday Button:", findMyHolidayButton);
-                if (findMyHolidayButton) {
-                    const parentDiv = document.createElement('div');
-                    parentDiv.style.textAlign = 'center';
-                    parentDiv.appendChild(h2Element);
-                    parentDiv.appendChild(findMyHolidayButton);
-                    findMyHolidayButton.parentNode.insertBefore(parentDiv, findMyHolidayButton);
-                    console.log("Welcome message inserted");
-                } else {
+                if (!findMyHolidayButton) {
                     console.error("Find My Holiday Button not found");
                 }
 
