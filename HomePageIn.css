@@ -75,9 +75,9 @@ h1 {
     margin: 20px 0; /* Adjust margin to position between h1 and auth buttons */
     padding-top: 10px;
     text-align: center; /* Center the text */
+    order: 1; /* Move holiday text above the button */
 }
 
-/* Button Styling */
 .center-button-container {
     display: flex;
     justify-content: center;
@@ -86,6 +86,11 @@ h1 {
     flex-direction: column;
 }
 
+.center-button {
+    order: 2; /* Ensure button is below the holiday text */
+}
+
+/* Button Styling */
 .center-button,
 .auth-buttons button {
     background-color: transparent;
