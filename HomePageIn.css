@@ -5,93 +5,73 @@ body {
     font-family: sans-serif;
 }
 
-/* Background Animation */
-body {
-    --s: 25vmin;
-    --p: calc(var(--s) / 2);
-    --c1: pink;
-    --c2: #003366; /* Changed from dodgerblue to deep sea blue */
-    --c3: black; /* Changed from white to black */
-    --bg: var(--c3);
-    --d: 4000ms;
-    --e: cubic-bezier(0.76, 0, 0.24, 1);
-
-    background-color: var(--bg);
-    background-image:
-        linear-gradient(45deg, var(--c1) 25%, transparent 25%),
-        linear-gradient(-45deg, var(--c1) 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, var(--c2) 75%),
-        linear-gradient(-45deg, transparent 75%, var(--c2) 75%);
-    background-size: var(--s) var(--s);
-    background-position: 
-        calc(var(--p) *  1) calc(var(--p) *  0), 
-        calc(var(--p) * -1) calc(var(--p) *  1), 
-        calc(var(--p) *  1) calc(var(--p) * -1), 
-        calc(var(--p) * -1) calc(var(--p) *  0);
-    animation: 
-        color var(--d) var(--e) infinite,
-        position var(--d) var(--e) infinite;
-    height: 100vh;
-    margin: 0;
+@property --a {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0deg;
+}
+@property --p {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
+}
+@property --c1 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: black;
+}
+@property --c2 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: black;
 }
 
-@keyframes color {
-    0%, 25% {
-        --bg: var(--c3);
-    }
-    26%, 50% {
-        --bg: var(--c1);
-    }
-    51%, 75% {
-        --bg: var(--c3);
-    }
-    76%, 100% {
-        --bg: var(--c2);
-    }
+html {
+  --s: 80px;
+  --_g: #0000, var(--c1) 2deg calc(var(--a) - 2deg),#0000 var(--a);
+  background: 
+    conic-gradient(from calc(-45deg  - var(--a)/2) at top    var(--p) left  var(--p),var(--_g)),
+    conic-gradient(from calc(-45deg  - var(--a)/2) at top    var(--p) left  var(--p),var(--_g)),
+    conic-gradient(from calc( 45deg  - var(--a)/2) at top    var(--p) right var(--p),var(--_g)),
+    conic-gradient(from calc( 45deg  - var(--a)/2) at top    var(--p) right var(--p),var(--_g)),
+    conic-gradient(from calc(-135deg - var(--a)/2) at bottom var(--p) left  var(--p),var(--_g)),
+    conic-gradient(from calc(-135deg - var(--a)/2) at bottom var(--p) left  var(--p),var(--_g)),
+    conic-gradient(from calc( 135deg - var(--a)/2) at bottom var(--p) right var(--p),var(--_g)),
+    conic-gradient(from calc( 135deg - var(--a)/2) at bottom var(--p) right var(--p),var(--_g))
+    var(--c2);
+  background-size: calc(2*var(--s)) calc(2*var(--s));
+  animation: m 2s infinite alternate linear;
 }
 
-@keyframes position {
-    0% {
-        background-position: 
-            calc(var(--p) *  1) calc(var(--p) *  0), 
-            calc(var(--p) * -1) calc(var(--p) *  1), 
-            calc(var(--p) *  1) calc(var(--p) * -1), 
-            calc(var(--p) * -1) calc(var(--p) *  0);
-    }
-    25% {
-        background-position: 
-            calc(var(--p) *  1) calc(var(--p) *  4), 
-            calc(var(--p) * -1) calc(var(--p) *  5), 
-            calc(var(--p) *  1) calc(var(--p) *  3), 
-            calc(var(--p) * -1) calc(var(--p) *  4);
-    }
-    50% {
-        background-position: 
-            calc(var(--p) *  3) calc(var(--p) * 8), 
-            calc(var(--p) * -3) calc(var(--p) * 9), 
-            calc(var(--p) *  2) calc(var(--p) * 7), 
-            calc(var(--p) * -2) calc(var(--p) * 8);
-    }
-    75% {
-        background-position: 
-            calc(var(--p) *  3) calc(var(--p) * 12), 
-            calc(var(--p) * -3) calc(var(--p) * 13), 
-            calc(var(--p) *  2) calc(var(--p) * 11), 
-            calc(var(--p) * -2) calc(var(--p) * 12);
-    }
-    100% {    
-        background-position: 
-            calc(var(--p) *  5) calc(var(--p) * 16), 
-            calc(var(--p) * -5) calc(var(--p) * 17), 
-            calc(var(--p) *  5) calc(var(--p) * 15), 
-            calc(var(--p) * -5) calc(var(--p) * 16);
-    }
-}
-
-@media (prefers-reduced-motion) {
-    body {
-        animation: none;
-    }
+@keyframes m {
+  0%,15% {
+    --a: 135deg;
+    --p: 20%;
+    --c1: #3B8183; /* Turquoise */
+    --c2: black;
+    background-position: 0 0,var(--s) var(--s);
+  }
+  45%,50% {
+    --a: 90deg;
+    --p: 25%;
+    --c1: #3B8183; /* Turquoise */
+    --c2: black;
+    background-position: 0 0,var(--s) var(--s);
+  }
+  50.01%,55% {
+    --a: 90deg;
+    --p: 25%;
+    --c2: #3B8183; /* Turquoise */
+    --c1: black;
+    background-position: var(--s) 0,0 var(--s);
+  }
+  85%,100% {
+    --a: 135deg;
+    --p: 20%;
+    --c2: #3B8183; /* Turquoise */
+    --c1: black;
+    background-position: var(--s) 0,0 var(--s);
+  }
 }
 
 /* Header Styling */
