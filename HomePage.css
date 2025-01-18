@@ -82,7 +82,7 @@ h1 {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: calc(120vh - 180px); /* Adjust height to account for header */
+    height: calc(80vh - 180px); /* Adjust height to account for header */
     flex-direction: column;
 }
 
