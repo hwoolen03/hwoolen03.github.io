@@ -61,8 +61,9 @@ h1 {
     color: white;
     font-size: 24px;
     font-family: sans-serif;
-    margin: 20px 0; /* Adjust margin to position between h1 and auth buttons */
+    margin: 20px 0;
     padding-top: 10px;
+    text-align: center; /* Center the text */
 }
 
 .auth-buttons {
