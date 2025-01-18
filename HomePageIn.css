@@ -18,7 +18,7 @@ body {
 @property --c1 {
   syntax: '<color>';
   inherits: true;
-  initial-value: black;
+  initial-value: #000000; /* Black */
 }
 @property --c2 {
   syntax: '<color>';
@@ -27,50 +27,88 @@ body {
 }
 
 html {
-  --s: 80px;
-  --_g: #0000, var(--c1) 2deg calc(var(--a) - 2deg),#0000 var(--a);
-  background: 
-    conic-gradient(from calc(-45deg  - var(--a)/2) at top    var(--p) left  var(--p),var(--_g)),
-    conic-gradient(from calc(-45deg  - var(--a)/2) at top    var(--p) left  var(--p),var(--_g)),
-    conic-gradient(from calc( 45deg  - var(--a)/2) at top    var(--p) right var(--p),var(--_g)),
-    conic-gradient(from calc( 45deg  - var(--a)/2) at top    var(--p) right var(--p),var(--_g)),
-    conic-gradient(from calc(-135deg - var(--a)/2) at bottom var(--p) left  var(--p),var(--_g)),
-    conic-gradient(from calc(-135deg - var(--a)/2) at bottom var(--p) left  var(--p),var(--_g)),
-    conic-gradient(from calc( 135deg - var(--a)/2) at bottom var(--p) right var(--p),var(--_g)),
-    conic-gradient(from calc( 135deg - var(--a)/2) at bottom var(--p) right var(--p),var(--_g))
-    var(--c2);
-  background-size: calc(2*var(--s)) calc(2*var(--s));
-  animation: m 2s infinite alternate linear;
+  --s: 25vmin;
+  --p: calc(var(--s) / 2);
+  --c1: pink;
+  --c2: #000033; /* Darkest blue */
+  --c3: #000000; /* Black */
+  --bg: var(--c3);
+  --d: 4000ms;
+  --e: cubic-bezier(0.76, 0, 0.24, 1);
+  
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(45deg, var(--c1) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--c1) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--c2) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--c2) 75%);
+  background-size: var(--s) var(--s);
+  background-position: 
+    calc(var(--p) *  1) calc(var(--p) *  0), 
+    calc(var(--p) * -1) calc(var (--p) *  1), 
+    calc(var(--p) *  1) calc(var(--p) * -1), 
+    calc(var(--p) * -1) calc(var(--p) *  0);
+  animation: 
+    color var(--d) var(--e) infinite,
+    position var(--d) var(--e) infinite;
 }
 
-@keyframes m {
-  0%,15% {
-    --a: 135deg;
-    --p: 20%;
-    --c1: #000033; /* Darkest blue */
-    --c2: black;
-    background-position: 0 0,var(--s) var(--s);
+@keyframes color {
+  0%, 25% {
+    --bg: var(--c3);
   }
-  45%,50% {
-    --a: 90deg;
-    --p: 25%;
-    --c1: #000033; /* Darkest blue */
-    --c2: black;
-    background-position: 0 0,var(--s) var(--s);
+  26%, 50% {
+    --bg: var(--c1);
   }
-  50.01%,55% {
-    --a: 90deg;
-    --p: 25%;
-    --c2: #000033; /* Darkest blue */
-    --c1: black;
-    background-position: var(--s) 0,0 var(--s);
+  51%, 75% {
+    --bg: var(--c3);
   }
-  85%,100% {
-    --a: 135deg;
-    --p: 20%;
-    --c2: #000033; /* Darkest blue */
-    --c1: black;
-    background-position: var(--s) 0,0 var(--s);
+  76%, 100% {
+    --bg: var(--c2);
+  }
+}
+
+@keyframes position {
+  0% {
+    background-position: 
+      calc(var(--p) *  1) calc(var(--p) *  0), 
+      calc(var(--p) * -1) calc(var(--p) *  1), 
+      calc(var(--p) *  1) calc(var(--p) * -1), 
+      calc(var(--p) * -1) calc(var(--p) *  0);
+  }
+  25% {
+    background-position: 
+      calc(var(--p) *  1) calc(var(--p) *  4), 
+      calc(var(--p) * -1) calc(var(--p) *  5), 
+      calc(var(--p) *  1) calc(var(--p) *  3), 
+      calc(var(--p) * -1) calc(var(--p) *  4);
+  }
+  50% {
+    background-position: 
+      calc(var(--p) *  3) calc(var(--p) * 8), 
+      calc(var(--p) * -3) calc(var(--p) * 9), 
+      calc(var(--p) *  2) calc(var(--p) * 7), 
+      calc(var(--p) * -2) calc(var(--p) * 8);
+  }
+  75% {
+    background-position: 
+      calc(var(--p) *  3) calc(var(--p) * 12), 
+      calc(var(--p) * -3) calc(var(--p) * 13), 
+      calc(var(--p) *  2) calc(var(--p) * 11), 
+      calc(var(--p) * -2) calc(var(--p) * 12);
+  }
+  100% {    
+    background-position: 
+      calc(var(--p) *  5) calc(var(--p) * 16), 
+      calc(var(--p) * -5) calc(var(--p) * 17), 
+      calc(var(--p) *  5) calc(var(--p) * 15), 
+      calc(var(--p) * -5) calc(var(--p) * 16);
+  }
+}
+
+@media (prefers-reduced-motion) {
+  body {
+    animation: none;
   }
 }
 
