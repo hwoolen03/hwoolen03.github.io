@@ -120,3 +120,35 @@ h1 {
     font-family: sans-serif; /* Apply Sans serif font */
     margin-top: 10px; /* Adjust margin to move text further up */
 }
+
+/* Additional Media Queries for Mobile Optimization */
+@media (max-width: 480px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px;
+    }
+
+    .logo-heading {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .auth-buttons {
+        justify-content: center;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .center-button-container {
+        height: auto;
+        padding: 20px;
+    }
+
+    .center-button,
+    .auth-buttons button {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+    }
+}
