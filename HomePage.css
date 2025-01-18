@@ -46,7 +46,7 @@ header {
 }
 
 .logo {
-    width: 100px;
+    width: 80px; /* Reduced the width to make the logo smaller */
     height: auto;
 }
 
@@ -148,7 +148,7 @@ h1 {
     }
 
     .logo {
-        width: 100px;
+        width: 60px; /* Reduced the width for smaller screens */
     }
 
     .holiday-text {
