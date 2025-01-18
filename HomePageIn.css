@@ -117,5 +117,6 @@ h1 {
 .holiday-text {
     color: white;
     font-size: 24px;
-    margin-top: 20px; /* Margin above the text */
+    font-family: sans-serif; /* Apply Sans serif font */
+    margin-top: 10px; /* Adjust margin to move text further up */
 }
