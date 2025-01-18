@@ -47,13 +47,16 @@ const handleAuthCallback = async () => {
                 const h2Element = document.createElement('h2');
                 h2Element.textContent = welcomeMessage;
                 h2Element.style.textAlign = 'center';
+                h2Element.style.margin = '0 auto';
 
                 const findMyHolidayButton = document.getElementById('findMyHolidayButton');
                 console.log("Find My Holiday Button:", findMyHolidayButton);
                 if (findMyHolidayButton) {
-                    findMyHolidayButton.style.display = 'block';
-                    findMyHolidayButton.style.margin = '0 auto';
-                    findMyHolidayButton.parentNode.insertBefore(h2Element, findMyHolidayButton);
+                    const parentDiv = document.createElement('div');
+                    parentDiv.style.textAlign = 'center';
+                    parentDiv.appendChild(h2Element);
+                    parentDiv.appendChild(findMyHolidayButton);
+                    findMyHolidayButton.parentNode.insertBefore(parentDiv, findMyHolidayButton);
                     console.log("Welcome message inserted");
                 } else {
                     console.error("Find My Holiday Button not found");
