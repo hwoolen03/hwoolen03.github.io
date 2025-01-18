@@ -51,6 +51,8 @@ const handleAuthCallback = async () => {
                 const findMyHolidayButton = document.getElementById('findMyHolidayButton');
                 console.log("Find My Holiday Button:", findMyHolidayButton);
                 if (findMyHolidayButton) {
+                    findMyHolidayButton.style.display = 'block';
+                    findMyHolidayButton.style.margin = '0 auto';
                     findMyHolidayButton.parentNode.insertBefore(h2Element, findMyHolidayButton);
                     console.log("Welcome message inserted");
                 } else {
