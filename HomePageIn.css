@@ -10,7 +10,7 @@ body {
     --s: 25vmin;
     --p: calc(var(--s) / 2);
     --c1: pink;
-    --c2: dodgerblue;
+    --c2: #003366; /* Changed from dodgerblue to deep sea blue */
     --c3: black; /* Changed from white to black */
     --bg: var(--c3);
     --d: 4000ms;
@@ -122,7 +122,7 @@ h1 {
     font-size: 40px;
     color: whitesmoke;
     margin: 0;
-    font-family: Arial;
+    font-family: Arial, sans-serif;
 }
 
 /* Button Styling */
