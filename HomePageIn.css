@@ -29,25 +29,24 @@ body {
 /* Header Styling */
 header {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     padding: 20px;
     position: absolute;
     top: 0;
-    width: 100%;
-    height: auto;
+    width: 90%;
+    height: 60px; /* Adjust the height to match the height of the sign-in buttons */
 }
 
 .logo-heading {
     display: flex;
     align-items: center;
     gap: 15px;
-    height: 100%;
+    height: 100%; /* Ensure it takes the full height of the header */
 }
 
 .logo {
-    width: 80px;
+    width: 80px; /* Adjusted logo size */
     height: auto;
 }
 
@@ -59,10 +58,14 @@ h1 {
 }
 
 .auth-buttons {
+    position: fixed;
+    right: 0;
+    top: 20px;
     display: flex;
-    flex-direction: row;
-    align-items: center;
+    flex-direction: row; /* Ensure buttons are in a row */
+    align-items: center; /* Align buttons horizontally */
     padding: 20px;
+    height: 60px; /* Adjust the height to match the header height */
 }
 
 .holiday-text {
@@ -108,7 +111,7 @@ h1 {
     }
 
     .logo {
-        width: 100px;
+        width: 60px; /* Reduced the width for smaller screens */
     }
 
     .center-button,
