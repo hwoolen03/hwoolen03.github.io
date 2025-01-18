@@ -39,15 +39,17 @@ const handleAuthCallback = async () => {
             if (isAuthenticated) {
                 const user = await auth0Client.getUser();
                 const userName = user.name;
+                const authMethod = user.sub.split('|')[0];
+                
+                document.getElementById('signOutBtn').textContent = `Hello ${userName}, you are signed in using ${authMethod}. Would you like to sign out?`;
+                
+                // Create and display the welcome message
                 const welcomeMessage = `Welcome to the Power of Atlas ${userName}`;
-
-                // Create the h2 element
                 const h2Element = document.createElement('h2');
                 h2Element.textContent = welcomeMessage;
                 h2Element.style.textAlign = 'center';
 
-                // Insert the h2 element above the "Find My Holiday" button
-                const findMyHolidayButton = document.querySelector('.center-button');
+                const findMyHolidayButton = document.getElementById('FindMyHolidayButton');
                 findMyHolidayButton.parentNode.insertBefore(h2Element, findMyHolidayButton);
 
                 console.log("User is authenticated:", user);
