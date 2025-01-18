@@ -49,7 +49,7 @@ const handleAuthCallback = async () => {
                 h2Element.textContent = welcomeMessage;
                 h2Element.style.textAlign = 'center';
 
-                const findMyHolidayButton = document.getElementById('FindMyHolidayButton');
+                const findMyHolidayButton = document.getElementById('findMyHolidayButton');
                 findMyHolidayButton.parentNode.insertBefore(h2Element, findMyHolidayButton);
 
                 console.log("User is authenticated:", user);
