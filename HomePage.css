@@ -69,6 +69,7 @@ h1 {
     color: white;
     font-size: 24px;
     margin-bottom: 20px; /* Margin below the text */
+    text-align: center;
 }
 
 .center-button {
@@ -148,10 +149,21 @@ h1 {
     min-width: 100%;
     min-height: 100%;
     z-index: -1;
-    
+    opacity: 0.7;
+    filter: brightness(80%);
 }
 
-
+/* Added overlay class */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.1); /* Dark background with 10% opacity */
+    z-index: 1;
+    pointer-events: none; /* Allows interactions with underlying elements */
+}
 
 .background-video {
     position: relative;
