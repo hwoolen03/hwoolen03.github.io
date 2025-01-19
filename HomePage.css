@@ -36,24 +36,6 @@ h1 {
     font-family: Arial;
 }
 
-/* Navigation Menu */
-.scrollmenu {
-    display: flex;
-    gap: 15px;
-}
-
-.scrollmenu a {
-    display: inline-block;
-    color: white;
-    padding: 10px;
-    text-decoration: none;
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.scrollmenu a:hover {
-    background-color: dimgrey;
-}
 
 /* Button Styling */
 .center-button-container {
@@ -61,7 +43,7 @@ h1 {
     justify-content: center;
     align-items: center;
     flex-direction: column; /* Stack items vertically */
-    height: 100vh;
+    height: 90vh;
     text-align: center; /* Ensure text is centered */
 }
 
