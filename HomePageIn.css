@@ -57,6 +57,45 @@ h1 {
     font-family: Arial, sans-serif;
 }
 
+h2 {
+    font-size: 150px;
+}
+
+/* Button Styling */
+.center-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column; /* Stack items vertically */
+    height: 90vh;
+    text-align: center; /* Ensure text is centered */
+}
+
+.holiday-text {
+    color: white;
+    font-size: 24px;
+    margin-bottom: 20px; /* Margin below the text */
+    text-align: center;
+}
+
+.center-button {
+    background-color: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 15px 40px;
+    font-size: 18px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 20px;
+}
+
+.center-button:hover {
+    background-color: white;
+    color: black;
+}
+
+/* Auth Buttons Styling */
 .auth-buttons {
     position: fixed;
     right: 0;
@@ -68,43 +107,18 @@ h1 {
     height: 60px; /* Adjust the height to match the header height */
 }
 
-.holiday-text {
-    color: white;
-    font-size: 24px;
-    font-family: sans-serif;
-    margin: 20px 0; /* Adjust margin to position between h1 and auth buttons */
-    padding-top: 10px;
-    text-align: center; /* Center the text */
-    order: 1; /* Move holiday text above the button */
-}
-
-.center-button-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: calc(100vh - 180px); /* Adjust height to account for header */
-    flex-direction: column;
-}
-
-.center-button {
-    order: 2; /* Ensure button is below the holiday text */
-}
-
-/* Button Styling */
-.center-button,
 .auth-buttons button {
     background-color: transparent;
     border: 2px solid white;
     color: white;
-    padding: 10px 20px;
-    font-size: 18px;
-    border-radius: 25px;
+    padding: 15px 25px;
+    font-size: 16px;
+    border-radius: 30px; /* Rounded edges */
     cursor: pointer;
     transition: all 0.3s ease;
     margin: 5px;
 }
 
-.center-button:hover,
 .auth-buttons button:hover {
     background-color: white;
     color: black;
@@ -116,43 +130,35 @@ h1 {
         font-size: 30px;
     }
 
-    .logo {
-        width: 60px; /* Reduced the width for smaller screens */
+    .scrollmenu a {
+        font-size: 16px;
     }
 
-    .center-button,
-    .auth-buttons button {
+    .logo {
+        width: 100px;
+    }
+
+    .holiday-text {
+        font-size: 20px;
+        margin-right: 10px;
+    }
+
+    .center-button {
         padding: 10px 20px;
         font-size: 16px;
     }
 }
 
-/* Additional Media Queries for Mobile Optimization */
-@media (max-width: 480px) {
-    header {
-        padding: 10px;
-    }
+#background-video {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    z-index: -1;
+}
 
-    .logo-heading {
-        justify-content: center;
-        width: 100%;
-    }
-
-    .auth-buttons {
-        justify-content: center;
-        width: 100%;
-        margin-top: 10px;
-    }
-
-    .center-button-container {
-        padding: 20px;
-        height: auto;
-    }
-
-    .center-button,
-    .auth-buttons button {
-        width: 100%;
-        padding: 10px;
-        font-size: 14px;
-    }
+.background-video {
+    position: relative;
+    z-index: 0;
 }
