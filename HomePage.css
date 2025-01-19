@@ -63,6 +63,7 @@ h1 {
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.3s ease;
+    margin-top: 20px;
 }
 
 .center-button:hover {
