@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas Travel - Signed In</title>
+    <link rel="stylesheet" href="HomePageIn.css">
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js"></script>
+    <script src="account.js" defer></script>
+</head>
+<body>
+<video autoplay muted loop id="background-video">
+    <source src="202368-918049003_medium.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
+<header>
+    <div class="logo-heading">
+        <img src="AtlasTravel.jpg" alt="Atlas Travel Logo" class="logo">
+        <h1>Atlas Travel</h1>
+    </div>
+    <div class="auth-buttons">
+        <button id="myAccountBtn">My Account</button>
+        <button id="signOutBtn" class="form-button">Sign Out</button>
+    </div>
+</header>
+
+<main>
+    <div class="center-button-container">
+        <div class="holiday-text">Welcome to the power of Atlas username</div>
+        <button id="findMyHolidayButton" class="center-button" onclick="window.location.href='FindMyHoliday.html'">Find My Holiday</button>
+    </div>
+</main>
+</body>
+</html>
