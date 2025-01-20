@@ -122,14 +122,20 @@ h2 {
     position: relative;
 }
 
-.currency-symbol,
+.currency-symbol {
+
+    color: white;
+}
+
+
+
+
 .person-icon {
     position: absolute;
     left: 5px;
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
-    colour: white
 }
 
 .icon-input-left {
