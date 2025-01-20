@@ -27,8 +27,19 @@
 
 <main>
     <div class="center-button-container">
+        <input type="date" id="holidayDate" class="date-picker" onchange="displayDate()">
+        <div id="selectedDate" class="date-display"></div>
+        <input type="number" id="numPeople" class="text-input" placeholder="Number of People">
+        <input type="number" id="budget" class="text-input" placeholder="Budget">
         <button id="findMyHolidayButton" class="center-button small-button" onclick="window.location.href='FindMyHoliday.html'">Find My Holiday</button>
     </div>
 </main>
+
+<script>
+function displayDate() {
+    const selectedDate = document.getElementById('holidayDate').value;
+    document.getElementById('selectedDate').innerText = selectedDate ? `Selected Date: ${selectedDate}` : '';
+}
+</script>
 </body>
 </html>
