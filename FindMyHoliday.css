@@ -120,26 +120,30 @@ h2 {
 
 .input-container {
     position: relative;
+    display: inline-block;
 }
 
-.currency-symbol {
-
-    color: white;
+.date-picker {
+    padding-right: 30px; /* Adjust as necessary */
 }
 
-
-
-
-.person-icon {
+.calendar-icon {
     position: absolute;
-    left: 5px;
+    right: 10px; /* Adjust as necessary */
     top: 50%;
     transform: translateY(-50%);
-    pointer-events: none;
 }
 
-.icon-input-left {
-    padding-left: 20px;
+.currency-symbol,
+.person-icon {
+    position: absolute;
+    left: 10px; /* Adjust as necessary */
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.text-input {
+    padding-left: 30px; /* Adjust as necessary */
 }
 
 /* Custom Calendar Styling */
