@@ -133,8 +133,9 @@ h2 {
         margin-right: 10px;
     }
 
-    .center-button {
+    .center-button.small-button {
         padding: 10px 20px;
         font-size: 16px;
+        margin-top: 200px;
     }
 }
