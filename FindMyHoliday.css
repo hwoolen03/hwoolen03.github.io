@@ -108,13 +108,6 @@ h2 {
     color: black;
 }
 
-.date-display {
-    margin: 10px 0;
-    font-size: 18px;
-    color: white;
-    text-align: center;
-}
-
 .no-arrows::-webkit-outer-spin-button,
 .no-arrows::-webkit-inner-spin-button {
     -webkit-appearance: none;
