@@ -125,11 +125,14 @@ h2 {
 .currency-symbol,
 .person-icon {
     position: absolute;
-    right: 15px;
+    left: 5px;
     top: 50%;
     transform: translateY(-50%);
-    color: white;
-    font-size: 18px;
+    pointer-events: none;
+}
+
+.icon-input-left {
+    padding-left: 20px;
 }
 
 /* Custom Calendar Styling */
