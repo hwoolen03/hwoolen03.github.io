@@ -138,6 +138,11 @@ h2 {
     font-size: 18px;
 }
 
+/* Custom Calendar Styling */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
 /* Auth Buttons Styling */
 .auth-buttons {
     position: fixed;
