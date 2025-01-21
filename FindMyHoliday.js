@@ -1,3 +1,5 @@
+import * as tf from '@tensorflow/tfjs';
+
 let auth0Client = null;
 
 // Configure the Auth0 client
@@ -109,12 +111,46 @@ const fetchHotelData = async (destination, checkInDate, checkOutDate, budget, nu
     }
 };
 
+// Preprocess user data for the model
+const preprocessUserData = (user) => {
+    // Example preprocessing
+    return {
+        name: user.name,
+        email: user.email,
+        preferences: user.preferences || {},
+    };
+};
+
+// Train a simple model (for demonstration purposes)
+const trainModel = async (data) => {
+    const model = tf.sequential();
+    model.add(tf.layers.dense({units: 10, activation: 'relu', inputShape: [data.length]}));
+    model.add(tf.layers.dense({units: 1, activation: 'sigmoid'}));
+    model.compile({loss: 'binaryCrossentropy', optimizer: 'adam'});
+
+    const xs = tf.tensor2d(data.map(d => [d.preferences]));
+    const ys = tf.tensor2d(data.map(d => d.label), [data.length, 1]);
+
+    await model.fit(xs, ys, {epochs: 10});
+    return model;
+};
+
+// Generate recommendations
+const generateRecommendations = async (user) => {
+    const userData = preprocessUserData(user);
+    const model = await trainModel([userData]); // Simplified for demonstration
+    const input = tf.tensor2d([userData.preferences]);
+    const output = model.predict(input);
+    return output.dataSync();
+};
+
 // Personalize content based on user data
 const personalizeContent = async (user) => {
     console.log("Personalizing content for user:", user);
-    const userName = user.name;
-    const userEmail = user.email;
-    const destination = document.getElementById('destination').value;
+    const recommendations = await generateRecommendations(user);
+
+    // Use recommendations to fetch flight and hotel data
+    const destination = recommendations[0]; // Simplified example
     const checkInDate = document.getElementById('holidayDate').value;
     const checkOutDate = document.getElementById('returnDate').value;
     const departureLocation = document.getElementById('departureLocation').value;
@@ -128,11 +164,11 @@ const personalizeContent = async (user) => {
     const hotelData = await fetchHotelData(destination, checkInDate, checkOutDate, budget, numPeople);
 
     // Personalize the content based on fetched data
-    if (userName) {
-        document.getElementById('welcome-message').innerText = `Hello, ${userName}!`;
+    if (user.name) {
+        document.getElementById('welcome-message').innerText = `Hello, ${user.name}!`;
     }
-    if (userEmail) {
-        document.getElementById('user-email').innerText = `Your email: ${userEmail}`;
+    if (user.email) {
+        document.getElementById('user-email').innerText = `Your email: ${user.email}`;
     }
 
     // Display flight and hotel data
@@ -142,7 +178,8 @@ const personalizeContent = async (user) => {
 
 window.onload = async () => {
     await configureClient();
-    handleAuthCallback();
+    const user = await auth0Client.getUser();
+    await personalizeContent(user);
 
     const signOutBtn = document.getElementById('signOutBtn');
     if (signOutBtn) {
