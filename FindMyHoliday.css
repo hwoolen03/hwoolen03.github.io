@@ -100,6 +100,9 @@ h2 {
     text-align: center;
     margin: 10px 0;
     transition: all 0.3s ease;
+    -webkit-appearance: none; /* Remove default styling for dropdown */
+    -moz-appearance: none; /* Remove default styling for dropdown */
+    appearance: none; /* Remove default styling for dropdown */
 }
 
 .date-picker:hover,
@@ -144,7 +147,8 @@ label {
 }
 
 .currency-symbol,
-.person-icon {
+.person-icon,
+.plane-icon {
     position: absolute;
     left: 10px; /* Adjust as necessary */
     top: 50%;
