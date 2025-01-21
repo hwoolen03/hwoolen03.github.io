@@ -85,19 +85,47 @@ const fetchFlightData = async (destination, dates, departureLocation, budget, nu
     }
 };
 
+// Fetch hotel data
+const fetchHotelData = async (destination, checkInDate, checkOutDate, budget, numPeople) => {
+    try {
+        const response = await fetch(`https://api.makcorps.com/free`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODcyNjc5NzIsImlhdCI6MTY4NzI2NjE3MiwibmJmIjoxNjg3MjY2MTcyLCJpZGVudGl0eSI6MjExMH0.HqBtNdrOg21LzKY7RmylIQpdazFx5QZSVyhhYSs6qFA'
+            },
+            body: JSON.stringify({
+                destination: destination,
+                checkIn: checkInDate,
+                checkOut: checkOutDate,
+                budget: budget,
+                guests: numPeople
+            })
+        });
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching hotel data:", error);
+    }
+};
+
 // Personalize content based on user data
 const personalizeContent = async (user) => {
     console.log("Personalizing content for user:", user);
     const userName = user.name;
     const userEmail = user.email;
     const destination = document.getElementById('destination').value;
-    const dates = document.getElementById('holidayDate').value + '_' + document.getElementById('returnDate').value;
+    const checkInDate = document.getElementById('holidayDate').value;
+    const checkOutDate = document.getElementById('returnDate').value;
     const departureLocation = document.getElementById('departureLocation').value;
     const budget = document.getElementById('budget').value;
     const numPeople = document.getElementById('numPeople').value;
 
     // Fetch flight data
-    const flightData = await fetchFlightData(destination, dates, departureLocation, budget, numPeople);
+    const flightData = await fetchFlightData(destination, checkInDate + '_' + checkOutDate, departureLocation, budget, numPeople);
+
+    // Fetch hotel data
+    const hotelData = await fetchHotelData(destination, checkInDate, checkOutDate, budget, numPeople);
 
     // Personalize the content based on fetched data
     if (userName) {
@@ -107,8 +135,9 @@ const personalizeContent = async (user) => {
         document.getElementById('user-email').innerText = `Your email: ${userEmail}`;
     }
 
-    // Display flight data
+    // Display flight and hotel data
     document.getElementById('flight-info').innerText = `Flights to ${destination}: ${JSON.stringify(flightData)}`;
+    document.getElementById('hotel-info').innerText = `Hotels in ${destination}: ${JSON.stringify(hotelData)}`;
 };
 
 window.onload = async () => {
