@@ -57,6 +57,8 @@ const handleAuthCallback = async () => {
                 console.log("Find My Holiday Button:", findMyHolidayButton);
                 if (!findMyHolidayButton) {
                     console.error("Find My Holiday Button not found");
+                } else {
+                    findMyHolidayButton.addEventListener('click', () => triggerPersonalization(user));
                 }
 
                 console.log("User is authenticated:", user);
@@ -171,6 +173,10 @@ const personalizeContent = async (user) => {
 
     // Redirect to HolidayResults.html with data
     window.location.href = `HolidayResults.html?welcomeMessage=${encodeURIComponent(welcomeMessage)}&userEmail=${encodeURIComponent(userEmail)}&flightInfo=${encodeURIComponent(flightInfo)}&hotelInfo=${encodeURIComponent(hotelInfo)}`;
+};
+
+const triggerPersonalization = async (user) => {
+    await personalizeContent(user);
 };
 
 window.onload = async () => {
