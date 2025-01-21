@@ -1,4 +1,4 @@
-import * as tf from '@tensorflow/tfjs';
+import * as tf from 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs';
 
 let auth0Client = null;
 
