@@ -36,6 +36,36 @@
             <input type="date" id="returnDate" class="date-picker">
         </div>
         <div class="input-container">
+            <span class="plane-icon">✈️</span>
+            <select id="departureLocation" class="text-input">
+                <option value="">Select Airport</option>
+                <!-- UK Airports -->
+                <option value="LHR">London Heathrow Airport (LHR)</option>
+                <option value="LGW">London Gatwick Airport (LGW)</option>
+                <option value="MAN">Manchester Airport (MAN)</option>
+                <option value="STN">London Stansted Airport (STN)</option>
+                <option value="LTN">London Luton Airport (LTN)</option>
+                <option value="EDI">Edinburgh Airport (EDI)</option>
+                <option value="BHX">Birmingham Airport (BHX)</option>
+                <option value="GLA">Glasgow Airport (GLA)</option>
+                <option value="BRS">Bristol Airport (BRS)</option>
+                <option value="NCL">Newcastle Airport (NCL)</option>
+                <option value="LPL">Liverpool John Lennon Airport (LPL)</option>
+                <option value="BFS">Belfast International Airport (BFS)</option>
+                <!-- Existing Airports -->
+                <option value="JFK">John F. Kennedy International Airport (JFK)</option>
+                <option value="LAX">Los Angeles International Airport (LAX)</option>
+                <option value="HND">Tokyo Haneda Airport (HND)</option>
+                <option value="SIN">Singapore Changi Airport (SIN)</option>
+                <option value="DXB">Dubai International Airport (DXB)</option>
+                <option value="CDG">Charles de Gaulle Airport (CDG)</option>
+                <option value="AMS">Amsterdam Schiphol Airport (AMS)</option>
+                <option value="FRA">Frankfurt Airport (FRA)</option>
+                <option value="SYD">Sydney Kingsford Smith Airport (SYD)</option>
+                <option value="HKG">Hong Kong International Airport (HKG)</option>
+            </select>
+        </div>
+        <div class="input-container">
             <span class="currency-symbol">£</span>
             <input type="number" id="budget" class="text-input no-arrows" placeholder="Budget">
         </div>
