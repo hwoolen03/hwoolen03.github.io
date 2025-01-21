@@ -163,17 +163,14 @@ const personalizeContent = async (user) => {
     // Fetch hotel data
     const hotelData = await fetchHotelData(destination, checkInDate, checkOutDate, budget, numPeople);
 
-    // Personalize the content based on fetched data
-    if (user.name) {
-        document.getElementById('welcome-message').innerText = `Hello, ${user.name}!`;
-    }
-    if (user.email) {
-        document.getElementById('user-email').innerText = `Your email: ${user.email}`;
-    }
+    // Prepare data for redirection
+    const welcomeMessage = `Hello, ${user.name}!`;
+    const userEmail = `Your email: ${user.email}`;
+    const flightInfo = `Flights to ${destination}: ${JSON.stringify(flightData)}`;
+    const hotelInfo = `Hotels in ${destination}: ${JSON.stringify(hotelData)}`;
 
-    // Display flight and hotel data
-    document.getElementById('flight-info').innerText = `Flights to ${destination}: ${JSON.stringify(flightData)}`;
-    document.getElementById('hotel-info').innerText = `Hotels in ${destination}: ${JSON.stringify(hotelData)}`;
+    // Redirect to HolidayResults.html with data
+    window.location.href = `HolidayResults.html?welcomeMessage=${encodeURIComponent(welcomeMessage)}&userEmail=${encodeURIComponent(userEmail)}&flightInfo=${encodeURIComponent(flightInfo)}&hotelInfo=${encodeURIComponent(hotelInfo)}`;
 };
 
 window.onload = async () => {
