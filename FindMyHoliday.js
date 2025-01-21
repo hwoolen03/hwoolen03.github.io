@@ -40,7 +40,7 @@ const handleAuthCallback = async () => {
             if (isAuthenticated) {
                 const user = await auth0Client.getUser();
                 console.log("User:", user);
-                personalizeContent(user); // Use user data for personalization
+                await personalizeContent(user); // Use user data for personalization
 
                 const userName = user.name;
 
@@ -74,14 +74,41 @@ const handleAuthCallback = async () => {
     }
 };
 
+// Fetch flight data
+const fetchFlightData = async (destination, dates, departureLocation, budget, numPeople) => {
+    try {
+        const response = await fetch(`https://aviation-edge.com/v2/public/flights?key=your_api_key&destination=${destination}&dates=${dates}&departureLocation=${departureLocation}&budget=${budget}&numPeople=${numPeople}`);
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching flight data:", error);
+    }
+};
+
 // Personalize content based on user data
-const personalizeContent = (user) => {
+const personalizeContent = async (user) => {
     console.log("Personalizing content for user:", user);
-    // Implement your personalization algorithm here
-    // Example: Use the user's name and email
     const userName = user.name;
     const userEmail = user.email;
-    // Personalization logic based on userName and userEmail
+    const destination = document.getElementById('destination').value;
+    const dates = document.getElementById('holidayDate').value + '_' + document.getElementById('returnDate').value;
+    const departureLocation = document.getElementById('departureLocation').value;
+    const budget = document.getElementById('budget').value;
+    const numPeople = document.getElementById('numPeople').value;
+
+    // Fetch flight data
+    const flightData = await fetchFlightData(destination, dates, departureLocation, budget, numPeople);
+
+    // Personalize the content based on fetched data
+    if (userName) {
+        document.getElementById('welcome-message').innerText = `Hello, ${userName}!`;
+    }
+    if (userEmail) {
+        document.getElementById('user-email').innerText = `Your email: ${userEmail}`;
+    }
+
+    // Display flight data
+    document.getElementById('flight-info').innerText = `Flights to ${destination}: ${JSON.stringify(flightData)}`;
 };
 
 window.onload = async () => {
