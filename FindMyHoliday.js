@@ -77,7 +77,7 @@ const handleAuthCallback = async () => {
 // Fetch flight data
 const fetchFlightData = async (destination, dates, departureLocation, budget, numPeople) => {
     try {
-        const response = await fetch(`https://aviation-edge.com/v2/public/flights?key=your_api_key&destination=${destination}&dates=${dates}&departureLocation=${departureLocation}&budget=${budget}&numPeople=${numPeople}`);
+        const response = await fetch(`https://aviation-edge.com/v2/public/flights?key=87034c-82c494&destination=${destination}&dates=${dates}&departureLocation=${departureLocation}&budget=${budget}&numPeople=${numPeople}`);
         const data = await response.json();
         return data;
     } catch (error) {
