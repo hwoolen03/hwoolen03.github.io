@@ -20,6 +20,7 @@ const configureClient = async () => {
 const signOut = async () => {
     try {
         if (auth0Client) {
+            console.log("Attempting to sign out user...");
             await auth0Client.logout({
                 returnTo: window.location.origin
             });
@@ -58,7 +59,10 @@ const handleAuthCallback = async () => {
                 if (!findMyHolidayButton) {
                     console.error("Find My Holiday Button not found");
                 } else {
-                    findMyHolidayButton.addEventListener('click', () => triggerPersonalization(user));
+                    findMyHolidayButton.addEventListener('click', () => {
+                        console.log("Find My Holiday button clicked");
+                        triggerPersonalization(user);
+                    });
                 }
 
                 console.log("User is authenticated:", user);
@@ -81,8 +85,10 @@ const handleAuthCallback = async () => {
 // Fetch flight data
 const fetchFlightData = async (destination, dates, departureLocation, budget, numPeople) => {
     try {
+        console.log("Fetching flight data...");
         const response = await fetch(`https://aviation-edge.com/v2/public/flights?key=87034c-82c494&destination=${destination}&dates=${dates}&departureLocation=${departureLocation}&budget=${budget}&numPeople=${numPeople}`);
         const data = await response.json();
+        console.log("Flight data fetched:", data);
         return data;
     } catch (error) {
         console.error("Error fetching flight data:", error);
@@ -92,6 +98,7 @@ const fetchFlightData = async (destination, dates, departureLocation, budget, nu
 // Fetch hotel data
 const fetchHotelData = async (destination, checkInDate, checkOutDate, budget, numPeople) => {
     try {
+        console.log("Fetching hotel data...");
         const response = await fetch(`https://api.makcorps.com/free`, {
             method: 'POST',
             headers: {
@@ -107,6 +114,7 @@ const fetchHotelData = async (destination, checkInDate, checkOutDate, budget, nu
             })
         });
         const data = await response.json();
+        console.log("Hotel data fetched:", data);
         return data;
     } catch (error) {
         console.error("Error fetching hotel data:", error);
@@ -116,6 +124,7 @@ const fetchHotelData = async (destination, checkInDate, checkOutDate, budget, nu
 // Preprocess user data for the model
 const preprocessUserData = (user) => {
     // Example preprocessing
+    console.log("Preprocessing user data:", user);
     return {
         name: user.name,
         email: user.email,
@@ -125,6 +134,7 @@ const preprocessUserData = (user) => {
 
 // Train a simple model (for demonstration purposes)
 const trainModel = async (data) => {
+    console.log("Training model...");
     const model = tf.sequential();
     model.add(tf.layers.dense({units: 10, activation: 'relu', inputShape: [data.length]}));
     model.add(tf.layers.dense({units: 1, activation: 'sigmoid'}));
@@ -134,15 +144,18 @@ const trainModel = async (data) => {
     const ys = tf.tensor2d(data.map(d => d.label), [data.length, 1]);
 
     await model.fit(xs, ys, {epochs: 10});
+    console.log("Model trained");
     return model;
 };
 
 // Generate recommendations
 const generateRecommendations = async (user) => {
+    console.log("Generating recommendations for user:", user);
     const userData = preprocessUserData(user);
     const model = await trainModel([userData]); // Simplified for demonstration
     const input = tf.tensor2d([userData.preferences]);
     const output = model.predict(input);
+    console.log("Recommendations generated:", output.dataSync());
     return output.dataSync();
 };
 
@@ -172,6 +185,7 @@ const personalizeContent = async (user) => {
     const hotelInfo = `Hotels in ${destination}: ${JSON.stringify(hotelData)}`;
 
     // Redirect to HolidayResults.html with data
+    console.log("Redirecting to HolidayResults.html with data");
     window.location.href = `HolidayResults.html?welcomeMessage=${encodeURIComponent(welcomeMessage)}&userEmail=${encodeURIComponent(userEmail)}&flightInfo=${encodeURIComponent(flightInfo)}&hotelInfo=${encodeURIComponent(hotelInfo)}`;
 };
 
@@ -180,13 +194,18 @@ const triggerPersonalization = async (user) => {
 };
 
 window.onload = async () => {
+    console.log("Window loaded, configuring Auth0 client...");
     await configureClient();
     const user = await auth0Client.getUser();
+    console.log("User retrieved:", user);
     await personalizeContent(user);
 
     const signOutBtn = document.getElementById('signOutBtn');
     if (signOutBtn) {
-        signOutBtn.addEventListener('click', signOut);
+        signOutBtn.addEventListener('click', () => {
+            console.log("Sign-out button clicked");
+            signOut();
+        });
         console.log("Sign-out button event listener added");
     } else {
         console.error("Sign-out button not found");
