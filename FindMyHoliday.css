@@ -120,7 +120,16 @@ h2 {
 
 .input-container {
     position: relative;
-    display: inline-block;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 20px; /* Add some space between the input containers */
+}
+
+label {
+    color: white;
+    font-size: 18px;
+    margin-bottom: 5px; /* Add some space between label and input */
 }
 
 .date-picker {
