@@ -1,4 +1,4 @@
-import * as tf from 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.9.0';  // Use a specific version known to work
+import * as tf from '@tensorflow/tfjs';  // Ensure correct import
 
 let auth0Client = null;
 
@@ -86,7 +86,7 @@ const handleAuthCallback = async () => {
 const fetchFlightData = async (destination, dates, departureLocation, budget, numPeople) => {
     try {
         console.log("Fetching flight data...");
-        const response = await fetch(`https://aviation-edge.com/v2/public/flights?key=87034c-82c494&destination=${destination}&dates=${dates}&departureLocation=${departureLocation}&budget=${budget}&numPeople=${numPeople}`);
+        const response = await fetch(`https://aviation-edge.com/v2/public/flights?key=87034c-82c494&destination=${destination}&dates=${dates}&departureLocation=${departureLocation}&budget=${budget}`);
         const data = await response.json();
         console.log("Flight data fetched:", data);
         return data;
@@ -103,7 +103,7 @@ const fetchHotelData = async (destination, checkInDate, checkOutDate, budget, nu
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODcyNjc5NzIsImlhdCI6MTY4NzI2NjE3MiwibmJmIjoxNjg3MjY2MTcyLCJpZGVudGl0eSI6MjExMH0.HqBtNdrOg21LzKY7RmylIQpdazFx5QZSVyhhYSs6qFA'
+                'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODcyNjc5NzIsImlhdCI6MTY4NzI2NjE3MiwibmJmIjoxNjg3MjY2MTcyLCJpZGVudGl0eSI6MjExMH0.HqBtNdrOg21LzKY7RmylIQpda`
             },
             body: JSON.stringify({
                 destination: destination,
