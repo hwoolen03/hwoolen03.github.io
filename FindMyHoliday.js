@@ -40,6 +40,8 @@ const handleAuthCallback = async () => {
             if (isAuthenticated) {
                 const user = await auth0Client.getUser();
                 console.log("User:", user);
+                personalizeContent(user); // Use user data for personalization
+
                 const userName = user.name;
 
                 // Create and display the welcome message
@@ -72,7 +74,16 @@ const handleAuthCallback = async () => {
     }
 };
 
-// Add event listener for the sign-out button
+// Personalize content based on user data
+const personalizeContent = (user) => {
+    console.log("Personalizing content for user:", user);
+    // Implement your personalization algorithm here
+    // Example: Use the user's name and email
+    const userName = user.name;
+    const userEmail = user.email;
+    // Personalization logic based on userName and userEmail
+};
+
 window.onload = async () => {
     await configureClient();
     handleAuthCallback();
