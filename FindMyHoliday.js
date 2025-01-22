@@ -129,7 +129,7 @@ const preprocessUserData = (user) => {
     return {
         name: user.name,
         email: user.email,
-        preferences: user.preferences ? Object.values(user.preferences) : [],
+        preferences: user.preferences ? Object.values(user.preferences) : [0], // Ensure preferences have a default value
     };
 };
 
