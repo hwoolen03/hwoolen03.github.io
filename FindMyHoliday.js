@@ -129,7 +129,7 @@ const preprocessUserData = (user) => {
     return {
         name: user.name,
         email: user.email,
-        preferences: user.preferences || {},
+        preferences: user.preferences ? Object.values(user.preferences) : [],
     };
 };
 
@@ -137,11 +137,11 @@ const preprocessUserData = (user) => {
 const trainModel = async (data) => {
     console.log("Training model...");
     const model = tf.sequential();
-    model.add(tf.layers.dense({units: 10, activation: 'relu', inputShape: [Object.keys(data[0].preferences).length]})); // Ensure input shape matches preferences length
+    model.add(tf.layers.dense({units: 10, activation: 'relu', inputShape: [data[0].preferences.length]})); // Ensure input shape matches preferences length
     model.add(tf.layers.dense({units: 1, activation: 'sigmoid'}));
     model.compile({loss: 'binaryCrossentropy', optimizer: 'adam'});
 
-    const xs = tf.tensor2d(data.map(d => Object.values(d.preferences))); // Ensure preferences are converted to array
+    const xs = tf.tensor2d(data.map(d => d.preferences)); // Ensure preferences are converted to array
     const ys = tf.tensor2d(data.map(d => d.label), [data.length, 1]);
 
     await model.fit(xs, ys, {epochs: 10});
@@ -156,10 +156,14 @@ const generateRecommendations = async (user) => {
         const userData = preprocessUserData(user);
         console.log("Preprocessed User Data:", userData);
 
+        if (userData.preferences.length === 0) {
+            throw new Error("User preferences are empty");
+        }
+
         const model = await trainModel([userData]);
         console.log("Model:", model);
 
-        const input = tf.tensor2d([Object.values(userData.preferences)]); // Ensure preferences are converted to array
+        const input = tf.tensor2d([userData.preferences]); // Ensure preferences are converted to array
         const output = model.predict(input);
         const recommendations = output.dataSync();
         console.log("Recommendations generated:", recommendations);
