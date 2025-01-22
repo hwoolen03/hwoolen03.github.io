@@ -60,10 +60,10 @@ const handleAuthCallback = async () => {
                 if (!findMyHolidayButton) {
                     console.error("Find My Holiday Button not found");
                 } else {
-                    findMyHolidayButton.addEventListener('click', () => {
+                    findMyHolidayButton.addEventListener('click', async () => {
                         console.log("Find My Holiday button clicked");
                         if (validateInputs()) {
-                            triggerPersonalization(user);
+                            await triggerPersonalization(user);
                         }
                     });
                 }
