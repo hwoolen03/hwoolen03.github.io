@@ -21,6 +21,7 @@ const signOut = async () => {
     try {
         if (auth0Client) {
             console.log("Attempting to sign out user...");
+            console.log("auth0Client:", auth0Client);
             await auth0Client.logout({
                 returnTo: window.location.origin
             });
@@ -86,7 +87,7 @@ const handleAuthCallback = async () => {
 const fetchFlightData = async (destination, dates, departureLocation, budget, numPeople) => {
     try {
         console.log("Fetching flight data...");
-        const response = await fetch(`https://aviation-edge.com/v2/public/flights?key=87034c-82c494&destination=${destination}&dates=${dates}&departureLocation=${departureLocation}&budget=${budget}`);
+        const response = await fetch(`https://aviation-edge.com/v2/public/flights?key=87034c-82c494&destination=${destination}&dates=${dates}&departureLocation=${departureLocation}&budget=${budget}&numPeople=${numPeople}`);
         const data = await response.json();
         console.log("Flight data fetched:", data);
         return data;
@@ -103,7 +104,7 @@ const fetchHotelData = async (destination, checkInDate, checkOutDate, budget, nu
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODcyNjc5NzIsImlhdCI6MTY4NzI2NjE3MiwibmJmIjoxNjg3MjY2MTcyLCJpZGVudGl0eSI6MjExMH0.HqBtNdrOg21LzKY7RmylIQpda9XyNVJopg6Zf3c7o3Q`
+                'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODcyNjc5NzIsImlhdCI6MTY4NzI2NjE3MiwibmJmIjoxNjg3MjY2MTcyLCJpZGVudGl0eSI6MjExMH0.HqBtNdrOg21LzKY7RmylIQpda7H9vG3dO5y4Qu9Q1s0'
             },
             body: JSON.stringify({
                 destination: destination,
@@ -150,43 +151,57 @@ const trainModel = async (data) => {
 
 // Generate recommendations
 const generateRecommendations = async (user) => {
-    console.log("Generating recommendations for user:", user);
-    const userData = preprocessUserData(user);
-    const model = await trainModel([userData]); // Simplified for demonstration
-    const input = tf.tensor2d([userData.preferences]);
-    const output = model.predict(input);
-    console.log("Recommendations generated:", output.dataSync());
-    return output.dataSync();
+    try {
+        console.log("Generating recommendations for user:", user);
+        const userData = preprocessUserData(user);
+        console.log("Preprocessed User Data:", userData);
+
+        const model = await trainModel([userData]);
+        console.log("Model:", model);
+
+        const input = tf.tensor2d([userData.preferences]);
+        const output = model.predict(input);
+        console.log("Recommendations generated:", output.dataSync());
+
+        return output.dataSync();
+    } catch (error) {
+        console.error("Error generating recommendations:", error);
+    }
 };
 
 // Personalize content based on user data
 const personalizeContent = async (user) => {
-    console.log("Personalizing content for user:", user);
-    const recommendations = await generateRecommendations(user);
+    try {
+        console.log("Personalizing content for user:", user);
+        const recommendations = await generateRecommendations(user);
+        console.log("Recommendations:", recommendations);
 
-    // Use recommendations to fetch flight and hotel data
-    const destination = recommendations[0]; // Simplified example
-    const checkInDate = document.getElementById('holidayDate').value;
-    const checkOutDate = document.getElementById('returnDate').value;
-    const departureLocation = document.getElementById('departureLocation').value;
-    const budget = document.getElementById('budget').value;
-    const numPeople = document.getElementById('numPeople').value;
+        const destination = recommendations[0];
+        const checkInDate = document.getElementById('holidayDate').value;
+        const checkOutDate = document.getElementById('returnDate').value;
+        const departureLocation = document.getElementById('departureLocation').value;
+        const budget = document.getElementById('budget').value;
+        const numPeople = document.getElementById('numPeople').value;
 
-    // Fetch flight data
-    const flightData = await fetchFlightData(destination, checkInDate + '_' + checkOutDate, departureLocation, budget, numPeople);
+        console.log("Inputs - Destination:", destination, "CheckInDate:", checkInDate, "CheckOutDate:", checkOutDate, "DepartureLocation:", departureLocation, "Budget:", budget, "NumPeople:", numPeople);
 
-    // Fetch hotel data
-    const hotelData = await fetchHotelData(destination, checkInDate, checkOutDate, budget, numPeople);
+        const flightData = await fetchFlightData(destination, checkInDate + '_' + checkOutDate, departureLocation, budget, numPeople);
+        console.log("Flight Data:", flightData);
 
-    // Prepare data for redirection
-    const welcomeMessage = `Hello, ${user.name}!`;
-    const userEmail = `Your email: ${user.email}`;
-    const flightInfo = `Flights to ${destination}: ${JSON.stringify(flightData)}`;
-    const hotelInfo = `Hotels in ${destination}: ${JSON.stringify(hotelData)}`;
+        const hotelData = await fetchHotelData(destination, checkInDate, checkOutDate, budget, numPeople);
+        console.log("Hotel Data:", hotelData);
 
-    // Redirect to HolidayResults.html with data
-    console.log("Redirecting to HolidayResults.html with data");
-    window.location.href = `HolidayResults.html?welcomeMessage=${encodeURIComponent(welcomeMessage)}&userEmail=${encodeURIComponent(userEmail)}&flightInfo=${encodeURIComponent(flightInfo)}&hotelInfo=${encodeURIComponent(hotelInfo)}`;
+        const welcomeMessage = `Hello, ${user.name}!`;
+        const userEmail = `Your email: ${user.email}`;
+        const flightInfo = `Flights to ${destination}: ${JSON.stringify(flightData)}`;
+        const hotelInfo = `Hotels in ${destination}: ${JSON.stringify(hotelData)}`;
+
+        console.log("Redirecting to HolidayResults.html with data");
+
+        window.location.href = `HolidayResults.html?welcomeMessage=${encodeURIComponent(welcomeMessage)}&userEmail=${encodeURIComponent(userEmail)}&flightInfo=${encodeURIComponent(flightInfo)}&hotelInfo=${encodeURIComponent(hotelInfo)}`;
+    } catch (error) {
+        console.error("Error personalizing content:", error);
+    }
 };
 
 const triggerPersonalization = async (user) => {
