@@ -62,7 +62,9 @@ const handleAuthCallback = async () => {
                 } else {
                     findMyHolidayButton.addEventListener('click', () => {
                         console.log("Find My Holiday button clicked");
-                        triggerPersonalization(user);
+                        if (validateInputs()) {
+                            triggerPersonalization(user);
+                        }
                     });
                 }
 
@@ -81,6 +83,50 @@ const handleAuthCallback = async () => {
     } catch (error) {
         console.error("Error handling authentication callback:", error);
     }
+};
+
+// Validate input fields
+const validateInputs = () => {
+    const checkInDate = document.getElementById('holidayDate').value;
+    const checkOutDate = document.getElementById('returnDate').value;
+    const budget = document.getElementById('budget').value;
+    const numPeople = document.getElementById('numPeople').value;
+
+    const currentDate = new Date();
+    const nextYearDate = new Date();
+    nextYearDate.setFullYear(nextYearDate.getFullYear() + 1);
+
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+
+    let valid = true;
+
+    if (checkIn < currentDate || checkIn > nextYearDate || checkOut < currentDate || checkOut > nextYearDate) {
+        flashRed('holidayDate');
+        flashRed('returnDate');
+        valid = false;
+    }
+
+    if (isNaN(budget) || budget <= 0 || budget > 5000) {
+        flashRed('budget');
+        valid = false;
+    }
+
+    if (isNaN(numPeople) || numPeople <= 0 || numPeople > 5) {
+        flashRed('numPeople');
+        valid = false;
+    }
+
+    return valid;
+};
+
+// Flash red for invalid input fields
+const flashRed = (elementId) => {
+    const element = document.getElementById(elementId);
+    element.style.border = '2px solid red';
+    setTimeout(() => {
+        element.style.border = '';
+    }, 2000);
 };
 
 // Fetch flight data
