@@ -87,7 +87,13 @@ const handleAuthCallback = async () => {
 const fetchFlightData = async (destination, dates, departureLocation, budget, numPeople) => {
     try {
         console.log("Fetching flight data...");
-        const response = await fetch(`https://aviation-edge.com/v2/public/flights?key=87034c-82c494&destination=${destination}&dates=${dates}&departureLocation=${departureLocation}&budget=${budget}`);
+        const response = await fetch(`https://sky-scanner3.p.rapidapi.com/flights/price-calendar-web?fromEntityId=${departureLocation}&toEntityId=${destination}&yearMonth=${dates}`, {
+            method: 'GET',
+            headers: {
+                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
+                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+            }
+        });
         const data = await response.json();
         console.log("Flight data fetched:", data);
         return data;
@@ -100,19 +106,12 @@ const fetchFlightData = async (destination, dates, departureLocation, budget, nu
 const fetchHotelData = async (destination, checkInDate, checkOutDate, budget, numPeople) => {
     try {
         console.log("Fetching hotel data...");
-        const response = await fetch(`https://api.makcorps.com/free`, {
-            method: 'POST',
+        const response = await fetch(`https://hotels-com-free.p.rapidapi.com/suggest/v1.7/json?query=${destination}&locale=en_US`, {
+            method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODcyNjc5NzIsImlhdCI6MTY4NzI2NjE3MiwibmJmIjoxNjg3MjY2MTcyLCJpZGVudGl0eSI6MjExMH0.HqBtNdrOg21LzKY7RmylIQpdaMnD7aA9cT1lG9xFpg'
-            },
-            body: JSON.stringify({
-                destination: destination,
-                checkIn: checkInDate,
-                checkOut: checkOutDate,
-                budget: budget,
-                guests: numPeople
-            })
+                'x-rapidapi-host': 'hotels-com-free.p.rapidapi.com',
+                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+            }
         });
         const data = await response.json();
         console.log("Hotel data fetched:", data);
