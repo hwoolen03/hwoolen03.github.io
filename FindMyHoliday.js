@@ -208,10 +208,11 @@ const generateRecommendations = async (user) => {
         const input = tf.tensor2d([userData.preferences]); // Ensure preferences are converted to array
         console.log("Input for prediction:", input); // Log input values
         const output = model.predict(input);
+        console.log("Model output:", output); // Log model output
         const recommendations = output.dataSync();
         console.log("Recommendations generated:", recommendations);
 
-        if (isNaN(recommendations[0])) {
+        if (isNaN(recommendations[0]) || recommendations.length === 0) {
             throw new Error("Invalid recommendations generated");
         }
 
