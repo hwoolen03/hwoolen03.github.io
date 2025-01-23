@@ -211,9 +211,14 @@ const generateRecommendations = async (user) => {
         const recommendations = output.dataSync();
         console.log("Recommendations generated:", recommendations);
 
+        if (isNaN(recommendations[0])) {
+            throw new Error("Invalid recommendations generated");
+        }
+
         return recommendations;
     } catch (error) {
         console.error("Error generating recommendations:", error);
+        return [NaN]; // Return NaN to indicate error
     }
 };
 
