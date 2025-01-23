@@ -167,7 +167,6 @@ const fetchHotelData = async (destination, checkInDate, checkOutDate, budget, nu
 
 // Preprocess user data for the model
 const preprocessUserData = (user) => {
-    // Example preprocessing
     console.log("Preprocessing user data:", user);
     return {
         name: user.name,
