@@ -199,7 +199,7 @@ const generateRecommendations = async (user) => {
         const userData = preprocessUserData(user);
         console.log("Preprocessed User Data:", userData);
 
-        if (userData.preferences.length === 0) {
+        if (!userData.preferences || userData.preferences.length === 0) {
             throw new Error("User preferences are empty");
         }
 
