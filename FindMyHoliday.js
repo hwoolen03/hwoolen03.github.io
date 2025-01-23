@@ -44,10 +44,8 @@ const handleAuthCallback = async () => {
             if (isAuthenticated) {
                 const user = await auth0Client.getUser();
                 console.log("User:", user);
-                await personalizeContent(user); // Use user data for personalization
 
                 const userName = user.name;
-
                 // Create and display the welcome message
                 const welcomeMessage = `Welcome to the Power of Atlas ${userName}`;
                 const h2Element = document.querySelector('.holiday-text');
@@ -266,7 +264,6 @@ window.onload = async () => {
     await configureClient();
     const user = await auth0Client.getUser();
     console.log("User retrieved:", user);
-    await personalizeContent(user);
 
     const signOutBtn = document.getElementById('signOutBtn');
     if (signOutBtn) {
@@ -277,5 +274,17 @@ window.onload = async () => {
         console.log("Sign-out button event listener added");
     } else {
         console.error("Sign-out button not found");
+    }
+
+    const findMyHolidayButton = document.getElementById('findMyHolidayButton');
+    if (findMyHolidayButton) {
+        findMyHolidayButton.addEventListener('click', async () => {
+            console.log("Find My Holiday button clicked");
+            if (validateInputs()) {
+                await triggerPersonalization(user);
+            }
+        });
+    } else {
+        console.error("Find My Holiday Button not found");
     }
 };
