@@ -227,10 +227,13 @@ const generateRecommendations = async (user) => {
             throw new Error("Invalid recommendations generated");
         }
 
-        return recommendations;
+        // Here you need to ensure the recommendation is a valid destination identifier
+        const destination = Math.round(recommendations[0]); // Example conversion, adjust as necessary
+
+        return destination;
     } catch (error) {
         console.error("Error generating recommendations:", error);
-        return [NaN]; // Return NaN to indicate error
+        return NaN; // Return NaN to indicate error
     }
 };
 
@@ -238,13 +241,12 @@ const generateRecommendations = async (user) => {
 const personalizeContent = async (user) => {
     try {
         console.log("Personalizing content for user:", user);
-        const recommendations = await generateRecommendations(user);
-        if (!recommendations || recommendations.length === 0 || isNaN(recommendations[0])) {
+        const destination = await generateRecommendations(user);
+        if (isNaN(destination)) {
             throw new Error("No valid recommendations generated");
         }
-        console.log("Recommendations:", recommendations);
+        console.log("Destination:", destination);
 
-        const destination = recommendations[0];
         const checkInDate = document.getElementById('holidayDate').value;
         const checkOutDate = document.getElementById('returnDate').value;
         const departureLocation = document.getElementById('departureLocation').value;
@@ -254,9 +256,15 @@ const personalizeContent = async (user) => {
         console.log("Inputs - Destination:", destination, "CheckInDate:", checkInDate, "CheckOutDate:", checkOutDate, "DepartureLocation:", departureLocation, "Budget:", budget, "NumPeople:", numPeople);
 
         const flightData = await fetchFlightData(destination, checkInDate + '_' + checkOutDate, departureLocation, budget, numPeople);
+        if (!flightData || !flightData.status) {
+            throw new Error("Error fetching flight data: " + flightData.message);
+        }
         console.log("Flight Data:", flightData);
 
         const hotelData = await fetchHotelData(destination, checkInDate, checkOutDate, budget, numPeople);
+        if (!hotelData) {
+            throw new Error("Error fetching hotel data");
+        }
         console.log("Hotel Data:", hotelData);
 
         const welcomeMessage = `Hello, ${user.name}!`;
