@@ -222,8 +222,8 @@ const personalizeContent = async (user) => {
     try {
         console.log("Personalizing content for user:", user);
         const recommendations = await generateRecommendations(user);
-        if (!recommendations || recommendations.length === 0) {
-            throw new Error("No recommendations generated");
+        if (!recommendations || recommendations.length === 0 || isNaN(recommendations[0])) {
+            throw new Error("No valid recommendations generated");
         }
         console.log("Recommendations:", recommendations);
 
