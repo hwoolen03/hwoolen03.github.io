@@ -206,6 +206,7 @@ const generateRecommendations = async (user) => {
         console.log("Model:", model);
 
         const input = tf.tensor2d([userData.preferences]); // Ensure preferences are converted to array
+        console.log("Input for prediction:", input); // Log input values
         const output = model.predict(input);
         const recommendations = output.dataSync();
         console.log("Recommendations generated:", recommendations);
