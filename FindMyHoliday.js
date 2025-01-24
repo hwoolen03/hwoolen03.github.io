@@ -317,7 +317,7 @@ const generateRecommendations = async (user) => {
 // Map recommendation score to a valid destination identifier
 const mapRecommendationToDestination = (score) => {
     // This is an example mapping function, adjust as necessary
-    const destinations = ["San Francisco", "New York", "Los Angeles", "Chicago", "Miami"]; // Example destination names
+    const destinations = ["PARI", "CDG", "JFK", "LHR", "SFO"]; // Example destination identifiers
     return destinations[Math.floor(score * destinations.length)];
 };
 
@@ -339,14 +339,10 @@ const personalizeContent = async (user) => {
 
         console.log("Inputs - Destination:", destination, "CheckInDate:", checkInDate, "CheckOutDate:", checkOutDate, "DepartureLocation:", departureLocation, "Budget:", budget, "NumPeople:", numPeople);
 
-        // Fetch both flight and hotel data concurrently
-        const [configData, airportData, roundtripFlights, cheapestOneWay, flightDetails, hotelData] = await Promise.all([
+        // Fetch configuration and airport data concurrently
+        const [configData, airportData] = await Promise.all([
             fetchConfigData(),
-            fetchAirportData(),
-            searchRoundtripFlights(departureLocation, destination),
-            fetchCheapestOneWayFlight(departureLocation, destination),
-            fetchFlightDetails("someFlightId"), // Replace with actual flight ID
-            fetchHotelData(destination)
+            fetchAirportData()
         ]);
 
         if (!configData) {
@@ -358,6 +354,13 @@ const personalizeContent = async (user) => {
             throw new Error("Error fetching airport data");
         }
         console.log("Airport Data:", airportData);
+
+        // Fetch roundtrip, cheapest one-way flight, and flight details concurrently
+        const [roundtripFlights, cheapestOneWay, flightDetails] = await Promise.all([
+            searchRoundtripFlights(departureLocation, destination),
+            fetchCheapestOneWayFlight(departureLocation, destination),
+            fetchFlightDetails("someFlightId") // Replace with actual flight ID
+        ]);
 
         if (!roundtripFlights) {
             throw new Error("Error searching for roundtrip flights");
@@ -374,6 +377,8 @@ const personalizeContent = async (user) => {
         }
         console.log("Flight Details:", flightDetails);
 
+        // Fetch hotel data
+        const hotelData = await fetchHotelData(destination);
         if (!hotelData) {
             throw new Error("Error fetching hotel data");
         }
