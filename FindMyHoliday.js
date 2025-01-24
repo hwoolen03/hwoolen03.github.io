@@ -449,4 +449,18 @@ window.onload = async () => {
         });
         console.log("Sign-out button event listener added");
     } else {
-        console
+        console.error("Sign-out button not found");
+    }
+
+    const findMyHolidayButton = document.getElementById('findMyHolidayButton');
+    if (findMyHolidayButton) {
+        findMyHolidayButton.addEventListener('click', async () => {
+            console.log("Find My Holiday button clicked");
+            if (validateInputs()) {
+                await triggerPersonalization(user);
+            }
+        });
+    } else {
+        console.error("Find My Holiday Button not found");
+    }
+};
