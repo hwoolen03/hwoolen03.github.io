@@ -208,15 +208,21 @@ const retryFetch = async (url, options, retries = 3, delay = 1000) => {
 
 // Search for roundtrip flights
 const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
-    const url = `https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip?fromEntityId=${fromEntityId}&toEntityId=${toEntityId}`;
+    const url = `https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip`;
+    const params = {
+        fromEntityId: fromEntityId,
+        toEntityId: toEntityId
+    };
     try {
         console.log(`Fetching roundtrip flights from ${fromEntityId} to ${toEntityId}...`);
         const data = await retryFetch(url, {
-            method: 'GET',
+            method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
-            }
+            },
+            body: JSON.stringify(params)
         });
         console.log("Roundtrip flight data fetched:", data);
         return data;
@@ -228,15 +234,21 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
 
 // Fetch cheapest one-way flight
 const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
-    const url = `https://sky-scanner3.p.rapidapi.com/flights/cheapest-one-way?fromEntityId=${fromEntityId}&toEntityId=${toEntityId}`;
+    const url = `https://sky-scanner3.p.rapidapi.com/flights/cheapest-one-way`;
+    const params = {
+        fromEntityId: fromEntityId,
+        toEntityId: toEntityId
+    };
     try {
         console.log(`Fetching cheapest one-way flight from ${fromEntityId} to ${toEntityId}...`);
         const data = await retryFetch(url, {
-            method: 'GET',
+            method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
-            }
+            },
+            body: JSON.stringify(params)
         });
         console.log("Cheapest one-way flight data fetched:", data);
         return data;
@@ -248,15 +260,20 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
 
 // Fetch flight details
 const fetchFlightDetails = async (flightId) => {
-    const url = `https://sky-scanner3.p.rapidapi.com/flights/detail?flightId=${flightId}`;
+    const url = `https://sky-scanner3.p.rapidapi.com/flights/detail`;
+    const params = {
+        flightId: flightId
+    };
     try {
         console.log(`Fetching flight details for ${flightId}...`);
         const data = await retryFetch(url, {
-            method: 'GET',
+            method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
-            }
+            },
+            body: JSON.stringify(params)
         });
         console.log("Flight details fetched:", data);
         return data;
@@ -432,18 +449,4 @@ window.onload = async () => {
         });
         console.log("Sign-out button event listener added");
     } else {
-        console.error("Sign-out button not found");
-    }
-
-    const findMyHolidayButton = document.getElementById('findMyHolidayButton');
-    if (findMyHolidayButton) {
-        findMyHolidayButton.addEventListener('click', async () => {
-            console.log("Find My Holiday button clicked");
-            if (validateInputs()) {
-                await triggerPersonalization(user);
-            }
-        });
-    } else {
-        console.error("Find My Holiday Button not found");
-    }
-};
+        console
