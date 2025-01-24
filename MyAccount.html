@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Account</title>
-    <link rel="stylesheet" href="styles.css"> <!-- Link to the common CSS file -->
     <link rel="stylesheet" href="myAccount.css"> <!-- Link to the specific CSS for My Account -->
     <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js"></script>
     <script src="MyAccount.js" defer></script> <!-- Link to the new JavaScript file -->
@@ -14,20 +13,34 @@
     <source src="BackGroundz.mp4" type="video/mp4">
     Your browser does not support HTML5 video.
 </video>
-<div class="account-container">
-    <h1>My Account</h1>
-    <div class="account-info">
-        <div class="profile-section">
-            <img id="profile-pic" src="default-profile-pic.jpg" alt="Profile Picture" class="profile-pic">
-            <h2 id="username">Username</h2>
-            <p id="email">Email</p>
-        </div>
-        <div class="account-actions">
-            <button class="form-button">Edit Profile</button>
-            <button class="form-button">Change Password</button>
-            <button class="form-button">Logout</button>
+<header>
+    <div class="logo-heading">
+        <img src="AtlasTravel.jpg" alt="Atlas Travel Logo" class="logo">
+        <h1>Atlas Travel</h1>
+    </div>
+    <div class="auth-buttons">
+        <button id="homeBtn" class="form-button" onclick="window.location.href='indexsignedin.html'">Home</button>
+        <button id="myAccountBtn" class="form-button" onclick="window.location.href='MyAccount.html'">My Account</button>
+        <button id="signOutBtn" class="form-button">Sign Out</button>
+    </div>
+</header>
+
+<main>
+    <div class="account-container">
+        <h1>My Account</h1>
+        <div class="account-info">
+            <div class="profile-section">
+                <img id="profile-pic" src="default-profile-pic.jpg" alt="Profile Picture" class="profile-pic">
+                <h2 id="username">Username</h2>
+                <p id="email">Email</p>
+            </div>
+            <div class="account-actions">
+                <button class="form-button">Edit Profile</button>
+                <button class="form-button">Change Password</button>
+                <button class="form-button">Logout</button>
+            </div>
         </div>
     </div>
-</div>
+</main>
 </body>
 </html>
