@@ -6,6 +6,8 @@
     <title>My Account</title>
     <link rel="stylesheet" href="styles.css"> <!-- Link to the common CSS file -->
     <link rel="stylesheet" href="myAccount.css"> <!-- Link to the specific CSS for My Account -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js"></script>
+    <script src="MyAccount.js" defer></script> <!-- Link to the new JavaScript file -->
 </head>
 <body>
 <video autoplay muted loop id="background-video">
@@ -16,14 +18,14 @@
     <h1>My Account</h1>
     <div class="account-info">
         <div class="profile-section">
-            <img src="profile-pic.jpg" alt="Profile Picture" class="profile-pic">
-            <h2>John Doe</h2>
-            <p>Email: john.doe@example.com</p>
+            <img id="profile-pic" src="default-profile-pic.jpg" alt="Profile Picture" class="profile-pic">
+            <h2 id="username">Username</h2>
+            <p id="email">Email</p>
         </div>
         <div class="account-actions">
-            <button class="action-button">Edit Profile</button>
-            <button class="action-button">Change Password</button>
-            <button class="action-button">Logout</button>
+            <button class="form-button">Edit Profile</button>
+            <button class="form-button">Change Password</button>
+            <button class="form-button">Logout</button>
         </div>
     </div>
 </div>
