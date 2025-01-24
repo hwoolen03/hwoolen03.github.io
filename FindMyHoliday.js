@@ -235,12 +235,16 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
     const url = `https://sky-scanner3.p.rapidapi.com/api/v1/cheapest-one-way`;
     const params = {
         fromEntityId: fromEntityId,
-        toEntityId: toEntityId
+        toEntityId: toEntityId,
+        departDate: '2024-06-15',
+        market: 'US',
+        currency: 'USD',
+        locale: 'en-US'
     };
     try {
         console.log(`Fetching cheapest one-way flight from ${fromEntityId} to ${toEntityId}...`);
         const data = await retryFetch(url, {
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
@@ -323,14 +327,14 @@ const preprocessUserData = (user) => {
 const trainModel = async (data) => {
     const inputShape = [data[0].preferences.length];
     const model = tf.sequential();
-    model.add(tf.layers.dense({units: 10, activation: 'relu', inputShape: inputShape}));
-    model.add(tf.layers.dense({units: 1, activation: 'sigmoid'}));
-    model.compile({loss: 'binaryCrossentropy', optimizer: 'adam'});
+    model.add(tf.layers.dense({ units: 10, activation: 'relu', inputShape: inputShape }));
+    model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
+    model.compile({ loss: 'binaryCrossentropy', optimizer: 'adam' });
 
     const xs = tf.tensor2d(data.map(d => d.preferences));
     const ys = tf.tensor2d(data.map(d => d.label || 1), [data.length, 1]);
 
-    await model.fit(xs, ys, {epochs: 10});
+    await model.fit(xs, ys, { epochs: 10 });
     return model;
 };
 
