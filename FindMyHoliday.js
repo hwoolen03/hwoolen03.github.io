@@ -21,7 +21,6 @@ const signOut = async () => {
     try {
         if (auth0Client) {
             console.log("Attempting to sign out user...");
-            console.log("auth0Client:", auth0Client);
             await auth0Client.logout({
                 returnTo: window.location.origin
             });
@@ -46,7 +45,6 @@ const handleAuthCallback = async () => {
                 console.log("User:", user);
 
                 const userName = user.name;
-                // Create and display the welcome message
                 const welcomeMessage = `Welcome to the Power of Atlas ${userName}`;
                 const h2Element = document.querySelector('.holiday-text');
                 if (h2Element) {
@@ -54,7 +52,6 @@ const handleAuthCallback = async () => {
                 }
 
                 const findMyHolidayButton = document.getElementById('findMyHolidayButton');
-                console.log("Find My Holiday Button:", findMyHolidayButton);
                 if (!findMyHolidayButton) {
                     console.error("Find My Holiday Button not found");
                 } else {
@@ -118,7 +115,6 @@ const validateInputs = () => {
     return valid;
 };
 
-// Flash red for invalid input fields
 const flashRed = (elementId) => {
     const element = document.getElementById(elementId);
     element.style.border = '2px solid red';
@@ -130,7 +126,6 @@ const flashRed = (elementId) => {
 // Fetch configuration data
 const fetchConfigData = async () => {
     try {
-        console.log("Fetching configuration data...");
         const response = await fetch("https://sky-scanner3.p.rapidapi.com/get-config", {
             method: 'GET',
             headers: {
@@ -142,7 +137,6 @@ const fetchConfigData = async () => {
             throw new Error(`API request failed with status ${response.status}`);
         }
         const data = await response.json();
-        console.log("Configuration data fetched:", data);
         return data;
     } catch (error) {
         console.error("Error fetching configuration data:", error);
@@ -153,7 +147,6 @@ const fetchConfigData = async () => {
 // Fetch airport data
 const fetchAirportData = async () => {
     try {
-        console.log("Fetching airport data...");
         const response = await fetch("https://sky-scanner3.p.rapidapi.com/flights/airports", {
             method: 'GET',
             headers: {
@@ -165,7 +158,6 @@ const fetchAirportData = async () => {
             throw new Error(`API request failed with status ${response.status}`);
         }
         const data = await response.json();
-        console.log("Airport data fetched:", data);
         return data;
     } catch (error) {
         console.error("Error fetching airport data:", error);
@@ -173,10 +165,32 @@ const fetchAirportData = async () => {
     }
 };
 
+// Fetch Sky IDs
+const fetchSkyIds = async () => {
+    try {
+        console.log("Fetching Sky IDs...");
+        const response = await fetch("https://sky-scanner3.p.rapidapi.com/flights/skyId-list", {
+            method: 'GET',
+            headers: {
+                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
+                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Sky IDs fetched:", data);
+        return data;
+    } catch (error) {
+        console.error("Error fetching Sky IDs:", error);
+        return null;
+    }
+};
+
 // Search for roundtrip flights
 const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
     try {
-        console.log("Searching for roundtrip flights...");
         const response = await fetch(`https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip?fromEntityId=${fromEntityId}&toEntityId=${toEntityId}`, {
             method: 'GET',
             headers: {
@@ -188,7 +202,6 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
             throw new Error(`API request failed with status ${response.status}`);
         }
         const data = await response.json();
-        console.log("Roundtrip flight data fetched:", data);
         return data;
     } catch (error) {
         console.error("Error searching for roundtrip flights:", error);
@@ -199,7 +212,6 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
 // Fetch cheapest one-way flight
 const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
     try {
-        console.log("Fetching cheapest one-way flight...");
         const response = await fetch(`https://sky-scanner3.p.rapidapi.com/flights/cheapest-one-way?fromEntityId=${fromEntityId}&toEntityId=${toEntityId}`, {
             method: 'GET',
             headers: {
@@ -211,7 +223,6 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
             throw new Error(`API request failed with status ${response.status}`);
         }
         const data = await response.json();
-        console.log("Cheapest one-way flight data fetched:", data);
         return data;
     } catch (error) {
         console.error("Error fetching cheapest one-way flight:", error);
@@ -222,7 +233,6 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
 // Fetch flight details
 const fetchFlightDetails = async (flightId) => {
     try {
-        console.log("Fetching flight details...");
         const response = await fetch(`https://sky-scanner3.p.rapidapi.com/flights/detail?flightId=${flightId}`, {
             method: 'GET',
             headers: {
@@ -234,7 +244,6 @@ const fetchFlightDetails = async (flightId) => {
             throw new Error(`API request failed with status ${response.status}`);
         }
         const data = await response.json();
-        console.log("Flight details fetched:", data);
         return data;
     } catch (error) {
         console.error("Error fetching flight details:", error);
@@ -244,9 +253,7 @@ const fetchFlightDetails = async (flightId) => {
 
 // Preprocess user data for the model
 const preprocessUserData = (user) => {
-    console.log("Preprocessing user data:", user);
     const preferences = user.preferences ? Object.values(user.preferences) : [0];
-    // Check if preferences contain valid numbers
     const validPreferences = preferences.every(pref => typeof pref === 'number' && !isNaN(pref));
     if (!validPreferences) {
         throw new Error("User preferences contain invalid values");
@@ -260,64 +267,51 @@ const preprocessUserData = (user) => {
 
 // Train a simple model (for demonstration purposes)
 const trainModel = async (data) => {
-    console.log("Training model...");
     const inputShape = [data[0].preferences.length];
-    console.log("Input Shape:", inputShape);
-
     const model = tf.sequential();
     model.add(tf.layers.dense({units: 10, activation: 'relu', inputShape: inputShape}));
     model.add(tf.layers.dense({units: 1, activation: 'sigmoid'}));
     model.compile({loss: 'binaryCrossentropy', optimizer: 'adam'});
 
     const xs = tf.tensor2d(data.map(d => d.preferences));
-    const ys = tf.tensor2d(data.map(d => d.label || 1), [data.length, 1]); // Assuming a default label value of 1
+    const ys = tf.tensor2d(data.map(d => d.label || 1), [data.length, 1]);
 
     await model.fit(xs, ys, {epochs: 10});
-    console.log("Model trained");
     return model;
 };
 
 // Generate recommendations
 const generateRecommendations = async (user) => {
     try {
-        console.log("Generating recommendations for user:", user);
         const userData = preprocessUserData(user);
-        console.log("Preprocessed User Data:", userData);
-
         if (!userData.preferences || userData.preferences.length === 0) {
             throw new Error("User preferences are empty or invalid");
         }
 
         const model = await trainModel([userData]);
-        console.log("Model:", model);
-
         const input = tf.tensor2d([userData.preferences]);
-        console.log("Input for prediction:", input); // Log input values
         const output = model.predict(input);
-        console.log("Model output:", output); // Log model output
         const recommendations = output.dataSync();
-        console.log("Recommendations generated:", recommendations);
 
-        // Validate the recommendations
         if (!recommendations || recommendations.length === 0 || isNaN(recommendations[0])) {
-            console.error("Invalid recommendations generated:", recommendations);
             throw new Error("Invalid recommendations generated");
         }
 
-        // Here you need to ensure the recommendation is a valid destination identifier
-        const destination = mapRecommendationToDestination(recommendations[0]); // Example conversion, adjust as necessary
+        const destination = mapRecommendationToDestination(recommendations[0]);
+        if (!destination) {
+            throw new Error("Invalid destination mapping");
+        }
 
         return destination;
     } catch (error) {
         console.error("Error generating recommendations:", error);
-        return NaN; // Return NaN to indicate error
+        throw error;
     }
 };
 
 // Map recommendation score to a valid destination identifier
 const mapRecommendationToDestination = (score) => {
-    // This is an example mapping function, adjust as necessary
-    const destinations = ["PARI", "CDG", "JFK", "LHR", "SFO"]; // Example destination identifiers
+    const destinations = ["PARI", "CDG", "JFK", "LHR", "SFO"];
     return destinations[Math.floor(score * destinations.length)];
 };
 
@@ -326,10 +320,10 @@ const personalizeContent = async (user) => {
     try {
         console.log("Personalizing content for user:", user);
         const destination = await generateRecommendations(user);
-        if (isNaN(destination)) {
+        if (!destination) {
             throw new Error("No valid recommendations generated");
         }
-        console.log("Destination:", destination);
+        console.log("Mapped Destination:", destination);
 
         const checkInDate = document.getElementById('holidayDate').value;
         const checkOutDate = document.getElementById('returnDate').value;
@@ -339,23 +333,14 @@ const personalizeContent = async (user) => {
 
         console.log("Inputs - Destination:", destination, "CheckInDate:", checkInDate, "CheckOutDate:", checkOutDate, "DepartureLocation:", departureLocation, "Budget:", budget, "NumPeople:", numPeople);
 
-        // Fetch configuration and airport data concurrently
-        const [configData, airportData] = await Promise.all([
-            fetchConfigData(),
-            fetchAirportData()
-        ]);
-
+        const [configData, airportData] = await Promise.all([fetchConfigData(), fetchAirportData()]);
         if (!configData) {
             throw new Error("Error fetching configuration data");
         }
-        console.log("Configuration Data:", configData);
-
         if (!airportData) {
             throw new Error("Error fetching airport data");
         }
-        console.log("Airport Data:", airportData);
 
-        // Fetch roundtrip, cheapest one-way flight, and flight details concurrently
         const [roundtripFlights, cheapestOneWay, flightDetails] = await Promise.all([
             searchRoundtripFlights(departureLocation, destination),
             fetchCheapestOneWayFlight(departureLocation, destination),
@@ -365,24 +350,17 @@ const personalizeContent = async (user) => {
         if (!roundtripFlights) {
             throw new Error("Error searching for roundtrip flights");
         }
-        console.log("Roundtrip Flights:", roundtripFlights);
-
         if (!cheapestOneWay) {
             throw new Error("Error fetching cheapest one-way flight");
         }
-        console.log("Cheapest One-Way Flight:", cheapestOneWay);
-
         if (!flightDetails) {
             throw new Error("Error fetching flight details");
         }
-        console.log("Flight Details:", flightDetails);
 
-        // Fetch hotel data
         const hotelData = await fetchHotelData(destination);
         if (!hotelData) {
             throw new Error("Error fetching hotel data");
         }
-        console.log("Hotel Data:", hotelData);
 
         const welcomeMessage = `Hello, ${user.name}!`;
         const userEmail = `Your email: ${user.email}`;
