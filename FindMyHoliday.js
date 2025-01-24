@@ -190,8 +190,10 @@ const fetchSkyIds = async () => {
 
 // Search for roundtrip flights
 const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
+    const url = `https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip?fromEntityId=${fromEntityId}&toEntityId=${toEntityId}`;
     try {
-        const response = await fetch(`https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip?fromEntityId=${fromEntityId}&toEntityId=${toEntityId}`, {
+        console.log(`Fetching roundtrip flights from ${fromEntityId} to ${toEntityId}...`);
+        const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
@@ -202,6 +204,7 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
             throw new Error(`API request failed with status ${response.status}`);
         }
         const data = await response.json();
+        console.log("Roundtrip flight data fetched:", data);
         return data;
     } catch (error) {
         console.error("Error searching for roundtrip flights:", error);
