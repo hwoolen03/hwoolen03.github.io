@@ -223,7 +223,15 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
             body: JSON.stringify(params)
         });
         console.log("Roundtrip flight data fetched:", data);
-        return data;
+        // Assuming the response has a structure like { flights: [{ id: 'flight1', ... }, ...] }
+        if (data.flights && data.flights.length > 0) {
+            const flightId = data.flights[0].id; // Extract the first flight's ID
+            console.log("First flight ID:", flightId);
+            return flightId;
+        } else {
+            console.error("No flights found");
+            return null;
+        }
     } catch (error) {
         console.error("Error searching for roundtrip flights:", error);
         return null;
@@ -249,8 +257,7 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
                 'Content-Type': 'application/json',
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
-            },
-            body: JSON.stringify(params)
+            }
         });
         console.log("Cheapest one-way flight data fetched:", data);
         return data;
@@ -262,21 +269,20 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
 
 // Fetch flight details
 const fetchFlightDetails = async (flightId) => {
-    const url = `https://sky-scanner3.p.rapidapi.com/api/v1/flight-details`;
-    const params = {
-        flightId: flightId
-    };
+    const url = `https://sky-scanner3.p.rapidapi.com/flights/detail?flightId=${flightId}`;
     try {
         console.log(`Fetching flight details for ${flightId}...`);
-        const data = await retryFetch(url, {
-            method: 'POST',
+        const response = await fetch(url, {
+            method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
-            },
-            body: JSON.stringify(params)
+            }
         });
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+        const data = await response.json();
         console.log("Flight details fetched:", data);
         return data;
     } catch (error) {
@@ -386,10 +392,8 @@ const personalizeContent = async (user) => {
         const checkInDate = document.getElementById('holidayDate').value;
         const checkOutDate = document.getElementById('returnDate').value;
         const departureLocation = document.getElementById('departureLocation').value;
-        const budget = document.getElementById('budget').value;
-        const numPeople = document.getElementById('numPeople').value;
 
-        console.log("Inputs - Destination:", destination, "CheckInDate:", checkInDate, "CheckOutDate:", checkOutDate, "DepartureLocation:", departureLocation, "Budget:", budget, "NumPeople:", numPeople);
+        console.log("Inputs - Destination:", destination, "CheckInDate:", checkInDate, "CheckOutDate:", checkOutDate, "DepartureLocation:", departureLocation);
 
         const [configData, airportData] = await Promise.all([fetchConfigData(), fetchAirportData()]);
         if (!configData) {
@@ -401,8 +405,7 @@ const personalizeContent = async (user) => {
 
         const [roundtripFlights, cheapestOneWay, flightDetails] = await Promise.all([
             searchRoundtripFlights(departureLocation, destination),
-            fetchCheapestOneWayFlight(departureLocation, destination),
-            fetchFlightDetails("someFlightId") // Replace with actual flight ID
+            fetchCheapestOneWayFlight(departureLocation, destination)
         ]);
 
         if (!roundtripFlights) {
@@ -411,9 +414,9 @@ const personalizeContent = async (user) => {
         if (!cheapestOneWay) {
             throw new Error("Error fetching cheapest one-way flight");
         }
-        if (!flightDetails) {
-            throw new Error("Error fetching flight details");
-        }
+
+        const flightId = roundtripFlights; // Assuming the flight ID is returned
+        const flightDetailsData = await fetchFlightDetails(flightId);
 
         const hotelData = await fetchHotelData(destination);
         if (!hotelData) {
