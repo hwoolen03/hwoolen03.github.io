@@ -127,42 +127,117 @@ const flashRed = (elementId) => {
     }, 2000);
 };
 
-// Fetch flight data
-const fetchFlightData = async (destination, dates, departureLocation, budget, numPeople) => {
+// Fetch configuration data
+const fetchConfigData = async () => {
     try {
-        console.log("Fetching flight data...");
-        const response = await fetch(`https://sky-scanner3.p.rapidapi.com/flights/price-calendar-web?fromEntityId=${departureLocation}&toEntityId=${destination}&yearMonth=${dates}`, {
+        console.log("Fetching configuration data...");
+        const response = await fetch("https://sky-scanner3.p.rapidapi.com/get-config", {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
             }
         });
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
         const data = await response.json();
-        console.log("Flight data fetched:", data);
+        console.log("Configuration data fetched:", data);
         return data;
     } catch (error) {
-        console.error("Error fetching flight data:", error);
+        console.error("Error fetching configuration data:", error);
         return null;
     }
 };
 
-// Fetch hotel data
-const fetchHotelData = async (destination, checkInDate, checkOutDate, budget, numPeople) => {
+// Fetch airport data
+const fetchAirportData = async () => {
     try {
-        console.log("Fetching hotel data...");
-        const response = await fetch(`https://hotels-com-free.p.rapidapi.com/suggest/v1.7/json?query=${destination}&locale=en_US`, {
+        console.log("Fetching airport data...");
+        const response = await fetch("https://sky-scanner3.p.rapidapi.com/flights/airports", {
             method: 'GET',
             headers: {
-                'x-rapidapi-host': 'hotels-com-free.p.rapidapi.com',
+                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
             }
         });
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
         const data = await response.json();
-        console.log("Hotel data fetched:", data);
+        console.log("Airport data fetched:", data);
         return data;
     } catch (error) {
-        console.error("Error fetching hotel data:", error);
+        console.error("Error fetching airport data:", error);
+        return null;
+    }
+};
+
+// Search for roundtrip flights
+const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
+    try {
+        console.log("Searching for roundtrip flights...");
+        const response = await fetch(`https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip?fromEntityId=${fromEntityId}&toEntityId=${toEntityId}`, {
+            method: 'GET',
+            headers: {
+                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
+                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Roundtrip flight data fetched:", data);
+        return data;
+    } catch (error) {
+        console.error("Error searching for roundtrip flights:", error);
+        return null;
+    }
+};
+
+// Fetch cheapest one-way flight
+const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
+    try {
+        console.log("Fetching cheapest one-way flight...");
+        const response = await fetch(`https://sky-scanner3.p.rapidapi.com/flights/cheapest-one-way?fromEntityId=${fromEntityId}&toEntityId=${toEntityId}`, {
+            method: 'GET',
+            headers: {
+                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
+                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Cheapest one-way flight data fetched:", data);
+        return data;
+    } catch (error) {
+        console.error("Error fetching cheapest one-way flight:", error);
+        return null;
+    }
+};
+
+// Fetch flight details
+const fetchFlightDetails = async (flightId) => {
+    try {
+        console.log("Fetching flight details...");
+        const response = await fetch(`https://sky-scanner3.p.rapidapi.com/flights/detail?flightId=${flightId}`, {
+            method: 'GET',
+            headers: {
+                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
+                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Flight details fetched:", data);
+        return data;
+    } catch (error) {
+        console.error("Error fetching flight details:", error);
         return null;
     }
 };
@@ -230,13 +305,20 @@ const generateRecommendations = async (user) => {
         }
 
         // Here you need to ensure the recommendation is a valid destination identifier
-        const destination = Math.round(recommendations[0]); // Example conversion, adjust as necessary
+        const destination = mapRecommendationToDestination(recommendations[0]); // Example conversion, adjust as necessary
 
         return destination;
     } catch (error) {
         console.error("Error generating recommendations:", error);
         return NaN; // Return NaN to indicate error
     }
+};
+
+// Map recommendation score to a valid destination identifier
+const mapRecommendationToDestination = (score) => {
+    // This is an example mapping function, adjust as necessary
+    const destinations = ["San Francisco", "New York", "Los Angeles", "Chicago", "Miami"]; // Example destination names
+    return destinations[Math.floor(score * destinations.length)];
 };
 
 // Personalize content based on user data
@@ -257,13 +339,41 @@ const personalizeContent = async (user) => {
 
         console.log("Inputs - Destination:", destination, "CheckInDate:", checkInDate, "CheckOutDate:", checkOutDate, "DepartureLocation:", departureLocation, "Budget:", budget, "NumPeople:", numPeople);
 
-        const flightData = await fetchFlightData(destination, checkInDate + '_' + checkOutDate, departureLocation, budget, numPeople);
-        if (!flightData || !flightData.status) {
-            throw new Error("Error fetching flight data: " + (flightData ? flightData.message : "Unknown error"));
-        }
-        console.log("Flight Data:", flightData);
+        // Fetch both flight and hotel data concurrently
+        const [configData, airportData, roundtripFlights, cheapestOneWay, flightDetails, hotelData] = await Promise.all([
+            fetchConfigData(),
+            fetchAirportData(),
+            searchRoundtripFlights(departureLocation, destination),
+            fetchCheapestOneWayFlight(departureLocation, destination),
+            fetchFlightDetails("someFlightId"), // Replace with actual flight ID
+            fetchHotelData(destination)
+        ]);
 
-        const hotelData = await fetchHotelData(destination, checkInDate, checkOutDate, budget, numPeople);
+        if (!configData) {
+            throw new Error("Error fetching configuration data");
+        }
+        console.log("Configuration Data:", configData);
+
+        if (!airportData) {
+            throw new Error("Error fetching airport data");
+        }
+        console.log("Airport Data:", airportData);
+
+        if (!roundtripFlights) {
+            throw new Error("Error searching for roundtrip flights");
+        }
+        console.log("Roundtrip Flights:", roundtripFlights);
+
+        if (!cheapestOneWay) {
+            throw new Error("Error fetching cheapest one-way flight");
+        }
+        console.log("Cheapest One-Way Flight:", cheapestOneWay);
+
+        if (!flightDetails) {
+            throw new Error("Error fetching flight details");
+        }
+        console.log("Flight Details:", flightDetails);
+
         if (!hotelData) {
             throw new Error("Error fetching hotel data");
         }
@@ -271,7 +381,7 @@ const personalizeContent = async (user) => {
 
         const welcomeMessage = `Hello, ${user.name}!`;
         const userEmail = `Your email: ${user.email}`;
-        const flightInfo = `Flights to ${destination}: ${JSON.stringify(flightData)}`;
+        const flightInfo = `Flights to ${destination}: ${JSON.stringify(roundtripFlights)}`;
         const hotelInfo = `Hotels in ${destination}: ${JSON.stringify(hotelData)}`;
 
         console.log("Redirecting to HolidayResults.html with data");
