@@ -1,5 +1,3 @@
-// import * as tf from '@tensorflow/tfjs'; // Removed this line
-
 let auth0Client = null;
 
 // Configure the Auth0 client
@@ -208,7 +206,7 @@ const retryFetch = async (url, options, retries = 3, delay = 1000) => {
 
 // Search for roundtrip flights
 const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
-    const url = `https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip`;
+    const url = `https://sky-scanner3.p.rapidapi.com/api/v1/search-roundtrip`;
     const params = {
         fromEntityId: fromEntityId,
         toEntityId: toEntityId
@@ -234,7 +232,7 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
 
 // Fetch cheapest one-way flight
 const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
-    const url = `https://sky-scanner3.p.rapidapi.com/flights/cheapest-one-way`;
+    const url = `https://sky-scanner3.p.rapidapi.com/api/v1/cheapest-one-way`;
     const params = {
         fromEntityId: fromEntityId,
         toEntityId: toEntityId
@@ -260,7 +258,7 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
 
 // Fetch flight details
 const fetchFlightDetails = async (flightId) => {
-    const url = `https://sky-scanner3.p.rapidapi.com/flights/detail`;
+    const url = `https://sky-scanner3.p.rapidapi.com/api/v1/flight-details`;
     const params = {
         flightId: flightId
     };
