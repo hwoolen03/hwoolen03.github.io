@@ -188,22 +188,36 @@ const fetchSkyIds = async () => {
     }
 };
 
+// Utility to retry fetch requests
+const retryFetch = async (url, options, retries = 3, delay = 1000) => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await fetch(url, options);
+            if (response.ok) {
+                return response.json();
+            } else {
+                console.error(`Attempt ${i + 1} failed: ${response.statusText}`);
+            }
+        } catch (error) {
+            console.error(`Attempt ${i + 1} error: ${error.message}`);
+        }
+        await new Promise(res => setTimeout(res, delay));
+    }
+    throw new Error(`Failed to fetch after ${retries} attempts`);
+};
+
 // Search for roundtrip flights
 const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
     const url = `https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip?fromEntityId=${fromEntityId}&toEntityId=${toEntityId}`;
     try {
         console.log(`Fetching roundtrip flights from ${fromEntityId} to ${toEntityId}...`);
-        const response = await fetch(url, {
+        const data = await retryFetch(url, {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
             }
         });
-        if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
-        }
-        const data = await response.json();
         console.log("Roundtrip flight data fetched:", data);
         return data;
     } catch (error) {
@@ -214,18 +228,17 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
 
 // Fetch cheapest one-way flight
 const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
+    const url = `https://sky-scanner3.p.rapidapi.com/flights/cheapest-one-way?fromEntityId=${fromEntityId}&toEntityId=${toEntityId}`;
     try {
-        const response = await fetch(`https://sky-scanner3.p.rapidapi.com/flights/cheapest-one-way?fromEntityId=${fromEntityId}&toEntityId=${toEntityId}`, {
+        console.log(`Fetching cheapest one-way flight from ${fromEntityId} to ${toEntityId}...`);
+        const data = await retryFetch(url, {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
             }
         });
-        if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
-        }
-        const data = await response.json();
+        console.log("Cheapest one-way flight data fetched:", data);
         return data;
     } catch (error) {
         console.error("Error fetching cheapest one-way flight:", error);
@@ -235,18 +248,17 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
 
 // Fetch flight details
 const fetchFlightDetails = async (flightId) => {
+    const url = `https://sky-scanner3.p.rapidapi.com/flights/detail?flightId=${flightId}`;
     try {
-        const response = await fetch(`https://sky-scanner3.p.rapidapi.com/flights/detail?flightId=${flightId}`, {
+        console.log(`Fetching flight details for ${flightId}...`);
+        const data = await retryFetch(url, {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
             }
         });
-        if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
-        }
-        const data = await response.json();
+        console.log("Flight details fetched:", data);
         return data;
     } catch (error) {
         console.error("Error fetching flight details:", error);
