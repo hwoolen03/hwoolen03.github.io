@@ -254,6 +254,30 @@ const fetchFlightDetails = async (flightId) => {
     }
 };
 
+// Fetch hotel data
+const fetchHotelData = async (destination) => {
+    try {
+        console.log(`Fetching hotel data for destination ${destination}...`);
+        // Replace with actual API endpoint and parameters
+        const response = await fetch(`https://hotels-com-provider.p.rapidapi.com/v2/regions?query=${destination}&domain=AR&locale=es_AR`, {
+            method: 'GET',
+            headers: {
+                'x-rapidapi-host': 'hotels-com-provider.p.rapidapi.com',
+                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Hotel data fetched:", data);
+        return data;
+    } catch (error) {
+        console.error("Error fetching hotel data:", error);
+        return null;
+    }
+};
+
 // Preprocess user data for the model
 const preprocessUserData = (user) => {
     const preferences = user.preferences ? Object.values(user.preferences) : [0];
