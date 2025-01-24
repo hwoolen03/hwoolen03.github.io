@@ -143,6 +143,7 @@ const fetchFlightData = async (destination, dates, departureLocation, budget, nu
         return data;
     } catch (error) {
         console.error("Error fetching flight data:", error);
+        return null;
     }
 };
 
@@ -162,6 +163,7 @@ const fetchHotelData = async (destination, checkInDate, checkOutDate, budget, nu
         return data;
     } catch (error) {
         console.error("Error fetching hotel data:", error);
+        return null;
     }
 };
 
@@ -257,7 +259,7 @@ const personalizeContent = async (user) => {
 
         const flightData = await fetchFlightData(destination, checkInDate + '_' + checkOutDate, departureLocation, budget, numPeople);
         if (!flightData || !flightData.status) {
-            throw new Error("Error fetching flight data: " + flightData.message);
+            throw new Error("Error fetching flight data: " + (flightData ? flightData.message : "Unknown error"));
         }
         console.log("Flight Data:", flightData);
 
