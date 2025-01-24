@@ -1,11 +1,25 @@
+/* Ensure the background video covers the entire screen without zooming in */
+#background-video {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    z-index: -1;
+}
+
 body {
     font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: white;
+    text-align: center;
 }
 
 .account-container {
     max-width: 800px;
     margin: 50px auto;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.7);
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -39,7 +53,7 @@ h1 {
     align-items: center;
 }
 
-.action-button {
+.form-button {
     background-color: #007BFF;
     color: white;
     border: none;
@@ -50,6 +64,6 @@ h1 {
     transition: background-color 0.3s;
 }
 
-.action-button:hover {
+.form-button:hover {
     background-color: #0056b3;
 }
