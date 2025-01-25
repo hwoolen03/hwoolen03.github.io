@@ -1,93 +1,5 @@
-/* General Reset */
-body {
-    margin: 0;
-    padding: 0;
-    font-family: sans-serif;
-}
-
-
-/* Header Styling */
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    position: absolute;
-    top: 0;
-    width: 90%;
-    height: 60px; /* Adjust the height to match the height of the sign-in buttons */
-}
-
-.logo-heading {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    height: 100%; /* Ensure it takes the full height of the header */
-}
-
-.logo {
-    width: 80px; /* Adjusted logo size */
-    height: auto;
-}
-
-h1 {
-    font-size: 40px;
-    color: whitesmoke;
-    margin: 0;
-    font-family: Arial, sans-serif;
-}
-
-h2 {
-    font-size: 150px;
-}
-
-/* Button Styling */
-.center-button-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column; /* Stack items vertically */
-    height: 90vh;
-    text-align: center; /* Ensure text is centered */
-}
-
-.holiday-text {
-    color: white;
-    font-size: 24px;
-    margin-bottom: 20px; /* Margin below the text */
-    text-align: center;
-}
-
-.center-button {
-    background-color: transparent;
-    border: 2px solid white;
-    color: white;
-    padding: 15px 40px;
-    font-size: 18px;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 20px;
-}
-
-.center-button:hover {
-    background-color: white;
-    color: black;
-}
-
-/* Auth Buttons Styling */
-.auth-buttons {
-    position: fixed;
-    right: 0;
-    top: 20px;
-    display: flex;
-    flex-direction: row; /* Ensure buttons are in a row */
-    align-items: center; /* Align buttons horizontally */
-    padding: 20px;
-    height: 60px; /* Adjust the height to match the header height */
-}
-
-.auth-buttons button {
+/* General button styling */
+.form-button {
     background-color: transparent;
     border: 2px solid white;
     color: white;
@@ -99,30 +11,69 @@ h2 {
     margin: 5px;
 }
 
-.auth-buttons button:hover {
+.form-button:hover {
     background-color: white;
     color: black;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    h1 {
-        font-size: 30px;
-    }
+/* Profile picture styling */
+.profile-pic {
+    display: block;
+    margin: 20px auto;
+    width: 200px; /* Increased width */
+    height: 200px; /* Increased height */
+    border-radius: 50%; /* Make the profile picture round */
+}
 
-    .logo {
-        width: 100px;
-    }
+/* Styling for the center content */
+.center-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin-top: 50px;
+    height: calc(100vh - 60px); /* Adjust height to center content */
+}
 
-    .holiday-text {
-        font-size: 20px;
-        margin-right: 10px;
-    }
+/* Additional layout and typography styles if needed */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
 
-    .center-button {
-        padding: 10px 20px;
-        font-size: 16px;
-    }
+header {
+    background-color: #333;
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+}
+
+.logo-heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-heading .logo {
+    height: 50px;
+    margin-right: 15px;
+}
+
+.auth-buttons {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
+
+.auth-buttons .form-button {
+    margin-left: 10px;
+}
+
+main {
+    padding: 20px;
 }
 
 #background-video {
@@ -132,9 +83,4 @@ h2 {
     min-width: 100%;
     min-height: 100%;
     z-index: -1;
-}
-
-.background-video {
-    position: relative;
-    z-index: 0;
 }
