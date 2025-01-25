@@ -45,8 +45,7 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    margin-top: 50px;
-    height: calc(100vh - 60px); /* Adjust height to center content */
+    height: 100vh;
 }
 
 /* Additional layout and typography styles if needed */
