@@ -21,17 +21,17 @@
     </div>
     <div class="auth-buttons">
         <button id="homeBtn" class="form-button" onclick="window.location.href='indexsignedin.html'">Home</button>
+        <button id="myAccountBtn" class="form-button" onclick="window.location.href='MyAccount.html'">My Account</button>
         <button id="signOutBtn" class="form-button">Sign Out</button>
     </div>
 </header>
 
 <main>
     <div class="account-container" style="text-align: center;">
-        <h1>My Account</h1>
+        <h1 id="username">Username</h1>
         <div class="account-info">
             <div class="profile-section">
                 <img id="profile-pic" src="default-profile-pic.jpg" alt="Profile Picture" class="profile-pic" style="display: block; margin: 0 auto;">
-                <h2 id="username">Username</h2>
                 <p id="email">Email</p>
             </div>
             <div class="account-actions">
