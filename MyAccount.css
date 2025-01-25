@@ -1,3 +1,33 @@
+
+/* General button styling */
+.form-button {
+    background-color: #4CAF50; /* Green background */
+    border: none; /* Remove borders */
+    color: white; /* White text */
+    padding: 15px 32px; /* Some padding */
+    text-align: center; /* Centered text */
+    text-decoration: none; /* Remove underline */
+    display: inline-block; /* Make the buttons appear side-by-side */
+    font-size: 16px; /* Increase font size */
+    margin: 4px 2px; /* Some margin */
+    cursor: pointer; /* Pointer/hand icon */
+    border-radius: 12px; /* Rounded corners */
+}
+
+/* If you have specific styles for the delete button */
+#deleteAccountBtn {
+    background-color: #f44336; /* Red background for delete button */
+}
+
+/* Additional styles for hover effects, etc. */
+.form-button:hover {
+    background-color: #45a049; /* Darker green on hover */
+}
+
+#deleteAccountBtn:hover {
+    background-color: #e53935; /* Darker red on hover */
+}
+
 /* Ensure the background video covers the entire screen without zooming in */
 #background-video {
     position: fixed;
