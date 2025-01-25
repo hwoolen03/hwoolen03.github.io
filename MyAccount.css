@@ -1,7 +1,6 @@
-
 /* General button styling */
 .form-button {
-    background-color: #4CAF50; /* Green background */
+    background-color: #4CAF50; /* Green background for general buttons */
     border: none; /* Remove borders */
     color: white; /* White text */
     padding: 15px 32px; /* Some padding */
@@ -14,7 +13,7 @@
     border-radius: 12px; /* Rounded corners */
 }
 
-/* If you have specific styles for the delete button */
+/* Specific style for the delete button */
 #deleteAccountBtn {
     background-color: #f44336; /* Red background for delete button */
 }
@@ -28,77 +27,93 @@
     background-color: #e53935; /* Darker red on hover */
 }
 
-/* Ensure the background video covers the entire screen without zooming in */
+/* Profile picture styling */
+.profile-pic {
+    display: block;
+    margin: 0 auto;
+    width: 200px; /* Increased width */
+    height: 200px; /* Increased height */
+    border-radius: 50%; /* Make the profile picture round */
+}
+
+/* Styling for the account container */
+.account-container {
+    text-align: center;
+    margin-top: 50px;
+}
+
+/* Styling for the account actions */
+.account-actions {
+    margin-top: 100px;
+}
+
+/* Additional layout and typography styles if needed */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #333;
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+}
+
+.logo-heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-heading .logo {
+    height: 50px;
+    margin-right: 15px;
+}
+
+.auth-buttons {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
+
+.auth-buttons .form-button {
+    margin-left: 10px;
+}
+
+main {
+    padding: 20px;
+}
+
+.account-info {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display: inline-block;
+}
+
+.profile-section {
+    margin-top: 20px;
+}
+
+.profile-section #username {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.profile-section #email {
+    font-size: 18px;
+    color: gray;
+}
+
 #background-video {
     position: fixed;
     right: 0;
     bottom: 0;
     min-width: 100%;
     min-height: 100%;
-    width: auto;
-    height: auto;
     z-index: -1;
-    background: no-repeat;
-    background-size: cover;
-    transition: 1s opacity;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    color: white;
-    text-align: center;
-}
-
-.account-container {
-    max-width: 800px;
-    margin: 50px auto;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.account-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.profile-section {
-    text-align: center;
-}
-
-.profile-pic {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    margin-bottom: 10px;
-}
-
-.account-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.form-button {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    margin: 5px 0;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.form-button:hover {
-    background-color: #0056b3;
 }
