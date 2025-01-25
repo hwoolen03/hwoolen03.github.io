@@ -1,36 +1,38 @@
 /* General button styling */
 .form-button {
-    background-color: #4CAF50; /* Green background for general buttons */
-    border: none; /* Remove borders */
-    color: white; /* White text */
-    padding: 15px 32px; /* Some padding */
-    text-align: center; /* Centered text */
-    text-decoration: none; /* Remove underline */
-    display: inline-block; /* Make the buttons appear side-by-side */
-    font-size: 16px; /* Increase font size */
-    margin: 4px 2px; /* Some margin */
-    cursor: pointer; /* Pointer/hand icon */
-    border-radius: 12px; /* Rounded corners */
+    background-color: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 15px 25px;
+    font-size: 16px;
+    border-radius: 30px; /* Rounded edges */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 5px;
 }
 
 /* Specific style for the delete button */
 #deleteAccountBtn {
-    background-color: #f44336; /* Red background for delete button */
+    background-color: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 15px 25px;
+    font-size: 16px;
+    border-radius: 30px; /* Rounded edges */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 5px;
 }
 
-/* Additional styles for hover effects, etc. */
-.form-button:hover {
-    background-color: #45a049; /* Darker green on hover */
-}
-
-#deleteAccountBtn:hover {
-    background-color: #e53935; /* Darker red on hover */
+.form-button:hover, #deleteAccountBtn:hover {
+    background-color: white;
+    color: black;
 }
 
 /* Profile picture styling */
 .profile-pic {
     display: block;
-    margin: 0 auto;
+    margin: 20px auto;
     width: 200px; /* Increased width */
     height: 200px; /* Increased height */
     border-radius: 50%; /* Make the profile picture round */
@@ -44,7 +46,7 @@
 
 /* Styling for the account actions */
 .account-actions {
-    margin-top: 100px;
+    margin-top: 20px;
 }
 
 /* Additional layout and typography styles if needed */
