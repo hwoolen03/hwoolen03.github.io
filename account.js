@@ -159,7 +159,7 @@ const fetchConfigData = async () => {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
+                'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             }
         });
         if (!response.ok) {
@@ -180,7 +180,7 @@ const fetchAirportData = async () => {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
+                'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             }
         });
         if (!response.ok) {
@@ -202,7 +202,7 @@ const fetchSkyIds = async () => {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
+                'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             }
         });
         if (!response.ok) {
@@ -249,13 +249,13 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
             headers: {
                 'Content-Type': 'application/json',
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
+                'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             },
             body: JSON.stringify(params)
         });
         console.log("Roundtrip flight data fetched:", data);
         if (data.flights && data.flights.length > 0) {
-            const flightId = data.flights[0].id; // Extract the first flight's ID
+            const flightId = data.flights[0].id;
             console.log("First flight ID:", flightId);
             return flightId;
         } else {
@@ -286,7 +286,7 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId, departDate, m
             headers: {
                 'Content-Type': 'application/json',
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
+                'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             }
         });
         console.log("Cheapest one-way flight data fetched:", data);
@@ -306,7 +306,7 @@ const fetchFlightDetails = async (flightId) => {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
+                'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             }
         });
         if (!response.ok) {
@@ -329,7 +329,7 @@ const fetchHotelData = async (destination) => {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'hotels-com-provider.p.rapidapi.com',
-                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
+                'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             }
         });
         if (!response.ok) {
@@ -450,7 +450,7 @@ const personalizeContent = async (user) => {
             throw new Error("Error fetching cheapest one-way flight");
         }
 
-        const flightId = roundtripFlights; // Assuming the flight ID is returned
+        const flightId = roundtripFlights;
         const flightDetailsData = await fetchFlightDetails(flightId);
 
         const hotelData = await fetchHotelData(destination);
@@ -481,4 +481,9 @@ const sanitizeInput = (input) => {
     return input.replace(/[^a-zA-Z0-9 ]/g, '');
 };
 
-// Initialize
+// Initialize the app
+window.onload = async () => {
+    console.log("Window onload event fired");
+    await configureClient();
+    await handleAuthCallback();
+};
