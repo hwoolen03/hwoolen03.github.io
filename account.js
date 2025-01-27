@@ -2,6 +2,7 @@ let auth0Client = null;
 
 // Configure the Auth0 client
 const configureClient = async () => {
+    if (auth0Client) return; // Avoid re-initialization
     try {
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
@@ -11,6 +12,7 @@ const configureClient = async () => {
         console.log("Auth0 client configured successfully");
     } catch (error) {
         console.error("Error configuring Auth0 client:", error);
+        alert("Authentication service is not available. Please try again later.");
     }
 };
 
@@ -25,39 +27,45 @@ const signOut = async () => {
             window.location.href = "index.html";
         } else {
             console.error("Auth0 client is not initialized");
+            alert("Authentication service is not available. Please try again later.");
         }
     } catch (error) {
         console.error("Error signing out user:", error);
+        alert("An error occurred during sign-out. Please try again.");
     }
 };
 
 // Handle authentication callback
 const handleAuthCallback = async () => {
     try {
-        if (auth0Client) {
-            const isAuthenticated = await auth0Client.isAuthenticated();
-            console.log("Is Authenticated:", isAuthenticated);
-            if (isAuthenticated) {
-                const user = await auth0Client.getUser();
-                console.log("User:", user);
-
-                // Attach event listeners to buttons
-                attachButtonListeners(user);
-
-                console.log("User is authenticated:", user);
-            } else {
-                const query = window.location.search;
-                if (query.includes("code=") && query.includes("state=")) {
-                    await auth0Client.handleRedirectCallback();
-                    window.location.href = "indexsignedin.html";
-                    console.log("Handled redirect callback");
-                }
-            }
-        } else {
+        if (!auth0Client) {
             console.error("Auth0 client is not initialized");
+            alert("Authentication service is not available. Please try again later.");
+            return;
+        }
+
+        const isAuthenticated = await auth0Client.isAuthenticated();
+        console.log("Is Authenticated:", isAuthenticated);
+
+        if (isAuthenticated) {
+            const user = await auth0Client.getUser();
+            console.log("User:", user);
+
+            // Attach event listeners to buttons
+            attachButtonListeners(user);
+
+            console.log("User is authenticated:", user);
+        } else {
+            const query = window.location.search;
+            if (query.includes("code=") && query.includes("state=")) {
+                await auth0Client.handleRedirectCallback();
+                window.location.href = "indexsignedin.html";
+                console.log("Handled redirect callback");
+            }
         }
     } catch (error) {
         console.error("Error handling authentication callback:", error);
+        alert("An error occurred during authentication. Please try again.");
     }
 };
 
@@ -116,29 +124,31 @@ const validateInputs = () => {
     let valid = true;
 
     if (checkIn < currentDate || checkIn > nextYearDate || checkOut < currentDate || checkOut > nextYearDate) {
-        flashRed('holidayDate');
-        flashRed('returnDate');
+        flashRed('holidayDate', "Check-in and check-out dates must be within the next year.");
+        flashRed('returnDate', "Check-in and check-out dates must be within the next year.");
         valid = false;
     }
 
     if (isNaN(budget) || budget <= 0 || budget > 5000) {
-        flashRed('budget');
+        flashRed('budget', "Budget must be a number between 1 and 5000.");
         valid = false;
     }
 
     if (isNaN(numPeople) || numPeople <= 0 || numPeople > 5) {
-        flashRed('numPeople');
+        flashRed('numPeople', "Number of people must be between 1 and 5.");
         valid = false;
     }
 
     return valid;
 };
 
-const flashRed = (elementId) => {
+const flashRed = (elementId, message) => {
     const element = document.getElementById(elementId);
     element.style.border = '2px solid red';
+    element.setAttribute('title', message);
     setTimeout(() => {
         element.style.border = '';
+        element.removeAttribute('title');
     }, 2000);
 };
 
@@ -149,7 +159,7 @@ const fetchConfigData = async () => {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
             }
         });
         if (!response.ok) {
@@ -170,7 +180,7 @@ const fetchAirportData = async () => {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
             }
         });
         if (!response.ok) {
@@ -192,7 +202,7 @@ const fetchSkyIds = async () => {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
             }
         });
         if (!response.ok) {
@@ -207,7 +217,7 @@ const fetchSkyIds = async () => {
     }
 };
 
-// Utility to retry fetch requests
+// Utility to retry fetch requests with exponential backoff
 const retryFetch = async (url, options, retries = 3, delay = 1000) => {
     for (let i = 0; i < retries; i++) {
         try {
@@ -220,7 +230,7 @@ const retryFetch = async (url, options, retries = 3, delay = 1000) => {
         } catch (error) {
             console.error(`Attempt ${i + 1} error: ${error.message}`);
         }
-        await new Promise(res => setTimeout(res, delay));
+        await new Promise(res => setTimeout(res, delay * Math.pow(2, i))); // Exponential backoff
     }
     throw new Error(`Failed to fetch after ${retries} attempts`);
 };
@@ -239,7 +249,7 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
             headers: {
                 'Content-Type': 'application/json',
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
             },
             body: JSON.stringify(params)
         });
@@ -259,15 +269,15 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
 };
 
 // Fetch cheapest one-way flight
-const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
+const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId, departDate, market, currency, locale) => {
     const url = `https://sky-scanner3.p.rapidapi.com/api/v1/cheapest-one-way`;
     const params = {
         fromEntityId: fromEntityId,
         toEntityId: toEntityId,
-        departDate: '2024-06-15',
-        market: 'US',
-        currency: 'USD',
-        locale: 'en-US'
+        departDate: departDate,
+        market: market,
+        currency: currency,
+        locale: locale
     };
     try {
         console.log(`Fetching cheapest one-way flight from ${fromEntityId} to ${toEntityId}...`);
@@ -276,7 +286,7 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
             headers: {
                 'Content-Type': 'application/json',
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
             }
         });
         console.log("Cheapest one-way flight data fetched:", data);
@@ -296,7 +306,7 @@ const fetchFlightDetails = async (flightId) => {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
             }
         });
         if (!response.ok) {
@@ -319,7 +329,7 @@ const fetchHotelData = async (destination) => {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'hotels-com-provider.p.rapidapi.com',
-                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+                'x-rapidapi-key': process.env.4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3 // Use environment variable
             }
         });
         if (!response.ok) {
@@ -350,6 +360,9 @@ const preprocessUserData = (user) => {
 
 // Train a simple model (for demonstration purposes)
 const trainModel = async (data) => {
+    if (data.length === 0) {
+        throw new Error("No data provided for training");
+    }
     const inputShape = [data[0].preferences.length];
     const model = tf.sequential();
     model.add(tf.layers.dense({ units: 10, activation: 'relu', inputShape: inputShape }));
@@ -398,6 +411,15 @@ const mapRecommendationToDestination = (score) => {
     return destinations[Math.floor(score * destinations.length)];
 };
 
+// Fetch all required data
+const fetchAllData = async (destination, departureLocation) => {
+    const [configData, airportData] = await Promise.all([fetchConfigData(), fetchAirportData()]);
+    if (!configData || !airportData) {
+        throw new Error("Error fetching configuration or airport data");
+    }
+    return { configData, airportData };
+};
+
 // Personalize content based on user data
 const personalizeContent = async (user) => {
     try {
@@ -414,17 +436,11 @@ const personalizeContent = async (user) => {
 
         console.log("Inputs - Destination:", destination, "CheckInDate:", checkInDate, "CheckOutDate:", checkOutDate, "DepartureLocation:", departureLocation);
 
-        const [configData, airportData] = await Promise.all([fetchConfigData(), fetchAirportData()]);
-        if (!configData) {
-            throw new Error("Error fetching configuration data");
-        }
-        if (!airportData) {
-            throw new Error("Error fetching airport data");
-        }
+        const { configData, airportData } = await fetchAllData(destination, departureLocation);
 
         const [roundtripFlights, cheapestOneWay] = await Promise.all([
             searchRoundtripFlights(departureLocation, destination),
-            fetchCheapestOneWayFlight(departureLocation, destination)
+            fetchCheapestOneWayFlight(departureLocation, destination, checkInDate, 'US', 'USD', 'en-US')
         ]);
 
         if (!roundtripFlights) {
@@ -449,9 +465,10 @@ const personalizeContent = async (user) => {
 
         console.log("Redirecting to HolidayResults.html with data");
 
-        window.location.href = `HolidayResults.html?welcomeMessage=${encodeURIComponent(welcomeMessage)}&userEmail=${encodeURIComponent(userEmail)}&flightInfo=${encodeURIComponent(flightInfo)}&hotelInfo=${encodeURIComponent(hotelInfo)}`;
+        window.location.href = `HolidayResults.html?welcomeMessage=${encodeURIComponent(sanitizeInput(welcomeMessage))}&userEmail=${encodeURIComponent(sanitizeInput(userEmail))}&flightInfo=${encodeURIComponent(sanitizeInput(flightInfo))}&hotelInfo=${encodeURIComponent(sanitizeInput(hotelInfo))}`;
     } catch (error) {
         console.error("Error personalizing content:", error);
+        alert("An error occurred while personalizing your content. Please try again.");
     }
 };
 
@@ -459,9 +476,9 @@ const triggerPersonalization = async (user) => {
     await personalizeContent(user);
 };
 
-// Initialize the app
-window.onload = async () => {
-    console.log("Window onload event fired");
-    await configureClient();
-    await handleAuthCallback();
+// Sanitize input to prevent injection attacks
+const sanitizeInput = (input) => {
+    return input.replace(/[^a-zA-Z0-9 ]/g, '');
 };
+
+// Initialize
