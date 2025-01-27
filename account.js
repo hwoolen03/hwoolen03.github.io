@@ -216,7 +216,6 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
             body: JSON.stringify(params)
         });
         console.log("Roundtrip flight data fetched:", data);
-        // Assuming the response has a structure like { flights: [{ id: 'flight1', ... }, ...] }
         if (data.flights && data.flights.length > 0) {
             const flightId = data.flights[0].id; // Extract the first flight's ID
             console.log("First flight ID:", flightId);
@@ -288,7 +287,6 @@ const fetchFlightDetails = async (flightId) => {
 const fetchHotelData = async (destination) => {
     try {
         console.log(`Fetching hotel data for destination ${destination}...`);
-        // Replace with actual API endpoint and parameters
         const response = await fetch(`https://hotels-com-provider.p.rapidapi.com/v2/regions?query=${destination}&domain=AR&locale=es_AR`, {
             method: 'GET',
             headers: {
@@ -378,84 +376,3 @@ const personalizeContent = async (user) => {
         console.log("Personalizing content for user:", user);
         const destination = await generateRecommendations(user);
         if (!destination) {
-            throw new Error("No valid recommendations generated");
-        }
-        console.log("Mapped Destination:", destination);
-
-        const checkInDate = document.getElementById('holidayDate').value;
-        const checkOutDate = document.getElementById('returnDate').value;
-        const departureLocation = document.getElementById('departureLocation').value;
-
-        console.log("Inputs - Destination:", destination, "CheckInDate:", checkInDate, "CheckOutDate:", checkOutDate, "DepartureLocation:", departureLocation);
-
-        const [configData, airportData] = await Promise.all([fetchConfigData(), fetchAirportData()]);
-        if (!configData) {
-            throw new Error("Error fetching configuration data");
-        }
-        if (!airportData) {
-            throw new Error("Error fetching airport data");
-        }
-
-        const [roundtripFlights, cheapestOneWay] = await Promise.all([
-            searchRoundtripFlights(departureLocation, destination),
-            fetchCheapestOneWayFlight(departureLocation, destination)
-        ]);
-
-        if (!roundtripFlights) {
-            throw new Error("Error searching for roundtrip flights");
-        }
-        if (!cheapestOneWay) {
-            throw new Error("Error fetching cheapest one-way flight");
-        }
-
-        const flightId = roundtripFlights; // Assuming the flight ID is returned
-        const flightDetailsData = await fetchFlightDetails(flightId);
-
-        const hotelData = await fetchHotelData(destination);
-        if (!hotelData) {
-            throw new Error("Error fetching hotel data");
-        }
-
-        const welcomeMessage = `Hello, ${user.name}!`;
-        const userEmail = `Your email: ${user.email}`;
-        const flightInfo = `Flights to ${destination}: ${JSON.stringify(roundtripFlights)}`;
-        const hotelInfo = `Hotels in ${destination}: ${JSON.stringify(hotelData)}`;
-
-        console.log("Redirecting to HolidayResults.html with data");
-
-        window.location.href = `HolidayResults.html?welcomeMessage=${encodeURIComponent(welcomeMessage)}&userEmail=${encodeURIComponent(userEmail)}&flightInfo=${encodeURIComponent(flightInfo)}&hotelInfo=${encodeURIComponent(hotelInfo)}`;
-    } catch (error) {
-        console.error("Error personalizing content:", error);
-    }
-};
-
-const triggerPersonalization = async (user) => {
-    await personalizeContent(user);
-};
-
-// Add event listener for the sign-out button
-window.onload = async () => {
-    console.log("Window onload event fired");
-    await configureClient();
-    await handleAuthCallback();
-
-    const signOutBtn = document.getElementById('signOutBtn');
-    if (signOutBtn) {
-        console.log("Sign-out button found");
-        signOutBtn.addEventListener('click', signOut);
-        console.log("Sign-out button event listener added");
-    } else {
-        console.error("Sign-out button not found");
-    }
-
-    const myAccountBtn = document.getElementById('myAccountBtn');
-    if (myAccountBtn) {
-        console.log("My Account button found");
-        myAccountBtn.addEventListener('click', () => {
-            window.location.href = 'MyAccount.html';
-        });
-        console.log("My Account button event listener added");
-    } else {
-        console.error("My Account button not found");
-    }
-};
