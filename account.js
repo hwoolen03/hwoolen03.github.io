@@ -40,14 +40,6 @@ const handleAuthCallback = async () => {
             if (isAuthenticated) {
                 const user = await auth0Client.getUser();
                 console.log("User:", user);
-                const userName = user.name;
-
-                // Create and display the welcome message
-                const welcomeMessage = `Welcome to the Power of Atlas ${userName}`;
-                const h2Element = document.querySelector('.holiday-text');
-                if (h2Element) {
-                    h2Element.textContent = welcomeMessage;
-                }
 
                 const findMyHolidayButton = document.getElementById('findMyHolidayButton');
                 console.log("Find My Holiday Button:", findMyHolidayButton);
@@ -452,5 +444,23 @@ window.onload = async () => {
         console.log("Sign-out button event listener added");
     } else {
         console.error("Sign-out button not found");
+    }
+
+    const homeBtn = document.getElementById('homeBtn');
+    if (homeBtn) {
+        homeBtn.addEventListener('click', () => {
+            window.location.href = 'indexsignedin.html';
+        });
+    } else {
+        console.error("Home button not found");
+    }
+
+    const myAccountBtn = document.getElementById('myAccountBtn');
+    if (myAccountBtn) {
+        myAccountBtn.addEventListener('click', () => {
+            window.location.href = 'MyAccount.html';
+        });
+    } else {
+        console.error("My Account button not found");
     }
 };
