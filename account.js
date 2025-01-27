@@ -41,18 +41,8 @@ const handleAuthCallback = async () => {
                 const user = await auth0Client.getUser();
                 console.log("User:", user);
 
-                const findMyHolidayButton = document.getElementById('findMyHolidayButton');
-                console.log("Find My Holiday Button:", findMyHolidayButton);
-                if (!findMyHolidayButton) {
-                    console.error("Find My Holiday Button not found");
-                } else {
-                    findMyHolidayButton.addEventListener('click', async () => {
-                        console.log("Find My Holiday button clicked");
-                        if (validateInputs()) {
-                            await triggerPersonalization(user);
-                        }
-                    });
-                }
+                // Attach event listeners to buttons
+                attachButtonListeners(user);
 
                 console.log("User is authenticated:", user);
             } else {
@@ -68,6 +58,44 @@ const handleAuthCallback = async () => {
         }
     } catch (error) {
         console.error("Error handling authentication callback:", error);
+    }
+};
+
+// Attach event listeners to buttons
+const attachButtonListeners = (user) => {
+    const signOutBtn = document.getElementById('signOutBtn');
+    const myAccountBtn = document.getElementById('myAccountBtn');
+    const findMyHolidayButton = document.getElementById('findMyHolidayButton');
+
+    if (signOutBtn) {
+        console.log("Sign-out button found");
+        signOutBtn.addEventListener('click', signOut);
+        console.log("Sign-out button event listener added");
+    } else {
+        console.error("Sign-out button not found");
+    }
+
+    if (myAccountBtn) {
+        console.log("My Account button found");
+        myAccountBtn.addEventListener('click', () => {
+            window.location.href = 'MyAccount.html';
+        });
+        console.log("My Account button event listener added");
+    } else {
+        console.error("My Account button not found");
+    }
+
+    if (findMyHolidayButton) {
+        console.log("Find My Holiday button found");
+        findMyHolidayButton.addEventListener('click', async () => {
+            console.log("Find My Holiday button clicked");
+            if (validateInputs()) {
+                await triggerPersonalization(user);
+            }
+        });
+        console.log("Find My Holiday button event listener added");
+    } else {
+        console.error("Find My Holiday button not found");
     }
 };
 
@@ -376,3 +404,64 @@ const personalizeContent = async (user) => {
         console.log("Personalizing content for user:", user);
         const destination = await generateRecommendations(user);
         if (!destination) {
+            throw new Error("No valid recommendations generated");
+        }
+        console.log("Mapped Destination:", destination);
+
+        const checkInDate = document.getElementById('holidayDate').value;
+        const checkOutDate = document.getElementById('returnDate').value;
+        const departureLocation = document.getElementById('departureLocation').value;
+
+        console.log("Inputs - Destination:", destination, "CheckInDate:", checkInDate, "CheckOutDate:", checkOutDate, "DepartureLocation:", departureLocation);
+
+        const [configData, airportData] = await Promise.all([fetchConfigData(), fetchAirportData()]);
+        if (!configData) {
+            throw new Error("Error fetching configuration data");
+        }
+        if (!airportData) {
+            throw new Error("Error fetching airport data");
+        }
+
+        const [roundtripFlights, cheapestOneWay] = await Promise.all([
+            searchRoundtripFlights(departureLocation, destination),
+            fetchCheapestOneWayFlight(departureLocation, destination)
+        ]);
+
+        if (!roundtripFlights) {
+            throw new Error("Error searching for roundtrip flights");
+        }
+        if (!cheapestOneWay) {
+            throw new Error("Error fetching cheapest one-way flight");
+        }
+
+        const flightId = roundtripFlights; // Assuming the flight ID is returned
+        const flightDetailsData = await fetchFlightDetails(flightId);
+
+        const hotelData = await fetchHotelData(destination);
+        if (!hotelData) {
+            throw new Error("Error fetching hotel data");
+        }
+
+        const welcomeMessage = `Hello, ${user.name}!`;
+        const userEmail = `Your email: ${user.email}`;
+        const flightInfo = `Flights to ${destination}: ${JSON.stringify(roundtripFlights)}`;
+        const hotelInfo = `Hotels in ${destination}: ${JSON.stringify(hotelData)}`;
+
+        console.log("Redirecting to HolidayResults.html with data");
+
+        window.location.href = `HolidayResults.html?welcomeMessage=${encodeURIComponent(welcomeMessage)}&userEmail=${encodeURIComponent(userEmail)}&flightInfo=${encodeURIComponent(flightInfo)}&hotelInfo=${encodeURIComponent(hotelInfo)}`;
+    } catch (error) {
+        console.error("Error personalizing content:", error);
+    }
+};
+
+const triggerPersonalization = async (user) => {
+    await personalizeContent(user);
+};
+
+// Initialize the app
+window.onload = async () => {
+    console.log("Window onload event fired");
+    await configureClient();
+    await handleAuthCallback();
+};
