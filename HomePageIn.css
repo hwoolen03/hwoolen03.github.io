@@ -17,6 +17,7 @@ header {
     top: 0;
     width: 90%;
     height: 60px; /* Adjust the height to match the height of the sign-in buttons */
+    z-index: 1; /* Ensure header is above other content */
 }
 
 .logo-heading {
@@ -88,6 +89,7 @@ h2 {
     align-items: center; /* Align buttons horizontally */
     padding: 20px;
     height: 60px; /* Adjust the height to match the header height */
+    z-index: 10; /* Ensure auth buttons are above other elements */
 }
 
 .auth-buttons button {
@@ -100,6 +102,8 @@ h2 {
     cursor: pointer;
     transition: all 0.3s ease;
     margin: 5px;
+    pointer-events: auto; /* Ensure buttons are clickable */
+    z-index: 10; /* Ensure buttons are above other elements */
 }
 
 .auth-buttons button:hover {
