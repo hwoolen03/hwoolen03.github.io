@@ -396,7 +396,7 @@ const personalizeContent = async (user) => {
             throw new Error("Error fetching airport data");
         }
 
-        const [roundtripFlights, cheapestOneWay, flightDetails] = await Promise.all([
+        const [roundtripFlights, cheapestOneWay] = await Promise.all([
             searchRoundtripFlights(departureLocation, destination),
             fetchCheapestOneWayFlight(departureLocation, destination)
         ]);
@@ -435,31 +435,26 @@ const triggerPersonalization = async (user) => {
 
 // Add event listener for the sign-out button
 window.onload = async () => {
+    console.log("Window onload event fired");
     await configureClient();
-    handleAuthCallback();
+    await handleAuthCallback();
 
     const signOutBtn = document.getElementById('signOutBtn');
     if (signOutBtn) {
+        console.log("Sign-out button found");
         signOutBtn.addEventListener('click', signOut);
         console.log("Sign-out button event listener added");
     } else {
         console.error("Sign-out button not found");
     }
 
-    const homeBtn = document.getElementById('homeBtn');
-    if (homeBtn) {
-        homeBtn.addEventListener('click', () => {
-            window.location.href = 'indexsignedin.html';
-        });
-    } else {
-        console.error("Home button not found");
-    }
-
     const myAccountBtn = document.getElementById('myAccountBtn');
     if (myAccountBtn) {
+        console.log("My Account button found");
         myAccountBtn.addEventListener('click', () => {
             window.location.href = 'MyAccount.html';
         });
+        console.log("My Account button event listener added");
     } else {
         console.error("My Account button not found");
     }
