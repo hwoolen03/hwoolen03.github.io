@@ -1,6 +1,6 @@
 let auth0Client = null;
 
-// Cojnfigure the Auth0 client
+// Configure the Auth0 client
 const configureClient = async () => {
     try {
         auth0Client = await createAuth0Client({
@@ -244,6 +244,22 @@ const personalizeContent = async (user) => {
     } catch (error) {
         console.error('Error personalizing content:', error);
     }
+};
+
+// Validate inputs function
+const validateInputs = () => {
+    const checkInDate = document.getElementById('holidayDate').value;
+    const checkOutDate = document.getElementById('returnDate').value;
+    const departureLocation = document.getElementById('departureLocation').value;
+
+    if (!checkInDate || !checkOutDate || !departureLocation) {
+        alert('Please fill in all required fields.');
+        return false;
+    }
+
+    // Additional validation logic can be added here
+
+    return true;
 };
 
 const triggerPersonalization = async (user) => {
