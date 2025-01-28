@@ -1,4 +1,4 @@
-name: Install Dependencies
+name: Check TensorFlow.js Installation
 
 on:
   push:
@@ -12,20 +12,29 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version: [14, 16, 18]
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      # Step to checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
+      # Step to set up Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: Install dependencies
-      run: npm install
+      # Step to install the project dependencies
+      - name: Install dependencies
+        run: npm install
 
-    - name: Install TensorFlow.js
-      run: npm install @tensorflow/tfjs
+      # Step to install TensorFlow.js specifically
+      - name: Install TensorFlow.js
+        run: npm install @tensorflow/tfjs
 
-    - name: Verify installation
-      run: npm list @tensorflow/tfjs
+      # Step to check TensorFlow.js installation
+      - name: Check TensorFlow.js Installation
+        run: node -e "require('@tensorflow/tfjs'); console.log('TensorFlow.js installed successfully');"
