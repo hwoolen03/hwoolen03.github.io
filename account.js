@@ -1,8 +1,8 @@
 let auth0Client = null;
 
-// Configure the Auth0 client
+// Auth0 Client Configuration
 const configureClient = async () => {
-    if (auth0Client) return; // Avoid re-initialization
+    if (auth0Client) return;
     try {
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
@@ -16,7 +16,7 @@ const configureClient = async () => {
     }
 };
 
-// Sign out the user
+// Authentication Handlers
 const signOut = async () => {
     if (!auth0Client) {
         console.error("Auth0 client is not initialized");
@@ -34,7 +34,6 @@ const signOut = async () => {
     }
 };
 
-// Handle authentication callback
 const handleAuthCallback = async () => {
     if (!auth0Client) {
         console.error("Auth0 client is not initialized");
@@ -61,7 +60,7 @@ const handleAuthCallback = async () => {
     }
 };
 
-// Attach event listeners to buttons
+// DOM Interaction
 const attachButtonListeners = (user) => {
     const buttons = [
         { id: "signOutBtn", action: signOut },
@@ -85,50 +84,24 @@ const attachButtonListeners = (user) => {
     });
 };
 
-// Trigger personalization process
-const triggerPersonalization = async (user) => {
-    try {
-        console.log("Triggering personalization process for user:", user);
-        await personalizeContent(user);
-    } catch (error) {
-        console.error("Error during personalization process:", error);
-        alert("An error occurred while personalizing your content. Please try again.");
-    }
-};
-
-// Generate holiday recommendations based on user data
-const generateRecommendations = async (user) => {
-    try {
-        console.log("Generating recommendations for user:", user);
-
-        // Example recommendation logic
-        const recommendations = ["Paris", "New York", "Tokyo"];
-        return recommendations[Math.floor(Math.random() * recommendations.length)];
-    } catch (error) {
-        console.error("Error generating recommendations:", error);
-        throw new Error("Error generating recommendations");
-    }
-};
-
-// Validate input fields
+// Validation Utilities
 const validateInputs = () => {
-    const checkInDate = document.getElementById("holidayDate").value;
-    const checkOutDate = document.getElementById("returnDate").value;
+    const checkInDate = new Date(document.getElementById("holidayDate").value).toISOString().split('T')[0];
+    const checkOutDate = new Date(document.getElementById("returnDate").value).toISOString().split('T')[0];
     const budget = parseFloat(document.getElementById("budget").value);
     const numPeople = parseInt(document.getElementById("numPeople").value, 10);
 
-    const currentDate = new Date();
-    const nextYearDate = new Date(currentDate);
+    const currentDate = new Date().toISOString().split('T')[0];
+    const nextYearDate = new Date();
     nextYearDate.setFullYear(nextYearDate.getFullYear() + 1);
-
-    const checkIn = new Date(checkInDate);
-    const checkOut = new Date(checkOutDate);
+    const nextYearDateString = nextYearDate.toISOString().split('T')[0];
 
     let valid = true;
 
     const validations = [
         {
-            condition: checkIn < currentDate || checkIn > nextYearDate || checkOut < currentDate || checkOut > nextYearDate,
+            condition: checkInDate < currentDate || checkInDate > nextYearDateString || 
+                      checkOutDate < currentDate || checkOutDate > nextYearDateString,
             element: ["holidayDate", "returnDate"],
             message: "Dates must be within the next year.",
         },
@@ -167,7 +140,95 @@ const flashRed = (elementId, message) => {
     }, 2000);
 };
 
-// Retry fetch requests with exponential backoff
+// API Integrations
+const searchRoundtripFlights = async (from, to) => {
+    try {
+        const response = await fetch(
+            `https://travel-api-proxy.onrender.com/api/flights?from=${from}&to=${to}`
+        );
+        return await response.json();
+    } catch (error) {
+        console.error("Flight search error:", error);
+        return null;
+    }
+};
+
+const fetchCheapestOneWayFlight = async (from, to, date) => {
+    try {
+        const response = await fetch(
+            `https://travel-api-proxy.onrender.com/api/cheap-flights?from=${from}&to=${to}&date=${date}`
+        );
+        return await response.json();
+    } catch (error) {
+        console.error("Cheap flight search error:", error);
+        return null;
+    }
+};
+
+const generateRecommendations = async (user) => {
+    try {
+        const userMetadata = user['https://travel.app/metadata'] || {};
+        const recommendationFactors = {
+            budget: parseFloat(document.getElementById("budget").value),
+            people: parseInt(document.getElementById("numPeople").value, 10),
+            preferences: userMetadata.preferences || 'general',
+            pastTrips: userMetadata.pastTrips || []
+        };
+
+        const response = await fetch('https://travel-api-proxy.onrender.com/api/recommend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(recommendationFactors)
+        });
+
+        const data = await response.json();
+        return data.recommendations;
+    } catch (error) {
+        console.error("Recommendation error:", error);
+        throw new Error("Failed to generate recommendations");
+    }
+};
+
+// Core Logic
+const triggerPersonalization = async (user) => {
+    try {
+        console.log("Starting personalization process...");
+        const destination = await generateRecommendations(user);
+        console.log("Selected destination:", destination);
+
+        const checkInDate = document.getElementById("holidayDate").value;
+        const checkOutDate = document.getElementById("returnDate").value;
+        const departureLocation = document.getElementById("departureLocation").value;
+
+        const [configData, airportData] = await Promise.all([
+            fetchConfigData(),
+            fetchAirportData()
+        ]);
+
+        const [roundtripFlights, cheapestOneWay] = await Promise.all([
+            searchRoundtripFlights(departureLocation, destination),
+            fetchCheapestOneWayFlight(departureLocation, destination, checkInDate)
+        ]);
+
+        const hotelData = await fetchHotelData(destination);
+
+        const urlParams = new URLSearchParams({
+            welcomeMessage: sanitizeInput(`Hello, ${user.name}!`),
+            userEmail: sanitizeInput(`Your email: ${user.email}`),
+            flightInfo: sanitizeInput(JSON.stringify(roundtripFlights)),
+            hotelInfo: sanitizeInput(JSON.stringify(hotelData)),
+        }).toString();
+
+        window.location.href = `HolidayResults.html?${urlParams}`;
+    } catch (error) {
+        console.error("Personalization error:", error);
+        alert("An error occurred while personalizing your content. Please try again.");
+    }
+};
+
+// Helper Functions
+const sanitizeInput = (input) => input.replace(/[^a-zA-Z0-9 ]/g, "");
+
 const retryFetch = async (url, options, retries = 3, delay = 1000) => {
     for (let i = 0; i < retries; i++) {
         try {
@@ -177,83 +238,22 @@ const retryFetch = async (url, options, retries = 3, delay = 1000) => {
         } catch (error) {
             console.error(`Attempt ${i + 1} error: ${error.message}`);
         }
-        await new Promise((res) => setTimeout(res, delay * Math.pow(2, i))); // Exponential backoff
+        await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
     }
     throw new Error(`Failed to fetch after ${retries} attempts`);
 };
 
-// Personalize content based on user data
-const personalizeContent = async (user) => {
-    try {
-        console.log("Personalizing content for user:", user);
+// Initialization
+window.addEventListener('DOMContentLoaded', async () => {
+    await configureClient();
+    await handleAuthCallback();
 
-        // Generate destination recommendations
-        const destination = await generateRecommendations(user);
-
-        const checkInDate = document.getElementById("holidayDate").value;
-        const checkOutDate = document.getElementById("returnDate").value;
-        const departureLocation = document.getElementById("departureLocation").value;
-
-        // Fetch configuration and airport data, and search for flights and hotels
-        const { configData, airportData } = await Promise.all([fetchConfigData(), fetchAirportData()]);
-        const roundtripFlights = await searchRoundtripFlights(departureLocation, destination);
-        const cheapestOneWay = await fetchCheapestOneWayFlight(departureLocation, destination, checkInDate, "US", "USD", "en-US");
-
-        if (!roundtripFlights || !cheapestOneWay) {
-            throw new Error("Error fetching flights");
-        }
-
-        const hotelData = await fetchHotelData(destination);
-        if (!hotelData) throw new Error("Error fetching hotels");
-
-        // Prepare URL with personalized data
-        const urlParams = new URLSearchParams({
-            welcomeMessage: sanitizeInput(`Hello, ${user.name}!`),
-            userEmail: sanitizeInput(`Your email: ${user.email}`),
-            flightInfo: sanitizeInput(JSON.stringify(roundtripFlights)),
-            hotelInfo: sanitizeInput(JSON.stringify(hotelData)),
-        }).toString();
-
-        // Redirect to the personalized results page
-        window.location.href = `HolidayResults.html?${urlParams}`;
-    } catch (error) {
-        console.error("Error personalizing content:", error);
-        alert("An error occurred while personalizing your content. Please try again.");
+    // Debugging safeguards
+    const button = document.getElementById('findMyHolidayButton');
+    if (button) {
+        console.log('Find Holiday button initialized');
+        button.addEventListener('click', () => console.log('Button click detected'));
+    } else {
+        console.error('Find Holiday button missing');
     }
-};
-
-// Sanitize input to prevent injection attacks
-const sanitizeInput = (input) => input.replace(/[^a-zA-Z0-9 ]/g, "");
-
-// API Calls to your backend
-const fetchConfigData = async () => {
-    try {
-        const response = await fetch('https://travel-api-proxy.onrender.com/api/config');
-        if (!response.ok) {
-            throw new Error("Error fetching config data");
-        }
-        const data = await response.json();
-        console.log("Config data fetched:", data);
-        return data; // Assuming the response is in JSON format
-    } catch (error) {
-        console.error("Error fetching config data:", error);
-        throw new Error("Error fetching configuration data");
-    }
-};
-
-const fetchAirportData = async () => {
-    try {
-        const response = await fetch('https://travel-api-proxy.onrender.com/api/airports');
-        if (!response.ok) {
-            throw new Error("Error fetching airport data");
-        }
-        const data = await response.json();
-        console.log("Airport data fetched:", data);
-        return data; // Assuming the response is in JSON format
-    } catch (error) {
-        console.error("Error fetching airport data:", error);
-        throw new Error("Error fetching airport data");
-    }
-};
-
-// Ensure the file ends properly with no missing brackets.
+});
