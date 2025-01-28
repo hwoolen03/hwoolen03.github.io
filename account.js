@@ -1,6 +1,6 @@
 let auth0Client = null;
 
-// Configure the Auth0 client
+// Cojnfigure the Auth0 client
 const configureClient = async () => {
     try {
         auth0Client = await createAuth0Client({
