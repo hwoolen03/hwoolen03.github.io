@@ -124,7 +124,7 @@ const flashRed = (elementId) => {
 // Fetch configuration data
 const fetchConfigData = async () => {
     try {
-        const response = await fetch("https://sky-scanner3.p.rapidapi.com/get-config", {
+        const response = await fetch("https://travel-api-proxy.onrender.com/api/config", {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
@@ -145,7 +145,7 @@ const fetchConfigData = async () => {
 // Fetch airport data
 const fetchAirportData = async () => {
     try {
-        const response = await fetch("https://sky-scanner3.p.rapidapi.com/flights/airports", {
+        const response = await fetch("https://travel-api-proxy.onrender.com/api/airports", {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
@@ -167,7 +167,7 @@ const fetchAirportData = async () => {
 const fetchSkyIds = async () => {
     try {
         console.log("Fetching Sky IDs...");
-        const response = await fetch("https://sky-scanner3.p.rapidapi.com/flights/skyId-list", {
+        const response = await fetch("https://travel-api-proxy.onrender.com/api/skyId-list", {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
@@ -206,7 +206,7 @@ const retryFetch = async (url, options, retries = 3, delay = 1000) => {
 
 // Search for roundtrip flights
 const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
-    const url = `https://sky-scanner3.p.rapidapi.com/api/v1/search-roundtrip`;
+    const url = `https://travel-api-proxy.onrender.com/api/search-roundtrip`;
     const params = {
         fromEntityId: fromEntityId,
         toEntityId: toEntityId
@@ -216,16 +216,13 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
         const data = await retryFetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(params)
         });
         console.log("Roundtrip flight data fetched:", data);
-        // Assuming the response has a structure like { flights: [{ id: 'flight1', ... }, ...] }
         if (data.flights && data.flights.length > 0) {
-            const flightId = data.flights[0].id; // Extract the first flight's ID
+            const flightId = data.flights[0].id;
             console.log("First flight ID:", flightId);
             return flightId;
         } else {
@@ -240,23 +237,13 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
 
 // Fetch cheapest one-way flight
 const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
-    const url = `https://sky-scanner3.p.rapidapi.com/api/v1/cheapest-one-way`;
-    const params = {
-        fromEntityId: fromEntityId,
-        toEntityId: toEntityId,
-        departDate: '2024-06-15',
-        market: 'US',
-        currency: 'USD',
-        locale: 'en-US'
-    };
+    const url = `https://travel-api-proxy.onrender.com/api/cheapest-one-way?fromEntityId=${fromEntityId}&toEntityId=${toEntityId}&departDate=2024-06-15&market=US&currency=USD&locale=en-US`;
     try {
         console.log(`Fetching cheapest one-way flight from ${fromEntityId} to ${toEntityId}...`);
         const data = await retryFetch(url, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
-                'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3'
+                'Content-Type': 'application/json'
             }
         });
         console.log("Cheapest one-way flight data fetched:", data);
@@ -269,7 +256,7 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
 
 // Fetch flight details
 const fetchFlightDetails = async (flightId) => {
-    const url = `https://sky-scanner3.p.rapidapi.com/flights/detail?flightId=${flightId}`;
+    const url = `https://travel-api-proxy.onrender.com/api/flights/detail?flightId=${flightId}`;
     try {
         console.log(`Fetching flight details for ${flightId}...`);
         const response = await fetch(url, {
@@ -296,7 +283,7 @@ const fetchHotelData = async (destination) => {
     try {
         console.log(`Fetching hotel data for destination ${destination}...`);
         // Replace with actual API endpoint and parameters
-        const response = await fetch(`https://hotels-com-provider.p.rapidapi.com/v2/regions?query=${destination}&domain=AR&locale=es_AR`, {
+        const response = await fetch(`https://travel-api-proxy.onrender.com/api/hotels?query=${destination}&domain=AR&locale=es_AR`, {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'hotels-com-provider.p.rapidapi.com',
