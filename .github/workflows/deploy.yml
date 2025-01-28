@@ -8,7 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 60 # Increase the timeout as needed
+    timeout-minutes: 120 # Increase the timeout as needed
 
     steps:
     - name: Checkout code
