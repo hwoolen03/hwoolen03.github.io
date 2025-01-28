@@ -8,8 +8,10 @@ module(
 bazel_dep(name = "rules_nodejs", version = "4.0.0")
 bazel_dep(name = "rules_js", version = "1.0.0")
 
-# Define npm dependencies
-npm_dependencies(
+# Define npm dependencies using rules_nodejs
+load("@rules_nodejs//:index.bzl", "npm_install")
+
+npm_install(
     name = "npm_deps",
     package_json = "//:package.json",
     package_lock_json = "//:package-lock.json",
