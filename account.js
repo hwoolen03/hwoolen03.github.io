@@ -1,3 +1,4 @@
+// Define the Auth0 client
 let auth0Client = null;
 
 // Configure the Auth0 client
@@ -96,12 +97,49 @@ const triggerPersonalization = async (user) => {
     }
 };
 
+// Personalize content based on user data
+const personalizeContent = async (user) => {
+    try {
+        console.log("Personalizing content for user:", user);
+
+        // Generate destination recommendations
+        const destination = await generateRecommendations(user);
+
+        const checkInDate = document.getElementById("holidayDate").value;
+        const checkOutDate = document.getElementById("returnDate").value;
+        const departureLocation = document.getElementById("departureLocation").value;
+
+        const { configData, airportData } = await Promise.all([fetchConfigData(), fetchAirportData()]);
+        const roundtripFlights = await searchRoundtripFlights(departureLocation, destination);
+        const cheapestOneWay = await fetchCheapestOneWayFlight(departureLocation, destination, checkInDate, "US", "USD", "en-US");
+
+        if (!roundtripFlights || !cheapestOneWay) {
+            throw new Error("Error fetching flights");
+        }
+
+        const hotelData = await fetchHotelData(destination);
+        if (!hotelData) throw new Error("Error fetching hotels");
+
+        const urlParams = new URLSearchParams({
+            welcomeMessage: sanitizeInput(`Hello, ${user.name}!`),
+            userEmail: sanitizeInput(`Your email: ${user.email}`),
+            flightInfo: sanitizeInput(JSON.stringify(roundtripFlights)),
+            hotelInfo: sanitizeInput(JSON.stringify(hotelData)),
+        }).toString();
+
+        window.location.href = `HolidayResults.html?${urlParams}`;
+    } catch (error) {
+        console.error("Error personalizing content:", error);
+        alert("An error occurred while personalizing your content. Please try again.");
+    }
+};
+
 // Generate holiday recommendations based on user data
 const generateRecommendations = async (user) => {
     try {
         console.log("Generating recommendations for user:", user);
 
-        // Example recommendation logic
+        // Example recommendation logic (use actual user data or preferences here)
         const recommendations = ["Paris", "New York", "Tokyo"];
         return recommendations[Math.floor(Math.random() * recommendations.length)];
     } catch (error) {
@@ -154,6 +192,7 @@ const validateInputs = () => {
     return valid;
 };
 
+// Flash the border red to indicate an error
 const flashRed = (elementId, message) => {
     const element = document.getElementById(elementId);
     if (!element) return;
@@ -180,41 +219,6 @@ const retryFetch = async (url, options, retries = 3, delay = 1000) => {
         await new Promise((res) => setTimeout(res, delay * Math.pow(2, i))); // Exponential backoff
     }
     throw new Error(`Failed to fetch after ${retries} attempts`);
-};
-
-// Personalize content based on user data
-const personalizeContent = async (user) => {
-    try {
-        console.log("Personalizing content for user:", user);
-
-        const destination = await generateRecommendations(user);
-        const checkInDate = document.getElementById("holidayDate").value;
-        const checkOutDate = document.getElementById("returnDate").value;
-        const departureLocation = document.getElementById("departureLocation").value;
-
-        const { configData, airportData } = await Promise.all([fetchConfigData(), fetchAirportData()]);
-        const roundtripFlights = await searchRoundtripFlights(departureLocation, destination);
-        const cheapestOneWay = await fetchCheapestOneWayFlight(departureLocation, destination, checkInDate, "US", "USD", "en-US");
-
-        if (!roundtripFlights || !cheapestOneWay) {
-            throw new Error("Error fetching flights");
-        }
-
-        const hotelData = await fetchHotelData(destination);
-        if (!hotelData) throw new Error("Error fetching hotels");
-
-        const urlParams = new URLSearchParams({
-            welcomeMessage: sanitizeInput(`Hello, ${user.name}!`),
-            userEmail: sanitizeInput(`Your email: ${user.email}`),
-            flightInfo: sanitizeInput(JSON.stringify(roundtripFlights)),
-            hotelInfo: sanitizeInput(JSON.stringify(hotelData)),
-        }).toString();
-
-        window.location.href = `HolidayResults.html?${urlParams}`;
-    } catch (error) {
-        console.error("Error personalizing content:", error);
-        alert("An error occurred while personalizing your content. Please try again.");
-    }
 };
 
 // Sanitize input to prevent injection attacks
