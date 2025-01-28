@@ -1,11 +1,10 @@
-# WORKSPACE file
+# WORKSPACE
 
-# Load npm_install rule from rules_nodejs
-load("@rules_nodejs//:index.bzl", "npm_install")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# Define npm dependencies
-npm_install(
-    name = "npm_deps",
-    package_json = "//:package.json",
-    package_lock_json = "//:package-lock.json",
+http_archive(
+    name = "rules_nodejs",
+    sha256 = "732aa2aeef9ba629cd7fa1cb30da07e6b696ed78706b08d84d5d8601982f38b1",
+    strip_prefix = "rules_nodejs-6.3.3",
+    url = "https://github.com/bazel-contrib/rules_nodejs/releases/download/v6.3.3/rules_nodejs-v6.3.3.tar.gz",
 )
