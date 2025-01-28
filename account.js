@@ -85,6 +85,10 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
             }
         });
         console.log('Roundtrip flight data fetched:', data);
+        if (data.status === false) {
+            console.error('Error fetching roundtrip flights:', data.message);
+            return null;
+        }
         if (data.flights && data.flights.length > 0) {
             const flightId = data.flights[0].id;
             console.log('First flight ID:', flightId);
