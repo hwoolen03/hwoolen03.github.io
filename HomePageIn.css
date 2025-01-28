@@ -89,7 +89,7 @@ h2 {
     align-items: center; /* Align buttons horizontally */
     padding: 20px;
     height: 60px; /* Adjust the height to match the header height */
-    z-index: 10; /* Ensure auth buttons are above other elements */
+    z-index: 1000; /* Ensure auth buttons are above other elements */
 }
 
 .auth-buttons button {
@@ -103,7 +103,7 @@ h2 {
     transition: all 0.3s ease;
     margin: 5px;
     pointer-events: auto; /* Ensure buttons are clickable */
-    z-index: 10; /* Ensure buttons are above other elements */
+    z-index: 1001; /* Ensure buttons are above other elements */
 }
 
 .auth-buttons button:hover {
