@@ -1,9 +1,13 @@
 const express = require("express");
 const fetch = require("node-fetch");
+const cors = require("cors");
 const router = express.Router();
 
 const RAPIDAPI_KEY = "4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3";
 const RAPIDAPI_HOST = "booking-com15.p.rapidapi.com";
+
+// Enable CORS for all routes
+router.use(cors());
 
 // Helper function to fetch data from RapidAPI
 const fetchFromRapidAPI = async (url) => {
