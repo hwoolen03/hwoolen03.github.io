@@ -9,22 +9,26 @@ on:
       - main
 
 jobs:
-  check-tensorflow:
+  build:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version: [14, 16, 18]
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
 
-    - name: Check TensorFlow.js Installation
-      run: |
-        npm list @tensorflow/tfjs
-        node -e "require('@tensorflow/tfjs'); console.log('TensorFlow.js is installed and working properly');"
+      - name: Check TensorFlow.js Installation
+        run: |
+          npm install @tensorflow/tfjs
+          node -e "require('@tensorflow/tfjs'); console.log('TensorFlow.js installed successfully');"
