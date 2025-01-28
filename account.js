@@ -85,6 +85,17 @@ const attachButtonListeners = (user) => {
     });
 };
 
+// Trigger personalization process
+const triggerPersonalization = async (user) => {
+    try {
+        console.log("Triggering personalization process for user:", user);
+        await personalizeContent(user);
+    } catch (error) {
+        console.error("Error during personalization process:", error);
+        alert("An error occurred while personalizing your content. Please try again.");
+    }
+};
+
 // Validate input fields
 const validateInputs = () => {
     const checkInDate = document.getElementById("holidayDate").value;
