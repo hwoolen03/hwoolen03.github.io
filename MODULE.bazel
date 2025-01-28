@@ -1,0 +1,16 @@
+module(
+    name = "my_project",
+    version = "1.0.0",
+    compatibility_level = 1,
+)
+
+# Define dependencies
+bazel_dep(name = "rules_nodejs", version = "4.0.0")
+bazel_dep(name = "rules_js", version = "1.0.0")
+
+# Define npm dependencies
+npm_dependencies(
+    name = "npm_deps",
+    package_json = "//:package.json",
+    package_lock_json = "//:package-lock.json",
+)
