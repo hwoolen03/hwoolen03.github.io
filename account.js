@@ -34,6 +34,7 @@ const signOut = async () => {
 
 // Fetch data utility function
 const fetchData = async (url, options) => {
+    console.log(`Fetching URL: ${url}`);
     const response = await fetch(url, options);
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
