@@ -5,7 +5,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL
+  origin: 'https://hwoolen03.github.io' // Allow requests from this origin
 }));
 app.use(express.json());
 
