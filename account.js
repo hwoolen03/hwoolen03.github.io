@@ -251,4 +251,9 @@ const fetchAirportData = async () => {
         console.log("Airport data fetched:", data);
         return data; // Assuming the response is in JSON format
     } catch (error) {
-        console
+        console.error("Error fetching airport data:", error);
+        throw new Error("Error fetching airport data");
+    }
+};
+
+// Ensure the file ends properly with no missing brackets.
