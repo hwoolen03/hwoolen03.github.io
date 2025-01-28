@@ -256,4 +256,5 @@ const fetchAirportData = async () => {
     }
 };
 
-// Ensure the file ends properly with no missing brackets.
+// Ensure all code ends properly with no missing brackets
+
