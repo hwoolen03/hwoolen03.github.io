@@ -12,7 +12,7 @@
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "axios": "^0.21.1",
-    "@tensorflow/tfjs": "^3.11.0" // Added TensorFlow.js
+    "@tensorflow/tfjs": "^3.11.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.7"
