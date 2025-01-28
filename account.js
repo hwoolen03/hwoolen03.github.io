@@ -155,10 +155,9 @@ const flashRed = (elementId, message) => {
 // Fetch configuration data
 const fetchConfigData = async () => {
     try {
-        const response = await fetch("https://sky-scanner3.p.rapidapi.com/get-config", {
+        const response = await fetch("https://travel-api-proxy.onrender.com/get-config", {
             method: 'GET',
             headers: {
-                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             }
         });
@@ -176,10 +175,9 @@ const fetchConfigData = async () => {
 // Fetch airport data
 const fetchAirportData = async () => {
     try {
-        const response = await fetch("https://sky-scanner3.p.rapidapi.com/flights/airports", {
+        const response = await fetch("https://travel-api-proxy.onrender.com/flights/airports", {
             method: 'GET',
             headers: {
-                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             }
         });
@@ -198,10 +196,9 @@ const fetchAirportData = async () => {
 const fetchSkyIds = async () => {
     try {
         console.log("Fetching Sky IDs...");
-        const response = await fetch("https://sky-scanner3.p.rapidapi.com/flights/skyId-list", {
+        const response = await fetch("https://travel-api-proxy.onrender.com/flights/skyId-list", {
             method: 'GET',
             headers: {
-                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             }
         });
@@ -237,7 +234,7 @@ const retryFetch = async (url, options, retries = 3, delay = 1000) => {
 
 // Search for roundtrip flights
 const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
-    const url = `https://sky-scanner3.p.rapidapi.com/api/v1/search-roundtrip`;
+    const url = `https://travel-api-proxy.onrender.com/api/v1/search-roundtrip`;
     const params = {
         fromEntityId: fromEntityId,
         toEntityId: toEntityId
@@ -248,7 +245,6 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             },
             body: JSON.stringify(params)
@@ -270,7 +266,7 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
 
 // Fetch cheapest one-way flight
 const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId, departDate, market, currency, locale) => {
-    const url = `https://sky-scanner3.p.rapidapi.com/api/v1/cheapest-one-way`;
+    const url = `https://travel-api-proxy.onrender.com/api/v1/cheapest-one-way`;
     const params = {
         fromEntityId: fromEntityId,
         toEntityId: toEntityId,
@@ -285,7 +281,6 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId, departDate, m
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             }
         });
@@ -299,13 +294,12 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId, departDate, m
 
 // Fetch flight details
 const fetchFlightDetails = async (flightId) => {
-    const url = `https://sky-scanner3.p.rapidapi.com/flights/detail?flightId=${flightId}`;
+    const url = `https://travel-api-proxy.onrender.com/flights/detail?flightId=${flightId}`;
     try {
         console.log(`Fetching flight details for ${flightId}...`);
         const response = await fetch(url, {
             method: 'GET',
             headers: {
-                'x-rapidapi-host': 'sky-scanner3.p.rapidapi.com',
                 'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             }
         });
@@ -325,10 +319,9 @@ const fetchFlightDetails = async (flightId) => {
 const fetchHotelData = async (destination) => {
     try {
         console.log(`Fetching hotel data for destination ${destination}...`);
-        const response = await fetch(`https://hotels-com-provider.p.rapidapi.com/v2/regions?query=${destination}&domain=AR&locale=es_AR`, {
+        const response = await fetch(`https://travel-api-proxy.onrender.com/v2/regions?query=${destination}&domain=AR&locale=es_AR`, {
             method: 'GET',
             headers: {
-                'x-rapidapi-host': 'hotels-com-provider.p.rapidapi.com',
                 'x-rapidapi-key': process.env.RAPIDAPI_KEY // Corrected
             }
         });
