@@ -6,4 +6,5 @@ module(
 
 # Define dependencies
 bazel_dep(name = "rules_nodejs", version = "4.0.0")
-bazel_dep(name = "rules_js", version = "1.0.0")
+# Remove or update the version of rules_js if necessary
+# bazel_dep(name = "rules_js", version = "1.0.0")
