@@ -3,8 +3,9 @@ body {
     margin: 0;
     padding: 0;
     font-family: sans-serif;
-    background: url('ActionPage.jpg') no-repeat center center fixed;
-    background-size: cover;
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
 }
 
 /* Header Styling */
@@ -13,11 +14,10 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    position: absolute;
-    top: 0;
     width: 90%;
     height: 60px; /* Adjust the height to match the height of the sign-in buttons */
-    z-index: 1; /* Ensure header is above other content */
+    position: relative;
+    z-index: 1; /* Ensure header is above the background */
 }
 
 .logo-heading {
@@ -79,39 +79,6 @@ h2 {
     color: black;
 }
 
-/* Auth Buttons Styling */
-.auth-buttons {
-    position: fixed;
-    right: 0;
-    top: 20px;
-    display: flex;
-    flex-direction: row; /* Ensure buttons are in a row */
-    align-items: center; /* Align buttons horizontally */
-    padding: 20px;
-    height: 60px; /* Adjust the height to match the header height */
-    z-index: 1000; /* Ensure auth buttons are above other elements */
-}
-
-.auth-buttons button {
-    background-color: transparent;
-    border: 2px solid white;
-    color: white;
-    padding: 15px 25px;
-    font-size: 16px;
-    border-radius: 30px; /* Rounded edges */
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin: 5px;
-    pointer-events: auto; /* Ensure buttons are clickable */
-    z-index: 1001; /* Ensure buttons are above other elements */
-}
-
-.auth-buttons button:hover {
-    background-color: white;
-    color: black;
-}
-
-/* Input and Date Picker Styling */
 .date-picker,
 .text-input {
     background-color: transparent;
@@ -187,6 +154,35 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(1);
 }
 
+/* Auth Buttons Styling */
+.auth-buttons {
+    position: fixed;
+    right: 0;
+    top: 20px;
+    display: flex;
+    flex-direction: row; /* Ensure buttons are in a row */
+    align-items: center; /* Align buttons horizontally */
+    padding: 20px;
+    height: 60px; /* Adjust the height to match the header height */
+}
+
+.auth-buttons button {
+    background-color: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 15px 25px;
+    font-size: 16px;
+    border-radius: 30px; /* Rounded edges */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 5px;
+}
+
+.auth-buttons button:hover {
+    background-color: white;
+    color: black;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     h1 {
@@ -202,8 +198,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         margin-right: 10px;
     }
 
-    .center-button {
+    .center-button.small-button {
         padding: 10px 20px;
         font-size: 16px;
+        margin-top: 300px;
     }
 }
