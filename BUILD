@@ -1,10 +1,5 @@
-# BUILD
+load("@npm//@bazel/typescript:index.bzl", "ts_project")  # Correct load path
 
-package(default_visibility = ["//visibility:public"])
-
-load("@rules_ts//:defs.bzl", "ts_project")
-
-# Define a TypeScript project
 ts_project(
     name = "tfjs-backend-cpu_pkg",
     srcs = glob(["src/**/*.ts"]),
@@ -13,4 +8,6 @@ ts_project(
         "@npm//@types/seedrandom",
         "@npm//seedrandom",
     ],
+    declaration = True,
+    tsconfig = "//:tsconfig.json",  # Add explicit tsconfig
 )
