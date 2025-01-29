@@ -6,4 +6,4 @@ module(
 
 # Define dependencies
 bazel_dep(name = "rules_nodejs", version = "6.3.3")
-bazel_dep(name = "rules_ts", version = "1.0.0")
+bazel_dep(name = "rules_ts", version = "5.0.0")  # Updated to a valid version of rules_ts
