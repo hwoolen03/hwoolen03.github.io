@@ -6,4 +6,4 @@ module(
 
 # Define dependencies with valid versions
 bazel_dep(name = "rules_nodejs", version = "6.3.3")  # Use the correct version of rules_nodejs
-bazel_dep(name = "rules_ts", version = "4.0.0")      # Use a valid version of rules_ts (adjust as needed)
+bazel_dep(name = "build_bazel_rules_typescript", version = "4.0.0")  # Use a valid version of rules_typescript (adjust as needed)
