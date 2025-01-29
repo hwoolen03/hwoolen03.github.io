@@ -4,6 +4,7 @@
   "description": "Your project description",
   "main": "index.js",
   "scripts": {
+    "build": "bazel build //:BUILD",
     "start": "node index.js"
   },
   "author": "Your Name",
