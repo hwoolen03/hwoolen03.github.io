@@ -8,12 +8,12 @@ http_archive(
     url = "https://github.com/bazel-contrib/rules_nodejs/releases/download/v6.3.3/rules_nodejs-v6.3.3.tar.gz",  # Ensure the URL is correct
 )
 
-# Fetch rules_ts
+# Fetch rules_ts (Updated to a valid version)
 http_archive(
     name = "rules_ts",
-    sha256 = "d3f8c1eac1cf57c050fd46bb12511637b8f4e7b9534cb594c7ff937e29088847",  # Replace with the checksum of the version you're using
-    strip_prefix = "rules_typescript-4.0.0",  # Adjust this based on the version you pick
-    url = "https://github.com/bazelbuild/rules_typescript/releases/download/4.0.0/rules_typescript-4.0.0.tar.gz",  # Replace with the correct URL
+    sha256 = "sha256-checksum-here",  # Replace with the checksum of the version you're using
+    strip_prefix = "rules_typescript-5.0.0",  # Adjust this based on the version you pick
+    url = "https://github.com/bazelbuild/rules_typescript/releases/download/5.0.0/rules_typescript-5.0.0.tar.gz",  # Replace with the correct URL
 )
 
 # Register Node.js toolchains and install dependencies (rules_nodejs)
