@@ -1,0 +1,14 @@
+{
+  "name": "Atlas",
+  "version": "1.0.0",
+  "description": "Your project description",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@tensorflow/tfjs": "^3.21.0"
+  }
+}
