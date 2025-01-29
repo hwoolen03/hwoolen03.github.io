@@ -5,4 +5,22 @@ module(
 )
 
 # Define dependencies
+# Using the latest version of rules_nodejs
 bazel_dep(name = "rules_nodejs", version = "6.3.3")
+
+# Replace deprecated npm_bazel_typescript with rules_ts
+# This package is recommended for TypeScript support
+bazel_dep(name = "rules_ts", version = "1.0.0")
+
+# Configure rules_nodejs
+# Make sure to initialize rules_nodejs after declaring it
+load("@rules_nodejs//nodejs:repositories.bzl", "nodejs_register_toolchains", "install_nodejs_deps")
+nodejs_register_toolchains()
+install_nodejs_deps()
+
+# Configure rules_ts
+# Set up TypeScript rules
+load("@rules_ts//typescript:repositories.bzl", "rules_ts_dependencies")
+rules_ts_dependencies()
+
+# Additional dependencies can be added below as needed
