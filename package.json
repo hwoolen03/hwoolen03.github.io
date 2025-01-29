@@ -1,15 +1,16 @@
 {
   "name": "Atlas",
   "version": "1.0.0",
-  "description": "Your project description",
-  "main": "index.js",
   "scripts": {
-    "build": "bazel build //:BUILD",
+    "build": "bazel build //...",
     "start": "node index.js"
   },
-  "author": "Your Name",
-  "license": "MIT",
   "dependencies": {
     "@tensorflow/tfjs": "^3.21.0"
+  },
+  "devDependencies": {
+    "@bazel/bazelisk": "^1.18.0",
+    "@bazel/typescript": "^6.3.3",
+    "typescript": "^5.0.0"
   }
 }
