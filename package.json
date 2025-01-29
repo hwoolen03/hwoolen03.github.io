@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "@bazel/bazelisk": "^1.18.0",
-    "@bazel/typescript": "^6.3.3",
+    "@bazel/typescript": "5.8.2",  # Must match rules_nodejs version
     "typescript": "^5.0.0"
   }
 }
