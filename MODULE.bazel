@@ -1,5 +1,5 @@
 module(
-    name = ""name": "@your-scope/tfjs-backend-cpu-custom",",
+    name = "tfjs-backend-cpu-custom",
     version = "1.0.0",
     compatibility_level = 1,
 )
