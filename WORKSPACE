@@ -10,10 +10,10 @@ http_archive(
 
 # Fetch rules_ts (Updated to a valid version)
 http_archive(
-    name = "rules_ts",
+    name = "build_bazel_rules_typescript",
     sha256 = "sha256-checksum-here",  # Replace with the checksum of the version you're using
-    strip_prefix = "rules_typescript-5.0.0",  # Adjust this based on the version you pick
-    url = "https://github.com/bazelbuild/rules_typescript/releases/download/5.0.0/rules_typescript-5.0.0.tar.gz",  # Replace with the correct URL
+    strip_prefix = "rules_typescript-4.0.0",  # Adjust this based on the version you pick
+    url = "https://github.com/bazelbuild/rules_typescript/releases/download/4.0.0/rules_typescript-4.0.0.tar.gz",  # Replace with the correct URL
 )
 
 # Register Node.js toolchains and install dependencies (rules_nodejs)
@@ -22,5 +22,5 @@ nodejs_register_toolchains()
 install_nodejs_deps()
 
 # Register TypeScript dependencies (rules_ts)
-load("@rules_ts//typescript:repositories.bzl", "rules_ts_dependencies")
-rules_ts_dependencies()
+load("@build_bazel_rules_typescript//:index.bzl", "rules_typescript_dependencies")
+rules_typescript_dependencies()
