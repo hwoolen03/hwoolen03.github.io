@@ -2,9 +2,10 @@
 
 package(default_visibility = ["//visibility:public"])
 
-load("@npm_bazel_typescript//:index.bzl", "ts_library")
+load("@rules_ts//:defs.bzl", "ts_project")
 
-ts_library(
+# Define a TypeScript project
+ts_project(
     name = "tfjs-backend-cpu_pkg",
     srcs = glob(["src/**/*.ts"]),
     deps = [
