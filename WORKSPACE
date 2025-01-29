@@ -1,16 +1,16 @@
 workspace(name = "Atlas")
 
-# Use OFFICIAL rules_nodejs (not bazel-contrib fork)
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# Official rules_nodejs (v5.8.2)
 http_archive(
     name = "rules_nodejs",
-    sha256 = "7a4c4bfe6f0e9f8acad301633a0cbef133f0a0c8321fda7e621a9340a4a1d774",  # SHA for 6.3.3
-    strip_prefix = "rules_nodejs-6.3.3",
-    url = "https://github.com/bazelbuild/rules_nodejs/releases/download/v6.3.3/rules_nodejs-v6.3.3.tar.gz",
+    sha256 = "d14076339deb08e5460c221fae5c5e9605d2ef4848eee1f0c81c9ffdc1ab31c1",
+    strip_prefix = "rules_nodejs-5.8.2",
+    url = "https://github.com/bazelbuild/rules_nodejs/releases/download/v5.8.2/rules_nodejs-core-5.8.2.tar.gz",
 )
 
-# Set up Node.js and npm
+# Node.js toolchain
 load("@rules_nodejs//nodejs:repositories.bzl", "nodejs_register_toolchains")
 nodejs_register_toolchains(
     name = "nodejs",
