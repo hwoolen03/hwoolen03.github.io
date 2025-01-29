@@ -1,4 +1,4 @@
-# WORKSPACE file
+workspace(name = "Atlas")
 
 # Fetch rules_nodejs
 http_archive(
