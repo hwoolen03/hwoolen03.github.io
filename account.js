@@ -1,3 +1,6 @@
+import { searchRoundtripFlights, fetchCheapestOneWayFlight, fetchFlightDetails } from './routes/flights';
+import { fetchHotelData, fetchHotelPaymentFeatures } from './routes/hotels';
+
 let auth0Client = null;
 
 // Configure the Auth0 client
@@ -32,26 +35,11 @@ const signOut = async () => {
     }
 };
 
-// Fetch data utility function
-const fetchData = async (url, options) => {
-    console.log(`Fetching URL: ${url}`);
-    const response = await fetch(url, options);
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-};
-
 // Fetch hotel data
-const fetchHotelData = async (destination) => {
+const fetchHotelDataWrapper = async (destination) => {
     try {
         console.log(`Fetching hotel data for destination ${destination}...`);
-        return await fetchData(`https://travel-api-proxy.onrender.com/api/hotels/search?query=${destination}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+        return await fetchHotelData(destination);
     } catch (error) {
         console.error('Error fetching hotel data:', error);
         return null;
@@ -59,15 +47,10 @@ const fetchHotelData = async (destination) => {
 };
 
 // Fetch hotel payment features
-const fetchHotelPaymentFeatures = async (hotelId) => {
+const fetchHotelPaymentFeaturesWrapper = async (hotelId) => {
     try {
         console.log(`Fetching payment features for hotel ID ${hotelId}...`);
-        return await fetchData(`https://travel-api-proxy.onrender.com/api/hotels/payment-features?hotel_id=${hotelId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+        return await fetchHotelPaymentFeatures(hotelId);
     } catch (error) {
         console.error('Error fetching hotel payment features:', error);
         return null;
@@ -75,29 +58,10 @@ const fetchHotelPaymentFeatures = async (hotelId) => {
 };
 
 // Search for roundtrip flights
-const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
-    const url = `https://travel-api-proxy.onrender.com/api/flights/search?fromId=${fromEntityId}&toId=${toEntityId}&pageNo=1&adults=1&children=0%2C17&sort=BEST&cabinClass=ECONOMY&currency_code=AED`;
+const searchRoundtripFlightsWrapper = async (fromEntityId, toEntityId) => {
     try {
         console.log(`Fetching roundtrip flights from ${fromEntityId} to ${toEntityId}...`);
-        const data = await fetchData(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        console.log('Roundtrip flight data fetched:', data);
-        if (data.status === false) {
-            console.error('Error fetching roundtrip flights:', data.message);
-            return null;
-        }
-        if (data.flights && data.flights.length > 0) {
-            const flightId = data.flights[0].id;
-            console.log('First flight ID:', flightId);
-            return flightId;
-        } else {
-            console.error('No flights found');
-            return null;
-        }
+        return await searchRoundtripFlights(fromEntityId, toEntityId);
     } catch (error) {
         console.error('Error searching for roundtrip flights:', error);
         return null;
@@ -105,16 +69,10 @@ const searchRoundtripFlights = async (fromEntityId, toEntityId) => {
 };
 
 // Fetch cheapest one-way flight
-const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
-    const url = `https://travel-api-proxy.onrender.com/api/flights/min-price?fromId=${fromEntityId}&toId=${toEntityId}&cabinClass=ECONOMY&currency_code=AED`;
+const fetchCheapestOneWayFlightWrapper = async (fromEntityId, toEntityId) => {
     try {
         console.log(`Fetching cheapest one-way flight from ${fromEntityId} to ${toEntityId}...`);
-        return await fetchData(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+        return await fetchCheapestOneWayFlight(fromEntityId, toEntityId);
     } catch (error) {
         console.error('Error fetching cheapest one-way flight:', error);
         return null;
@@ -122,16 +80,10 @@ const fetchCheapestOneWayFlight = async (fromEntityId, toEntityId) => {
 };
 
 // Fetch flight details
-const fetchFlightDetails = async (flightId) => {
-    const url = `https://travel-api-proxy.onrender.com/api/flights/details?flightId=${flightId}`;
+const fetchFlightDetailsWrapper = async (flightId) => {
     try {
         console.log(`Fetching flight details for ${flightId}...`);
-        return await fetchData(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+        return await fetchFlightDetails(flightId);
     } catch (error) {
         console.error('Error fetching flight details:', error);
         return null;
@@ -219,8 +171,8 @@ const personalizeContent = async (user) => {
         console.log('Inputs - Destination:', destination, 'CheckInDate:', checkInDate, 'CheckOutDate:', checkOutDate, 'DepartureLocation:', departureLocation);
 
         const [roundtripFlights, cheapestOneWay] = await Promise.all([
-            searchRoundtripFlights(departureLocation, destination),
-            fetchCheapestOneWayFlight(departureLocation, destination)
+            searchRoundtripFlightsWrapper(departureLocation, destination),
+            fetchCheapestOneWayFlightWrapper(departureLocation, destination)
         ]);
 
         if (!roundtripFlights) {
@@ -231,9 +183,9 @@ const personalizeContent = async (user) => {
         }
 
         const flightId = roundtripFlights; // Assuming the flight ID is returned
-        const flightDetailsData = await fetchFlightDetails(flightId);
+        const flightDetailsData = await fetchFlightDetailsWrapper(flightId);
 
-        const hotelData = await fetchHotelData(destination);
+        const hotelData = await fetchHotelDataWrapper(destination);
         if (!hotelData) {
             throw new Error('Error fetching hotel data');
         }
@@ -243,9 +195,8 @@ const personalizeContent = async (user) => {
         const flightInfo = `Flights to ${destination}: ${JSON.stringify(roundtripFlights)}`;
         const hotelInfo = `Hotels in ${destination}: ${JSON.stringify(hotelData)}`;
 
-        console.log('Redirecting to HolidayResults.html with data');
-
-        window.location.href = `HolidayResults.html?welcomeMessage=${encodeURIComponent(welcomeMessage)}&userEmail=${encodeURIComponent(userEmail)}&flightInfo=${encodeURIComponent(flightInfo)}&hotelInfo=${encodeURIComponent(hotelInfo)}`;
+        console.log('Personalized content generated successfully');
+        // Handle the personalized content as needed
     } catch (error) {
         console.error('Error personalizing content:', error);
     }
