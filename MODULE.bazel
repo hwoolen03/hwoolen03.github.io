@@ -25,13 +25,3 @@ git_override(
     commit = "0987654321ab...",  # Replace with actual commit hash
     remote = "https://github.com/bazelbuild/rules_nodejs",
 )
-
-load("@aspect_rules_js//npm:extensions.bzl", "npm")
-
-npm.npm_translate_lock(
-    name = "npm",
-    npm_lock = "//:package-lock.json",
-    package_json = "//:package.json",
-)
-
-use_repo(npm, "npm")
