@@ -1,8 +1,12 @@
 module(
-    name = "tfjs-backend-cpu-custom",
+    name = "Atlas",
     version = "1.0.0",
-    compatibility_level = 1,
 )
 
-# Declare official rules_nodejs
-bazel_dep(name = "rules_nodejs", version = "5.8.2")
+npm = use_extension("@bazel/registry//npm:extensions.bzl", "npm")
+npm.npm_translate_lock(
+    name = "npm",
+    lockfile = "//:package-lock.json",
+)
+
+use_repo(npm, "npm")
