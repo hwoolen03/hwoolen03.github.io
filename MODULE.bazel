@@ -5,7 +5,7 @@ module(
 
 bazel_dep(name = "aspect_rules_js", version = "1.0.0")
 
-load("@aspect_rules_js//js:extensions.bzl", "npm")
+npm = use_extension("@aspect_rules_js//js:extensions.bzl", "npm")
 
 npm.npm_translate_lock(
     name = "npm",
