@@ -1,5 +1,5 @@
-import { searchRoundtripFlights, fetchCheapestOneWayFlight, fetchFlightDetails } from './routes/flights';
-import { fetchHotelData, fetchHotelPaymentFeatures } from './routes/hotels';
+import { searchRoundtripFlights, fetchCheapestOneWayFlight, fetchFlightDetails } from '../routes/flights';
+import { fetchHotelData, fetchHotelPaymentFeatures } from '../routes/hotels';
 
 let auth0Client = null;
 
