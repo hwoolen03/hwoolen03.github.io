@@ -3,14 +3,15 @@ module(
     version = "1.0.0",
 )
 
-bazel_dep(name = "aspect_rules_js", version = "1.0.0")
+bazel_dep(name = "aspect_rules_js", version = "1.32.0")
+bazel_dep(name = "aspect_rules_ts", version = "1.32.0")
 
-npm = use_extension("@aspect_rules_js//js:extensions.bzl", "npm")
+npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm")
 
 npm.npm_translate_lock(
     name = "npm",
-    lockfile = "//:package-lock.json",  # or yarn_lock for yarn.lock
+    npm_lock = "//:package-lock.json",
     package_json = "//:package.json",
 )
 
-use_repo(npm, "npm")
+use_repo(npm, "npm", "npm_atlas")
