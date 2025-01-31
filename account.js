@@ -1,4 +1,4 @@
-import { createAuth0Client } from '@auth0/auth0-spa-js';
+
 import * as tf from '@tensorflow/tfjs';
 
 let auth0Client = null;
