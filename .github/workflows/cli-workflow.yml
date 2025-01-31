@@ -1,0 +1,16 @@
+name: CLI Workflow
+
+on: [workflow_dispatch]
+
+jobs:
+  run-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run CLI commands
+        run: |
+          bazel clean --expunge
+          bazel sync --only=aspect_rules_js,aspect_rules_ts,rules_nodejs,rules_typescript
+          bazel build //...
