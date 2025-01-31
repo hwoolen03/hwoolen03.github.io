@@ -1,5 +1,5 @@
 {
-  "name": "Atlas",
+  "name": "atlas",
   "version": "1.0.0",
   "scripts": {
     "build": "bazel build //...",
