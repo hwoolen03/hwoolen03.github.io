@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atlas Travel - Signed In</title>
-    <link rel="stylesheet" href="HomePageIn.css">
+    <link rel="stylesheet" href="HomePage.css">
     <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script type="module" src="account.js" defer></script>
+    <script src="script.js" defer></script>
 </head>
 <body>
 <header>
@@ -15,62 +14,37 @@
         <img src="mock5.png" alt="Atlas Travel Logo" class="logo">
         <h1>Atlas Travel</h1>
     </div>
-    <div class="auth-buttons">
-        <button id="myAccountBtn" onclick="window.location.href='MyAccount.html'">My Account</button>
-        <button id="signOutBtn" class="form-button">Sign Out</button>
-    </div>
+    <button id="signOutBtn">Sign Out</button>
 </header>
 
-<main>
-    <div class="center-button-container">
-        <div class="input-container">
-            <label for="holidayDate">When do you want to go?</label>
-            <input type="date" id="holidayDate" class="date-picker">
-        </div>
-        <div class="input-container">
-            <label for="returnDate">When are you coming back?</label>
-            <input type="date" id="returnDate" class="date-picker">
-        </div>
-        <div class="input-container">
-            <span class="plane-icon">✈️</span>
-            <select id="departureLocation" class="text-input">
-                <option value="">Select Airport</option>
-                <!-- UK Airports -->
-                <option value="LHR">London Heathrow Airport (LHR)</option>
-                <option value="LGW">London Gatwick Airport (LGW)</option>
-                <option value="MAN">Manchester Airport (MAN)</option>
-                <option value="STN">London Stansted Airport (STN)</option>
-                <option value="LTN">London Luton Airport (LTN)</option>
-                <option value="EDI">Edinburgh Airport (EDI)</option>
-                <option value="BHX">Birmingham Airport (BHX)</option>
-                <option value="GLA">Glasgow Airport (GLA)</option>
-                <option value="BRS">Bristol Airport (BRS)</option>
-                <option value="NCL">Newcastle Airport (NCL)</option>
-                <option value="LPL">Liverpool John Lennon Airport (LPL)</option>
-                <option value="BFS">Belfast International Airport (BFS)</option>
-                <!-- Existing Airports -->
-                <option value="JFK">John F. Kennedy International Airport (JFK)</option>
-                <option value="LAX">Los Angeles International Airport (LAX)</option>
-                <option value="HND">Tokyo Haneda Airport (HND)</option>
-                <option value="SIN">Singapore Changi Airport (SIN)</option>
-                <option value="DXB">Dubai International Airport (DXB)</option>
-                <option value="CDG">Charles de Gaulle Airport (CDG)</option>
-                <option value="AMS">Amsterdam Schiphol Airport (AMS)</option>
-                <option value="FRA">Frankfurt Airport (FRA)</option>
-                <option value="SYD">Sydney Kingsford Smith Airport (SYD)</option>
-                <option value="HKG">Hong Kong International Airport (HKG)</option>
-            </select>
-        </div>
-        <div class="input-container">
-            <span class="currency-symbol">£</span>
-            <input type="number" id="budget" class="text-input no-arrows" placeholder="Budget">
-        </div>
-        <div class="input-container">
-            <span class="person-icon">👤</span>
-            <input type="number" id="numPeople" class="text-input no-arrows" placeholder="Number of People">
-        </div>
-        <button id="findMyHolidayButton" class="center-button small-button">Find My Holiday</button>
-    </div>
-</main>
+<div class="center-button-container">
+    <h2 class="holiday-text">Where Will Atlas Take you?</h2>
+    <button id="findMyHolidayButton" class="center-button">Find My Holiday</button>
+</div>
+
+<!-- Input Fields for Personalization -->
+<div class="input-container">
+    <label for="holidayDate">Check-In Date:</label>
+    <input type="date" id="holidayDate" name="holidayDate">
+
+    <label for="returnDate">Check-Out Date:</label>
+    <input type="date" id="returnDate" name="returnDate">
+
+    <label for="departureLocation">Departure Location (IATA Code):</label>
+    <select id="departureLocation" name="departureLocation">
+        <option value="JFK">John F. Kennedy International Airport (JFK)</option>
+        <option value="LHR">London Heathrow Airport (LHR)</option>
+        <option value="CDG">Charles de Gaulle Airport (CDG)</option>
+        <option value="HND">Tokyo Haneda Airport (HND)</option>
+        <option value="SYD">Sydney Kingsford Smith Airport (SYD)</option>
+    </select>
+
+    <label for="budget">Budget:</label>
+    <input type="number" id="budget" name="budget">
+</div>
+
+<!-- Results Section -->
+<div id="results" class="results-container"></div>
+
 </body>
 </html>
