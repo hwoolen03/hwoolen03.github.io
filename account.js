@@ -1,9 +1,13 @@
-import { searchRoundtripFlights, fetchCheapestOneWayFlight, fetchFlightDetails } from '../routes/flights';
-import { fetchHotelData, fetchHotelPaymentFeatures } from '../routes/hotels';
+import { createAuth0Client } from '@auth0/auth0-spa-js';
+import * as tf from '@tensorflow/tfjs';
 
 let auth0Client = null;
+const API_HEADERS = {
+    'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3',
+    'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
+};
 
-// Configure the Auth0 client
+// Auth0 Configuration
 const configureClient = async () => {
     try {
         auth0Client = await createAuth0Client({
@@ -17,86 +21,22 @@ const configureClient = async () => {
     }
 };
 
-// Sign out the user
 const signOut = async () => {
     try {
         if (auth0Client) {
-            console.log("Attempting to sign out user...");
             await auth0Client.logout({
                 returnTo: window.location.origin
             });
-            console.log("User signed out successfully");
             window.location.href = "index.html";
-        } else {
-            console.error("Auth0 client is not initialized");
         }
     } catch (error) {
-        console.error("Error signing out user:", error);
+        console.error("Sign out error:", error);
     }
 };
 
-// Fetch hotel data
-const fetchHotelDataWrapper = async (destination) => {
-    try {
-        console.log(`Fetching hotel data for destination ${destination}...`);
-        return await fetchHotelData(destination);
-    } catch (error) {
-        console.error('Error fetching hotel data:', error);
-        return null;
-    }
-};
-
-// Fetch hotel payment features
-const fetchHotelPaymentFeaturesWrapper = async (hotelId) => {
-    try {
-        console.log(`Fetching payment features for hotel ID ${hotelId}...`);
-        return await fetchHotelPaymentFeatures(hotelId);
-    } catch (error) {
-        console.error('Error fetching hotel payment features:', error);
-        return null;
-    }
-};
-
-// Search for roundtrip flights
-const searchRoundtripFlightsWrapper = async (fromEntityId, toEntityId) => {
-    try {
-        console.log(`Fetching roundtrip flights from ${fromEntityId} to ${toEntityId}...`);
-        return await searchRoundtripFlights(fromEntityId, toEntityId);
-    } catch (error) {
-        console.error('Error searching for roundtrip flights:', error);
-        return null;
-    }
-};
-
-// Fetch cheapest one-way flight
-const fetchCheapestOneWayFlightWrapper = async (fromEntityId, toEntityId) => {
-    try {
-        console.log(`Fetching cheapest one-way flight from ${fromEntityId} to ${toEntityId}...`);
-        return await fetchCheapestOneWayFlight(fromEntityId, toEntityId);
-    } catch (error) {
-        console.error('Error fetching cheapest one-way flight:', error);
-        return null;
-    }
-};
-
-// Fetch flight details
-const fetchFlightDetailsWrapper = async (flightId) => {
-    try {
-        console.log(`Fetching flight details for ${flightId}...`);
-        return await fetchFlightDetails(flightId);
-    } catch (error) {
-        console.error('Error fetching flight details:', error);
-        return null;
-    }
-};
-
-// Preprocess user data for the model
+// Personalization Algorithm
 const preprocessUserData = (user) => {
-    const preferences = user.preferences ? Object.values(user.preferences) : [0];
-    const validPreferences = preferences.every(pref => typeof pref === 'number' && !isNaN(pref));
-    if (!validPreferences) {
-        throw new Error('User preferences contain invalid values');
-    }
+    const preferences = user.preferences ? Object.values(user.preferences) : [0.5, 0.5, 0.5];
     return {
         name: user.name,
         email: user.email,
@@ -104,150 +44,154 @@ const preprocessUserData = (user) => {
     };
 };
 
-// Train a simple model (for demonstration purposes)
-const trainModel = async (data) => {
-    const inputShape = [data[0].preferences.length];
-    const model = tf.sequential();
-    model.add(tf.layers.dense({ units: 10, activation: 'relu', inputShape: inputShape }));
-    model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
-    model.compile({ loss: 'binaryCrossentropy', optimizer: 'adam' });
-
-    const xs = tf.tensor2d(data.map(d => d.preferences));
-    const ys = tf.tensor2d(data.map(d => d.label || 1), [data.length, 1]);
-
+const trainModel = async (userData) => {
+    const model = tf.sequential({
+        layers: [
+            tf.layers.dense({ units: 8, activation: 'relu', inputShape: [userData.preferences.length + 2] }),
+            tf.layers.dense({ units: 4, activation: 'relu' }),
+            tf.layers.dense({ units: 1, activation: 'sigmoid' })
+        ]
+    });
+    
+    model.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
+    
+    const xs = tf.tensor2d([[
+        ...userData.preferences,
+        parseFloat(userData.budget) / 5000,
+        new Date(userData.checkInDate).getMonth() / 11
+    ]]);
+    
+    const ys = tf.tensor2d([[1]]); // Dummy training data
     await model.fit(xs, ys, { epochs: 10 });
     return model;
 };
 
-// Generate recommendations
-const generateRecommendations = async (user) => {
-    try {
-        const userData = preprocessUserData(user);
-        if (!userData.preferences || userData.preferences.length === 0) {
-            throw new Error('User preferences are empty or invalid');
-        }
+const generateRecommendations = async (user, inputs) => {
+    const processedData = {
+        ...preprocessUserData(user),
+        ...inputs
+    };
 
-        const model = await trainModel([userData]);
-        const input = tf.tensor2d([userData.preferences]);
-        const output = model.predict(input);
-        const recommendations = output.dataSync();
-
-        if (!recommendations || recommendations.length === 0 || isNaN(recommendations[0])) {
-            throw new Error('Invalid recommendations generated');
-        }
-
-        const destination = mapRecommendationToDestination(recommendations[0]);
-        if (!destination) {
-            throw new Error('Invalid destination mapping');
-        }
-
-        return destination;
-    } catch (error) {
-        console.error('Error generating recommendations:', error);
-        throw error;
-    }
+    const model = await trainModel(processedData);
+    const input = tf.tensor2d([[
+        ...processedData.preferences,
+        parseFloat(inputs.budget) / 5000,
+        new Date(inputs.checkInDate).getMonth() / 11
+    ]]);
+    
+    const prediction = model.predict(input);
+    return mapRecommendationToDestination(prediction.dataSync()[0]);
 };
 
-// Map recommendation score to a valid destination identifier
 const mapRecommendationToDestination = (score) => {
-    const destinations = ['PARI', 'CDG', 'JFK', 'LHR', 'SFO'];
-    return destinations[Math.floor(score * destinations.length)];
+    const destinations = [
+        { code: 'PAR', threshold: 0.8, name: 'Paris' },
+        { code: 'JFK', threshold: 0.6, name: 'New York' },
+        { code: 'LHR', threshold: 0.4, name: 'London' },
+        { code: 'SYD', threshold: 0.2, name: 'Sydney' }
+    ];
+    
+    return destinations.reduce((closest, dest) => {
+        return score >= dest.threshold ? dest : closest;
+    }, destinations[destinations.length - 1]).code;
 };
 
-// Personalize content based on user data
+// API Functions
+const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
+    const url = `https://booking-com15.p.rapidapi.com/api/v1/flights/searchFlights?fromId=${fromIATA}&toId=${toIATA}&date=${date}`;
+    const response = await fetch(url, { method: 'GET', headers: API_HEADERS });
+    return response.json();
+};
+
+const fetchHotelData = async (destinationIATA, budget) => {
+    const destResponse = await fetch(
+        `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${destinationIATA}`,
+        { method: 'GET', headers: API_HEADERS }
+    );
+    
+    const destData = await destResponse.json();
+    const destId = destData.data[0]?.dest_id;
+    
+    const hotelResponse = await fetch(
+        `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?dest_id=${destId}&price_max=${budget}`,
+        { method: 'GET', headers: API_HEADERS }
+    );
+    
+    return hotelResponse.json();
+};
+
+// Main Workflow
 const personalizeContent = async (user) => {
-    try {
-        console.log('Personalizing content for user:', user);
-        const destination = await generateRecommendations(user);
-        if (!destination) {
-            throw new Error('No valid recommendations generated');
-        }
-        console.log('Mapped Destination:', destination);
+    const inputs = {
+        checkInDate: document.getElementById('holidayDate').value,
+        checkOutDate: document.getElementById('returnDate').value,
+        departureLocation: document.getElementById('departureLocation').value.toUpperCase(),
+        budget: document.getElementById('budget').value
+    };
 
-        const checkInDate = document.getElementById('holidayDate').value;
-        const checkOutDate = document.getElementById('returnDate').value;
-        const departureLocation = document.getElementById('departureLocation').value;
+    const destinationIATA = await generateRecommendations(user, inputs);
+    
+    const [flights, hotels] = await Promise.all([
+        searchRoundtripFlights(inputs.departureLocation, destinationIATA, inputs.checkInDate),
+        fetchHotelData(destinationIATA, inputs.budget)
+    ]);
 
-        console.log('Inputs - Destination:', destination, 'CheckInDate:', checkInDate, 'CheckOutDate:', checkOutDate, 'DepartureLocation:', departureLocation);
-
-        const [roundtripFlights, cheapestOneWay] = await Promise.all([
-            searchRoundtripFlightsWrapper(departureLocation, destination),
-            fetchCheapestOneWayFlightWrapper(departureLocation, destination)
-        ]);
-
-        if (!roundtripFlights) {
-            throw new Error('Error searching for roundtrip flights');
-        }
-        if (!cheapestOneWay) {
-            throw new Error('Error fetching cheapest one-way flight');
-        }
-
-        const flightId = roundtripFlights; // Assuming the flight ID is returned
-        const flightDetailsData = await fetchFlightDetailsWrapper(flightId);
-
-        const hotelData = await fetchHotelDataWrapper(destination);
-        if (!hotelData) {
-            throw new Error('Error fetching hotel data');
-        }
-
-        const welcomeMessage = `Hello, ${user.name}!`;
-        const userEmail = `Your email: ${user.email}`;
-        const flightInfo = `Flights to ${destination}: ${JSON.stringify(roundtripFlights)}`;
-        const hotelInfo = `Hotels in ${destination}: ${JSON.stringify(hotelData)}`;
-
-        console.log('Personalized content generated successfully');
-        // Handle the personalized content as needed
-    } catch (error) {
-        console.error('Error personalizing content:', error);
-    }
+    return {
+        destination: destinationIATA,
+        flights,
+        hotels,
+        dates: { checkIn: inputs.checkInDate, checkOut: inputs.checkOutDate },
+        budget: inputs.budget
+    };
 };
 
-// Validate inputs function
+// UI Handlers
 const validateInputs = () => {
-    const checkInDate = document.getElementById('holidayDate').value;
-    const checkOutDate = document.getElementById('returnDate').value;
-    const departureLocation = document.getElementById('departureLocation').value;
+    const inputs = {
+        checkInDate: document.getElementById('holidayDate').value,
+        checkOutDate: document.getElementById('returnDate').value,
+        departureLocation: document.getElementById('departureLocation').value,
+        budget: document.getElementById('budget').value
+    };
 
-    if (!checkInDate || !checkOutDate || !departureLocation) {
-        alert('Please fill in all required fields.');
+    if (!inputs.checkInDate || !inputs.checkOutDate) {
+        alert('Please select both dates');
         return false;
     }
 
-    // Additional validation logic can be added here
+    if (!inputs.departureLocation.match(/^[A-Z]{3}$/i)) {
+        alert('Please enter a valid 3-letter airport code');
+        return false;
+    }
 
     return true;
 };
 
-const triggerPersonalization = async (user) => {
-    await personalizeContent(user);
-};
-
 window.onload = async () => {
-    console.log('Window loaded, configuring Auth0 client...');
     await configureClient();
     const user = await auth0Client.getUser();
-    console.log('User retrieved:', user);
 
-    const signOutBtn = document.getElementById('signOutBtn');
-    if (signOutBtn) {
-        signOutBtn.addEventListener('click', () => {
-            console.log('Sign-out button clicked');
-            signOut();
-        });
-        console.log('Sign-out button event listener added');
-    } else {
-        console.error('Sign-out button not found');
-    }
+    // Sign Out Button
+    document.getElementById('signOutBtn').addEventListener('click', signOut);
 
-    const findMyHolidayButton = document.getElementById('findMyHolidayButton');
-    if (findMyHolidayButton) {
-        findMyHolidayButton.addEventListener('click', async () => {
-            console.log('Find My Holiday button clicked');
-            if (validateInputs()) {
-                await triggerPersonalization(user);
+    // Find Holiday Button
+    document.getElementById('findMyHolidayButton').addEventListener('click', async () => {
+        if (validateInputs()) {
+            try {
+                const results = await personalizeContent(user);
+                console.log('Holiday Package:', results);
+                document.getElementById('results').innerHTML = `
+                    <h3>Your ${results.destination} Package</h3>
+                    <p>Dates: ${results.dates.checkIn} to ${results.dates.checkOut}</p>
+                    <p>Budget: $${results.budget}</p>
+                    <div class="results-container">
+                        <div>Flights: ${JSON.stringify(results.flights.data?.slice(0, 2))}</div>
+                        <div>Hotels: ${JSON.stringify(results.hotels.data?.slice(0, 2))}</div>
+                    </div>
+                `;
+            } catch (error) {
+                alert('Error creating package: ' + error.message);
             }
-        });
-    } else {
-        console.error('Find My Holiday Button not found');
-    }
+        }
+    });
 };
