@@ -1,4 +1,4 @@
-load("@npm//@bazel/typescript:index.bzl", "ts_project")  # Correct load path
+load("@npm//@bazel/typescript:index.bzl", "ts_project")
 
 ts_project(
     name = "tfjs-backend-cpu_pkg",
@@ -9,5 +9,5 @@ ts_project(
         "@npm//seedrandom",
     ],
     declaration = True,
-    tsconfig = "//:tsconfig.json",  # Add explicit tsconfig
+    tsconfig = "//:tsconfig.json",
 )
