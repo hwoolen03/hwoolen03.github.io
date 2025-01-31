@@ -5,6 +5,6 @@ module(
 
 bazel_dep(name = "rules_nodejs", version = "5.4.0")
 bazel_dep(name = "rules_typescript", version = "5.3.0")
-bazel_dep(name = "aspect_rules_ts", version = "1.32.0", repo_name = "aspect_rules_ts")
+bazel_dep(name = "aspect_rules_ts", version = "1.31.0", repo_name = "aspect_rules_ts")
 
 # Add any other necessary dependencies here
