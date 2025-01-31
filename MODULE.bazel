@@ -3,15 +3,15 @@ module(
     version = "1.0.0",
 )
 
-bazel_dep(name = "aspect_rules_js", version = "1.32.0")
-bazel_dep(name = "aspect_rules_ts", version = "1.32.0")
+bazel_dep(name = "rules_nodejs", version = "5.3.0")
+bazel_dep(name = "rules_typescript", version = "1.0.0")
 
-npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm")
-
-npm.npm_translate_lock(
+npm_translate_lock(
     name = "npm",
-    npm_lock = "//:package-lock.json",
-    package_json = "//:package.json",
+    lockfile = "//:package-lock.json",
 )
 
-use_repo(npm, "npm", "npm_atlas")
+# Add the aspect_rules_ts module
+bazel_dep(name = "aspect_rules_ts", version = "1.32.0")
+
+# Add any other necessary dependencies here
