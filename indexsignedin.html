@@ -6,7 +6,7 @@
     <title>Atlas Travel - Signed In</title>
     <link rel="stylesheet" href="HomePageIn.css">
     <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js"></script>
-    <script src="account.js" defer></script>
+    <script type="module" src="account.js"></script>
 </head>
 <body>
 <header>
@@ -14,14 +14,10 @@
         <img src="mock5.png" alt="Atlas Travel Logo" class="logo">
         <h1>Atlas Travel</h1>
     </div>
+
     <button id="signOutBtn">Sign Out</button>
+
 </header>
-
-<div class="center-button-container">
-    <h2 class="holiday-text">Where Will Atlas Take you?</h2>
-    <button id="findMyHolidayButton" class="center-button">Find My Holiday</button>
-</div>
-
 <!-- Input Fields for Personalization -->
 <div class="input-container">
     <label for="holidayDate">Check-In Date:</label>
@@ -42,6 +38,11 @@
     <label for="budget">Budget:</label>
     <input type="number" id="budget" name="budget">
 </div>
+
+<div class="center-button-container">
+    <button id="findMyHolidayButton" class="center-button">Find My Holiday</button>
+</div>
+
 
 <!-- Results Section -->
 <div id="results" class="results-container"></div>
