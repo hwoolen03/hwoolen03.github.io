@@ -1,11 +1,8 @@
-import * as tf from './node_modules/@tensorflow/tfjs';
-
-let auth0Client = null;
-
 const API_HEADERS = {
-    'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3',
+    'x-rapidapi-key': 'YOUR_API_KEY_HERE',
     'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
 };
+
 // Auth0 Configuration
 const configureClient = async () => {
     try {
