@@ -14,7 +14,8 @@ const configureClient = async () => {
         });
         console.log("Auth0 client configured successfully");
     } catch (error) {
-        console.error("Error configuring Auth0 client:", error);
+        console.error("Auth0 configuration error:", error);
+        throw new Error('Failed to initialize authentication');
     }
 };
 
@@ -28,16 +29,19 @@ const signOut = async () => {
         }
     } catch (error) {
         console.error("Sign out error:", error);
+        alert('Error signing out: ' + error.message);
     }
 };
 
 // IATA to City Mapping
 const getCityName = (iataCode) => {
-    const mapping = {
+    const mapping = { 
         SYD: 'Sydney',
         PAR: 'Paris',
         JFK: 'New York',
-        LHR: 'London'
+        LHR: 'London',
+        CDG: 'Paris',
+        HND: 'Tokyo'
     };
     return mapping[iataCode] || iataCode;
 };
@@ -53,42 +57,52 @@ const preprocessUserData = (user) => {
 };
 
 const trainModel = async (userData) => {
-    const model = tf.sequential({
-        layers: [
-            tf.layers.dense({ units: 8, activation: 'relu', inputShape: [userData.preferences.length + 2] }),
-            tf.layers.dense({ units: 4, activation: 'relu' }),
-            tf.layers.dense({ units: 1, activation: 'sigmoid' })
-        ]
-    });
+    try {
+        const model = tf.sequential({
+            layers: [
+                tf.layers.dense({ units: 8, activation: 'relu', inputShape: [userData.preferences.length + 2] }),
+                tf.layers.dense({ units: 4, activation: 'relu' }),
+                tf.layers.dense({ units: 1, activation: 'sigmoid' })
+            ]
+        });
 
-    model.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
+        model.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
 
-    const xs = tf.tensor2d([[
-        ...userData.preferences,
-        parseFloat(userData.budget) / 5000,
-        new Date(userData.checkInDate).getMonth() / 11
-    ]]);
+        const xs = tf.tensor2d([[
+            ...userData.preferences,
+            parseFloat(userData.budget) / 5000,
+            new Date(userData.checkInDate).getMonth() / 11
+        ]]);
 
-    const ys = tf.tensor2d([[1]]);
-    await model.fit(xs, ys, { epochs: 10 });
-    return model;
+        const ys = tf.tensor2d([[1]]);
+        await model.fit(xs, ys, { epochs: 10 });
+        return model;
+    } catch (error) {
+        console.error("Model training error:", error);
+        throw new Error('Failed to generate recommendations');
+    }
 };
 
 const generateRecommendations = async (user, inputs) => {
-    const processedData = {
-        ...preprocessUserData(user),
-        ...inputs
-    };
+    try {
+        const processedData = {
+            ...preprocessUserData(user),
+            ...inputs
+        };
 
-    const model = await trainModel(processedData);
-    const input = tf.tensor2d([[
-        ...processedData.preferences,
-        parseFloat(inputs.budget) / 5000,
-        new Date(inputs.checkInDate).getMonth() / 11
-    ]]);
+        const model = await trainModel(processedData);
+        const input = tf.tensor2d([[
+            ...processedData.preferences,
+            parseFloat(inputs.budget) / 5000,
+            new Date(inputs.checkInDate).getMonth() / 11
+        ]]);
 
-    const prediction = model.predict(input);
-    return mapRecommendationToDestination(prediction.dataSync()[0]);
+        const prediction = model.predict(input);
+        return mapRecommendationToDestination(prediction.dataSync()[0]);
+    } catch (error) {
+        console.error("Recommendation error:", error);
+        throw new Error('Failed to generate travel recommendations');
+    }
 };
 
 const mapRecommendationToDestination = (score) => {
@@ -107,10 +121,20 @@ const mapRecommendationToDestination = (score) => {
 // API Functions
 const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
     try {
-        const url = `https://booking-com15.p.rapidapi.com/api/v1/flights/searchFlights?from=${fromIATA}&to=${toIATA}&date=${date}`;
-        const response = await fetch(url, { method: 'GET', headers: API_HEADERS });
+        const url = `https://booking-com15.p.rapidapi.com/api/v1/flights/searchFlights?fromId=${fromIATA}&toId=${toIATA}&date=${date}`;
+        const response = await fetch(url, { 
+            method: 'GET', 
+            headers: API_HEADERS,
+            signal: AbortSignal.timeout(8000)
+        });
+        
         const data = await response.json();
         console.log('Flights API Response:', data);
+        
+        if (!response.ok || data.status === false) {
+            const errorMsg = data.message?.join(', ') || 'Unknown flight search error';
+            throw new Error(`Flights: ${errorMsg}`);
+        }
         return data;
     } catch (error) {
         console.error('Flight API Error:', error);
@@ -118,108 +142,147 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
     }
 };
 
-const fetchHotelData = async (destinationIATA, budget) => {
+const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate) => {
     try {
         const cityName = getCityName(destinationIATA);
         const destResponse = await fetch(
-            `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${cityName}`,
+            `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${encodeURIComponent(cityName)}`,
             { method: 'GET', headers: API_HEADERS }
         );
 
         const destData = await destResponse.json();
-        if (!destData.data || !destData.data[0]?.dest_id) {
-            throw new Error('Destination not found');
+        console.log('Destination API Response:', destData);
+        
+        if (!destData.data?.[0]?.dest_id) {
+            throw new Error(`No destinations found for ${cityName}`);
         }
 
-        const hotelResponse = await fetch(
-            `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?dest_id=${destData.data[0].dest_id}&price_max=${budget}`,
-            { method: 'GET', headers: API_HEADERS }
-        );
+        const hotelUrl = new URL('https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels');
+        hotelUrl.searchParams.append('dest_id', destData.data[0].dest_id);
+        hotelUrl.searchParams.append('search_type', 'CITY');
+        hotelUrl.searchParams.append('date_from', checkInDate);
+        hotelUrl.searchParams.append('date_to', checkOutDate);
+        hotelUrl.searchParams.append('price_max', budget);
+        hotelUrl.searchParams.append('adults', '1');
+
+        const hotelResponse = await fetch(hotelUrl, { 
+            method: 'GET', 
+            headers: API_HEADERS 
+        });
 
         const hotelData = await hotelResponse.json();
-        if (hotelData.status === false) {
-            throw new Error(hotelData.message.join(', '));
+        console.log('Hotels API Response:', hotelData);
+        
+        if (!hotelResponse.ok || hotelData.status === false) {
+            const errorMessages = hotelData.message
+                ?.map(msg => msg?.message || JSON.stringify(msg))
+                ?.join(', ') || 'Unknown hotel error';
+            throw new Error(`Hotels: ${errorMessages}`);
         }
+        
         return hotelData;
     } catch (error) {
-        console.error('Hotel API Error:', error);
+        console.error('Hotel API Error:', error.message);
         return { status: false, message: error.message };
     }
 };
 
 // Main Workflow
 const personalizeContent = async (user) => {
-    const inputs = {
-        checkInDate: document.getElementById('holidayDate').value,
-        checkOutDate: document.getElementById('returnDate').value,
-        departureLocation: document.getElementById('departureLocation').value.toUpperCase(),
-        budget: document.getElementById('budget').value
-    };
+    try {
+        const inputs = {
+            checkInDate: document.getElementById('holidayDate').value,
+            checkOutDate: document.getElementById('returnDate').value,
+            departureLocation: document.getElementById('departureLocation').value.toUpperCase(),
+            budget: document.getElementById('budget').value
+        };
 
-    console.log('Date Inputs:', inputs.checkInDate, inputs.checkOutDate);
-    const destinationIATA = await generateRecommendations(user, inputs);
+        console.log('Processing inputs:', inputs);
+        
+        if (!/^\d+$/.test(inputs.budget)) {
+            throw new Error('Budget must be a number without currency symbols');
+        }
 
-    const [flights, hotels] = await Promise.all([
-        searchRoundtripFlights(inputs.departureLocation, destinationIATA, inputs.checkInDate),
-        fetchHotelData(destinationIATA, inputs.budget)
-    ]);
+        const destinationIATA = await generateRecommendations(user, inputs);
+        console.log('Recommended destination:', destinationIATA);
 
-    return {
-        destination: destinationIATA,
-        flights,
-        hotels,
-        dates: { checkIn: inputs.checkInDate, checkOut: inputs.checkOutDate },
-        budget: inputs.budget
-    };
+        const [flights, hotels] = await Promise.all([
+            searchRoundtripFlights(inputs.departureLocation, destinationIATA, inputs.checkInDate),
+            fetchHotelData(destinationIATA, inputs.budget, inputs.checkInDate, inputs.checkOutDate)
+        ]);
+
+        return {
+            destination: destinationIATA,
+            flights,
+            hotels,
+            dates: { checkIn: inputs.checkInDate, checkOut: inputs.checkOutDate },
+            budget: inputs.budget
+        };
+    } catch (error) {
+        console.error('Personalization error:', error);
+        throw error;
+    }
 };
 
 // UI Handlers
-const validateInputs = () => {
-    const inputs = {
-        checkInDate: document.getElementById('holidayDate').value,
-        checkOutDate: document.getElementById('returnDate').value,
-        departureLocation: document.getElementById('departureLocation').value,
-        budget: document.getElementById('budget').value
-    };
-
-    if (!inputs.checkInDate || !inputs.checkOutDate) {
-        alert('Please select both dates');
-        return false;
-    }
-
-    if (!inputs.departureLocation.match(/^[A-Z]{3}$/i)) {
-        alert('Please enter a valid 3-letter airport code');
-        return false;
-    }
-
-    return true;
+const showLoading = (show = true) => {
+    document.querySelector('.loading-indicator').hidden = !show;
+    document.getElementById('findMyHolidayButton').disabled = show;
 };
 
-// Initialization
+const showError = (message) => {
+    const errorElement = document.querySelector('.api-error');
+    errorElement.textContent = message;
+    errorElement.hidden = false;
+    setTimeout(() => errorElement.hidden = true, 5000);
+};
+
 window.onload = async () => {
-    await configureClient();
-    const user = await auth0Client.getUser();
+    try {
+        await configureClient();
+        const user = await auth0Client.getUser();
+        
+        if (!user) {
+            window.location.href = 'index.html';
+            return;
+        }
 
-    document.getElementById('signOutBtn').addEventListener('click', signOut);
+        // Event Listeners
+        document.getElementById('signOutBtn').addEventListener('click', signOut);
 
-    document.getElementById('findMyHolidayButton').addEventListener('click', async () => {
-        if (validateInputs()) {
+        document.getElementById('findMyHolidayButton').addEventListener('click', async () => {
             try {
+                showLoading();
                 const results = await personalizeContent(user);
-                console.log('Holiday Package:', results);
-
+                console.log('Final results:', results);
+                
                 document.getElementById('results').innerHTML = `
                     <h3>Your ${results.destination} Package</h3>
                     <p>Dates: ${results.dates.checkIn} to ${results.dates.checkOut}</p>
                     <p>Budget: $${results.budget}</p>
-                    <div class="results-container">
-                        <div>Flights: ${JSON.stringify(results.flights.data?.slice(0, 2))}</div>
-                        <div>Hotels: ${JSON.stringify(results.hotels.data?.slice(0, 2))}</div>
+                    <div class="results-content">
+                        <div class="flights-results">
+                            <h4>Flights</h4>
+                            <pre>${results.flights.status 
+                                ? JSON.stringify(results.flights.data?.slice(0, 2), null, 2) 
+                                : 'Error: ' + results.flights.message}</pre>
+                        </div>
+                        <div class="hotels-results">
+                            <h4>Hotels</h4>
+                            <pre>${results.hotels.status 
+                                ? JSON.stringify(results.hotels.data?.slice(0, 2), null, 2) 
+                                : 'Error: ' + results.hotels.message}</pre>
+                        </div>
                     </div>
                 `;
             } catch (error) {
-                alert('Error creating package: ' + error.message);
+                showError(error.message);
+            } finally {
+                showLoading(false);
             }
-        }
-    });
+        });
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showError('Failed to initialize application');
+    }
 };
