@@ -100,3 +100,31 @@ header {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 68, 68, 0.3);
 }
+
+
+
+#signOutBtn {
+    background-color: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 15px 25px;
+    font-size: 16px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 5px;
+    margin-left: 20px;
+}
+
+#signOutBtn:hover {
+    background-color: white;
+    color: black;
+}
+
+
+
+
+
+
+
+
