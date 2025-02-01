@@ -1,4 +1,3 @@
-
 import * as tf from '@tensorflow/tfjs';
 
 let auth0Client = null;
@@ -32,6 +31,14 @@ const signOut = async () => {
     } catch (error) {
         console.error("Sign out error:", error);
     }
+
+};
+window.onload = async () => {
+    await configureClient();
+    const user = await auth0Client.getUser();
+
+    // Sign Out Button
+    document.getElementById('signOutBtn').addEventListener('click', signOut);
 };
 
 // Personalization Algorithm
@@ -52,15 +59,15 @@ const trainModel = async (userData) => {
             tf.layers.dense({ units: 1, activation: 'sigmoid' })
         ]
     });
-    
+
     model.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
-    
+
     const xs = tf.tensor2d([[
         ...userData.preferences,
         parseFloat(userData.budget) / 5000,
         new Date(userData.checkInDate).getMonth() / 11
     ]]);
-    
+
     const ys = tf.tensor2d([[1]]); // Dummy training data
     await model.fit(xs, ys, { epochs: 10 });
     return model;
@@ -78,7 +85,7 @@ const generateRecommendations = async (user, inputs) => {
         parseFloat(inputs.budget) / 5000,
         new Date(inputs.checkInDate).getMonth() / 11
     ]]);
-    
+
     const prediction = model.predict(input);
     return mapRecommendationToDestination(prediction.dataSync()[0]);
 };
@@ -90,7 +97,7 @@ const mapRecommendationToDestination = (score) => {
         { code: 'LHR', threshold: 0.4, name: 'London' },
         { code: 'SYD', threshold: 0.2, name: 'Sydney' }
     ];
-    
+
     return destinations.reduce((closest, dest) => {
         return score >= dest.threshold ? dest : closest;
     }, destinations[destinations.length - 1]).code;
@@ -108,15 +115,15 @@ const fetchHotelData = async (destinationIATA, budget) => {
         `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${destinationIATA}`,
         { method: 'GET', headers: API_HEADERS }
     );
-    
+
     const destData = await destResponse.json();
     const destId = destData.data[0]?.dest_id;
-    
+
     const hotelResponse = await fetch(
         `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?dest_id=${destId}&price_max=${budget}`,
         { method: 'GET', headers: API_HEADERS }
     );
-    
+
     return hotelResponse.json();
 };
 
@@ -130,7 +137,7 @@ const personalizeContent = async (user) => {
     };
 
     const destinationIATA = await generateRecommendations(user, inputs);
-    
+
     const [flights, hotels] = await Promise.all([
         searchRoundtripFlights(inputs.departureLocation, destinationIATA, inputs.checkInDate),
         fetchHotelData(destinationIATA, inputs.budget)
