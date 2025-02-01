@@ -15,7 +15,8 @@ const configureClient = async () => {
         console.log("Auth0 client configured successfully");
     } catch (error) {
         console.error("Auth0 configuration error:", error);
-        throw new Error('Failed to initialize authentication');
+        showError('Authentication failed. Please refresh the page.');
+        throw error;
     }
 };
 
@@ -25,11 +26,10 @@ const signOut = async () => {
             await auth0Client.logout({
                 returnTo: window.location.origin
             });
-            window.location.href = "index.html";
         }
     } catch (error) {
         console.error("Sign out error:", error);
-        alert('Error signing out: ' + error.message);
+        showError('Error signing out. Please try again.');
     }
 };
 
@@ -60,13 +60,21 @@ const trainModel = async (userData) => {
     try {
         const model = tf.sequential({
             layers: [
-                tf.layers.dense({ units: 8, activation: 'relu', inputShape: [userData.preferences.length + 2] }),
+                tf.layers.dense({ 
+                    units: 8, 
+                    activation: 'relu', 
+                    inputShape: [userData.preferences.length + 2] 
+                }),
                 tf.layers.dense({ units: 4, activation: 'relu' }),
                 tf.layers.dense({ units: 1, activation: 'sigmoid' })
             ]
         });
 
-        model.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
+        model.compile({ 
+            optimizer: 'adam', 
+            loss: 'meanSquaredError',
+            metrics: ['accuracy'] 
+        });
 
         const xs = tf.tensor2d([[
             ...userData.preferences,
@@ -75,7 +83,12 @@ const trainModel = async (userData) => {
         ]]);
 
         const ys = tf.tensor2d([[1]]);
-        await model.fit(xs, ys, { epochs: 10 });
+        await model.fit(xs, ys, { 
+            epochs: 10,
+            batchSize: 1,
+            validationSplit: 0.2 
+        });
+        
         return model;
     } catch (error) {
         console.error("Model training error:", error);
@@ -121,20 +134,27 @@ const mapRecommendationToDestination = (score) => {
 // API Functions
 const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
     try {
-        const url = `https://booking-com15.p.rapidapi.com/api/v1/flights/searchFlights?fromId=${fromIATA}&toId=${toIATA}&date=${date}`;
+        const url = new URL('https://booking-com15.p.rapidapi.com/api/v1/flights/searchFlights');
+        url.searchParams.append('fromId', fromIATA);
+        url.searchParams.append('toId', toIATA);
+        url.searchParams.append('date', date);
+        url.searchParams.append('currency', 'USD');
+
         const response = await fetch(url, { 
             method: 'GET', 
             headers: API_HEADERS,
-            signal: AbortSignal.timeout(8000)
+            signal: AbortSignal.timeout(10000)
         });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         const data = await response.json();
         console.log('Flights API Response:', data);
-        
-        if (!response.ok || data.status === false) {
-            const errorMsg = data.message?.join(', ') || 'Unknown flight search error';
-            throw new Error(`Flights: ${errorMsg}`);
+
+        if (data.status === false) {
+            throw new Error(data.message?.join(', ') || 'Flight search failed');
         }
+
         return data;
     } catch (error) {
         console.error('Flight API Error:', error);
@@ -145,44 +165,48 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
 const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate) => {
     try {
         const cityName = getCityName(destinationIATA);
-        const destResponse = await fetch(
-            `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${encodeURIComponent(cityName)}`,
-            { method: 'GET', headers: API_HEADERS }
-        );
+        const destUrl = new URL('https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination');
+        destUrl.searchParams.append('query', cityName);
 
+        const destResponse = await fetch(destUrl, { 
+            method: 'GET', 
+            headers: API_HEADERS 
+        });
+
+        if (!destResponse.ok) throw new Error(`Destination lookup failed: ${destResponse.status}`);
+        
         const destData = await destResponse.json();
         console.log('Destination API Response:', destData);
-        
-        if (!destData.data?.[0]?.dest_id) {
-            throw new Error(`No destinations found for ${cityName}`);
-        }
+
+        const destId = destData.data?.[0]?.dest_id;
+        if (!destId) throw new Error('No destination ID found');
 
         const hotelUrl = new URL('https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels');
-        hotelUrl.searchParams.append('dest_id', destData.data[0].dest_id);
+        hotelUrl.searchParams.append('dest_id', destId);
         hotelUrl.searchParams.append('search_type', 'CITY');
         hotelUrl.searchParams.append('date_from', checkInDate);
         hotelUrl.searchParams.append('date_to', checkOutDate);
         hotelUrl.searchParams.append('price_max', budget);
         hotelUrl.searchParams.append('adults', '1');
+        hotelUrl.searchParams.append('currency', 'USD');
 
         const hotelResponse = await fetch(hotelUrl, { 
             method: 'GET', 
             headers: API_HEADERS 
         });
 
+        if (!hotelResponse.ok) throw new Error(`Hotel search failed: ${hotelResponse.status}`);
+        
         const hotelData = await hotelResponse.json();
         console.log('Hotels API Response:', hotelData);
-        
-        if (!hotelResponse.ok || hotelData.status === false) {
-            const errorMessages = hotelData.message
-                ?.map(msg => msg?.message || JSON.stringify(msg))
-                ?.join(', ') || 'Unknown hotel error';
-            throw new Error(`Hotels: ${errorMessages}`);
+
+        if (hotelData.status === false) {
+            throw new Error(hotelData.message?.map(m => m.message || m).join(', ') || 'Hotel search error');
         }
-        
+
         return hotelData;
     } catch (error) {
-        console.error('Hotel API Error:', error.message);
+        console.error('Hotel API Error:', error);
         return { status: false, message: error.message };
     }
 };
@@ -197,10 +221,14 @@ const personalizeContent = async (user) => {
             budget: document.getElementById('budget').value
         };
 
-        console.log('Processing inputs:', inputs);
-        
-        if (!/^\d+$/.test(inputs.budget)) {
-            throw new Error('Budget must be a number without currency symbols');
+        // Validate dates
+        if (new Date(inputs.checkOutDate) < new Date(inputs.checkInDate)) {
+            throw new Error('Check-out date must be after check-in date');
+        }
+
+        // Validate budget
+        if (!/^\d+$/.test(inputs.budget) || inputs.budget < 100) {
+            throw new Error('Budget must be a number greater than $100');
         }
 
         const destinationIATA = await generateRecommendations(user, inputs);
@@ -213,8 +241,8 @@ const personalizeContent = async (user) => {
 
         return {
             destination: destinationIATA,
-            flights,
-            hotels,
+            flights: flights.data ? flights : { status: false, message: 'No flight data' },
+            hotels: hotels.data ? hotels : { status: false, message: 'No hotel data' },
             dates: { checkIn: inputs.checkInDate, checkOut: inputs.checkOutDate },
             budget: inputs.budget
         };
@@ -237,6 +265,7 @@ const showError = (message) => {
     setTimeout(() => errorElement.hidden = true, 5000);
 };
 
+// Initialize Application
 window.onload = async () => {
     try {
         await configureClient();
@@ -247,14 +276,12 @@ window.onload = async () => {
             return;
         }
 
-        // Event Listeners
         document.getElementById('signOutBtn').addEventListener('click', signOut);
 
         document.getElementById('findMyHolidayButton').addEventListener('click', async () => {
             try {
                 showLoading();
                 const results = await personalizeContent(user);
-                console.log('Final results:', results);
                 
                 document.getElementById('results').innerHTML = `
                     <h3>Your ${results.destination} Package</h3>
@@ -263,15 +290,15 @@ window.onload = async () => {
                     <div class="results-content">
                         <div class="flights-results">
                             <h4>Flights</h4>
-                            <pre>${results.flights.status 
-                                ? JSON.stringify(results.flights.data?.slice(0, 2), null, 2) 
-                                : 'Error: ' + results.flights.message}</pre>
+                            ${results.flights.status 
+                                ? `<pre>${JSON.stringify(results.flights.data?.slice(0, 2), null, 2)}</pre>` 
+                                : `<p class="error">${results.flights.message}</p>`}
                         </div>
                         <div class="hotels-results">
                             <h4>Hotels</h4>
-                            <pre>${results.hotels.status 
-                                ? JSON.stringify(results.hotels.data?.slice(0, 2), null, 2) 
-                                : 'Error: ' + results.hotels.message}</pre>
+                            ${results.hotels.status 
+                                ? `<pre>${JSON.stringify(results.hotels.data?.slice(0, 2), null, 2)}</pre>` 
+                                : `<p class="error">${results.hotels.message}</p>`}
                         </div>
                     </div>
                 `;
@@ -282,7 +309,7 @@ window.onload = async () => {
             }
         });
     } catch (error) {
+        showError('Failed to initialize application. Please try again.');
         console.error('Initialization error:', error);
-        showError('Failed to initialize application');
     }
 };
