@@ -1,4 +1,4 @@
-* Base Styles */
+/* HomePageIn.css */
 body {
     margin: 0;
     padding: 0;
@@ -6,214 +6,97 @@ body {
     background-image: url('HomePage.jpg');
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
-    height: 100vh;
+    background-attachment: fixed;
+    min-height: 100vh;
     color: white;
-    overflow: auto;
 }
 
-/* Header Styles */
+/* Transparent Header */
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.4); /* More transparent */
     backdrop-filter: blur(5px);
 }
 
-.logo-heading {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.logo {
-    width: 80px;
-    height: auto;
-    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
-}
-
-h1 {
-    font-size: 2.5rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-/* Form Container */
+/* Glassmorphism Input Container */
 .input-container {
     max-width: 500px;
     margin: 2rem auto;
     padding: 2rem;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(255, 255, 255, 0.05); /* Increased transparency */
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
-    backdrop-filter: blur(5px);
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
-.input-container label {
-    display: block;
-    margin: 1rem 0 0.5rem;
-    font-weight: bold;
-}
-
+/* Transparent Input Fields */
 .input-container input,
 .input-container select {
     width: 100%;
     padding: 12px;
     margin-bottom: 1rem;
-    border: 2px solid #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 25px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05); /* More transparent */
     color: white;
     font-size: 1rem;
     transition: all 0.3s ease;
 }
 
-.input-container input[type="date"] {
-    -webkit-appearance: none;
-    appearance: none;
+.input-container input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .input-container input:focus,
 .input-container select:focus {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1); /* Subtle focus state */
     outline: none;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
-/* Validation States */
-.input-container input:invalid,
-.input-container select:invalid {
-    border-color: #ff4444;
-    animation: shake 0.5s;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-}
-
-.error-message {
-    color: #ff4444;
-    font-size: 0.9rem;
-    margin-top: -0.5rem;
-    margin-bottom: 1rem;
-    display: none;
-}
-
-/* Results Section */
+/* Transparent Results Container */
 .results-container {
     max-width: 800px;
     margin: 2rem auto;
     padding: 2rem;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.4); /* More transparent */
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(8px);
+}
+
+/* Semi-transparent Buttons */
+.center-button, #signOutBtn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.center-button:hover, #signOutBtn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Error Messages with Transparency */
+.error-message {
+    color: #ff4444;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px;
+    border-radius: 4px;
 }
 
 .loading-indicator {
-    text-align: center;
-    font-size: 1.2rem;
-    padding: 1rem;
-    display: none;
+    color: white;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 5px;
 }
 
 .api-error {
     color: #ff4444;
-    padding: 1rem;
-    border: 2px solid #ff4444;
-    border-radius: 8px;
-    margin: 1rem 0;
-}
-
-/* Buttons */
-.center-button-container {
-    text-align: center;
-    margin: 2rem 0;
-}
-
-.center-button {
-    background: transparent;
-    border: 2px solid white;
-    color: white;
-    padding: 1rem 3rem;
-    font-size: 1.1rem;
-    border-radius: 30px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.center-button:hover {
-    background: white;
-    color: #000;
-    transform: translateY(-2px);
-}
-
-#signOutBtn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid white;
-    padding: 0.8rem 1.5rem;
-    margin-right: 2rem;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    body {
-        height: auto;
-        min-height: 100vh;
-    }
-
-    header {
-        flex-direction: column;
-        padding: 1rem;
-    }
-
-    .input-container {
-        width: 90%;
-        padding: 1rem;
-    }
-
-    h1 {
-        font-size: 2rem;
-    }
-
-    .center-button {
-        width: 90%;
-        padding: 1rem;
-    }
-
-    input[type="date"] {
-        font-size: 0.9rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .logo {
-        width: 60px;
-    }
-
-    h1 {
-        font-size: 1.5rem;
-    }
-
-    .input-container {
-        margin: 1rem auto;
-    }
-
-    .results-container {
-        padding: 1rem;
-    }
-}
-
-/* Animation Enhancements */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.results-container {
-    animation: fadeIn 0.5s ease-out;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 68, 68, 0.3);
 }
