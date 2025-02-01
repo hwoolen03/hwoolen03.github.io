@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atlas Travel - Signed In</title>
     <link rel="stylesheet" href="HomePageIn.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
     <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js"></script>
-    <script type="module" src="account.js"></script>
     <script src="validation.js"></script>
+    <script type="module" src="account.js"></script>
 </head>
 <body>
 <header>
@@ -19,20 +20,20 @@
 </header>
 
 <div class="input-container">
-    <!-- Date inputs with constraints -->
     <label for="holidayDate">Check-In Date:</label>
-    <input type="date" id="holidayDate" name="holidayDate"
-           min="<?= date('Y-m-d') ?>"
-           required
-           pattern="\d{4}-\d{2}-\d{2}">
+    <input type="date" id="holidayDate" name="holidayDate" 
+           required 
+           pattern="\d{4}-\d{2}-\d{2}"
+           onchange="document.getElementById('returnDate').min = this.value">
+    <div class="error-message"></div>
 
     <label for="returnDate">Check-Out Date:</label>
-    <input type="date" id="returnDate" name="returnDate"
-           min="<?= date('Y-m-d') ?>"
-           required
-           pattern="\d{4}-\d{2}-\d{2}">
+    <input type="date" id="returnDate" name="returnDate" 
+           required 
+           pattern="\d{4}-\d{2}-\d{2}"
+           min="<?= date('Y-m-d') ?>">
+    <div class="error-message"></div>
 
-    <!-- IATA Code dropdown -->
     <label for="departureLocation">Departure Airport:</label>
     <select id="departureLocation" name="departureLocation" required>
         <option value="" disabled selected>Select airport</option>
@@ -42,25 +43,25 @@
         <option value="HND">HND - Tokyo</option>
         <option value="SYD">SYD - Sydney</option>
     </select>
+    <div class="error-message"></div>
 
-    <!-- Budget input with constraints -->
     <label for="budget">Budget (USD):</label>
-    <input type="number" id="budget" name="budget"
-           min="100"
-           step="50"
-           required
+    <input type="number" id="budget" name="budget" 
+           min="100" 
+           step="50" 
+           required 
            placeholder="Enter amount in USD">
+    <div class="error-message"></div>
 </div>
 
 <div class="center-button-container">
     <button id="findMyHolidayButton" class="center-button">Find My Holiday</button>
 </div>
 
-<!-- Enhanced results display -->
 <div id="results" class="results-container">
-    <div class="loading-indicator" hidden>Loading...</div>
+    <div class="loading-indicator" hidden>Loading recommendations...</div>
     <div class="api-error" hidden></div>
 </div>
 
 </body>
-</html>>
+</html>
