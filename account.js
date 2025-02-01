@@ -1,16 +1,10 @@
-// Remove the local import
-// import * as tf from './node_modules/@tensorflow/tfjs';
-
-// Add this line to use the global `tf` object provided by the CDN
-const tf = window.tf;
-
-let auth0Client = null;
 const API_HEADERS = {
-    'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3',
+    'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3', // REPLACE WITH YOUR API KEY
     'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
 };
 
 // Auth0 Configuration
+let auth0Client;
 const configureClient = async () => {
     try {
         auth0Client = await createAuth0Client({
@@ -37,12 +31,15 @@ const signOut = async () => {
     }
 };
 
-window.onload = async () => {
-    await configureClient();
-    const user = await auth0Client.getUser();
-
-    // Sign Out Button
-    document.getElementById('signOutBtn').addEventListener('click', signOut);
+// IATA to City Mapping
+const getCityName = (iataCode) => {
+    const mapping = {
+        SYD: 'Sydney',
+        PAR: 'Paris',
+        JFK: 'New York',
+        LHR: 'London'
+    };
+    return mapping[iataCode] || iataCode;
 };
 
 // Personalization Algorithm
@@ -72,7 +69,7 @@ const trainModel = async (userData) => {
         new Date(userData.checkInDate).getMonth() / 11
     ]]);
 
-    const ys = tf.tensor2d([[1]]); // Dummy training data
+    const ys = tf.tensor2d([[1]]);
     await model.fit(xs, ys, { epochs: 10 });
     return model;
 };
@@ -109,26 +106,45 @@ const mapRecommendationToDestination = (score) => {
 
 // API Functions
 const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
-    const url = `https://booking-com15.p.rapidapi.com/api/v1/flights/searchFlights?fromId=${fromIATA}&toId=${toIATA}&date=${date}`;
-    const response = await fetch(url, { method: 'GET', headers: API_HEADERS });
-    return response.json();
+    try {
+        const url = `https://booking-com15.p.rapidapi.com/api/v1/flights/searchFlights?from=${fromIATA}&to=${toIATA}&date=${date}`;
+        const response = await fetch(url, { method: 'GET', headers: API_HEADERS });
+        const data = await response.json();
+        console.log('Flights API Response:', data);
+        return data;
+    } catch (error) {
+        console.error('Flight API Error:', error);
+        return { status: false, message: error.message };
+    }
 };
 
 const fetchHotelData = async (destinationIATA, budget) => {
-    const destResponse = await fetch(
-        `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${destinationIATA}`,
-        { method: 'GET', headers: API_HEADERS }
-    );
+    try {
+        const cityName = getCityName(destinationIATA);
+        const destResponse = await fetch(
+            `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${cityName}`,
+            { method: 'GET', headers: API_HEADERS }
+        );
 
-    const destData = await destResponse.json();
-    const destId = destData.data[0]?.dest_id;
+        const destData = await destResponse.json();
+        if (!destData.data || !destData.data[0]?.dest_id) {
+            throw new Error('Destination not found');
+        }
 
-    const hotelResponse = await fetch(
-        `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?dest_id=${destId}&price_max=${budget}`,
-        { method: 'GET', headers: API_HEADERS }
-    );
+        const hotelResponse = await fetch(
+            `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?dest_id=${destData.data[0].dest_id}&price_max=${budget}`,
+            { method: 'GET', headers: API_HEADERS }
+        );
 
-    return hotelResponse.json();
+        const hotelData = await hotelResponse.json();
+        if (hotelData.status === false) {
+            throw new Error(hotelData.message.join(', '));
+        }
+        return hotelData;
+    } catch (error) {
+        console.error('Hotel API Error:', error);
+        return { status: false, message: error.message };
+    }
 };
 
 // Main Workflow
@@ -140,6 +156,7 @@ const personalizeContent = async (user) => {
         budget: document.getElementById('budget').value
     };
 
+    console.log('Date Inputs:', inputs.checkInDate, inputs.checkOutDate);
     const destinationIATA = await generateRecommendations(user, inputs);
 
     const [flights, hotels] = await Promise.all([
@@ -178,19 +195,19 @@ const validateInputs = () => {
     return true;
 };
 
+// Initialization
 window.onload = async () => {
     await configureClient();
     const user = await auth0Client.getUser();
 
-    // Sign Out Button
     document.getElementById('signOutBtn').addEventListener('click', signOut);
 
-    // Find Holiday Button
     document.getElementById('findMyHolidayButton').addEventListener('click', async () => {
         if (validateInputs()) {
             try {
                 const results = await personalizeContent(user);
                 console.log('Holiday Package:', results);
+
                 document.getElementById('results').innerHTML = `
                     <h3>Your ${results.destination} Package</h3>
                     <p>Dates: ${results.dates.checkIn} to ${results.dates.checkOut}</p>
