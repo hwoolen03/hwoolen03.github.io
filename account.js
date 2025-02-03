@@ -132,24 +132,35 @@ const mapRecommendationToDestination = (score) => {
 };
 
 // API Functions
-const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
+const searchRoundtripFlights = async (fromIATA, toIATA, departureDate, returnDate) => {
     try {
         const url = new URL('https://booking-com15.p.rapidapi.com/api/v1/flights/searchFlights');
         url.searchParams.append('fromId', fromIATA);
         url.searchParams.append('toId', toIATA);
-        url.searchParams.append('date', date);
+        url.searchParams.append('departDate', departureDate);  // Changed parameter name
+        url.searchParams.append('returnDate', returnDate);     // Added return date
         url.searchParams.append('currency', 'USD');
+
+        console.log('Flight Search URL:', url.toString());
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(url, { 
             method: 'GET', 
             headers: API_HEADERS,
-            signal: AbortSignal.timeout(10000)
+            signal: controller.signal 
         });
+        clearTimeout(timeoutId);
+        console.log('Flight API Status:', response.status, response.statusText);
 
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         const data = await response.json();
         console.log('Flights API Response:', data);
+
+        if (!data.data || !data.data.flights) {
+            throw new Error('Invalid flight data structure');
+        }
 
         if (data.status === false) {
             throw new Error(data.message?.join(', ') || 'Flight search failed');
@@ -179,7 +190,12 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
         console.log('Destination API Response:', destData);
 
         const destId = destData.data?.[0]?.dest_id;
+        const destType = destData.data?.[0]?.dest_type;  // Get destination type
         if (!destId) throw new Error('No destination ID found');
+
+        if (!destData.data || !Array.isArray(destData.data)) {
+            throw new Error('Invalid destination response');
+        }
 
         const hotelUrl = new URL('https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels');
         hotelUrl.searchParams.append('dest_id', destId);
@@ -189,6 +205,10 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
         hotelUrl.searchParams.append('price_max', budget);
         hotelUrl.searchParams.append('adults', '1');
         hotelUrl.searchParams.append('currency', 'USD');
+        hotelUrl.searchParams.append('dest_type', destType);  // Add this line
+
+        console.log('Destination Search URL:', destUrl.toString());
+        console.log('Hotel Search URL:', hotelUrl.toString());
 
         const hotelResponse = await fetch(hotelUrl, { 
             method: 'GET', 
@@ -235,7 +255,12 @@ const personalizeContent = async (user) => {
         console.log('Recommended destination:', destinationIATA);
 
         const [flights, hotels] = await Promise.all([
-            searchRoundtripFlights(inputs.departureLocation, destinationIATA, inputs.checkInDate),
+            searchRoundtripFlights(
+                inputs.departureLocation, 
+                destinationIATA, 
+                inputs.checkInDate,
+                inputs.checkOutDate  // Pass return date
+            ),
             fetchHotelData(destinationIATA, inputs.budget, inputs.checkInDate, inputs.checkOutDate)
         ]);
 
