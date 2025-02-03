@@ -3,6 +3,22 @@
     height: auto;
 }
 
+
+/* Add the following CSS to HomePageIn.css */
+.logo-heading {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    height: 100%; /* Ensure it takes the full height of the header */
+}
+
+h1 {
+    font-size: 40px;
+    color: whitesmoke;
+    margin: 0;
+    font-family: Arial;
+}
+
 /* HomePageIn.css */
 body {
     margin: 0;
