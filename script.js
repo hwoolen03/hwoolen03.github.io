@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOMContentLoaded event fired");
     let auth0Client = null;
-    const redirectUri = "indexsignedin.html";
+    const redirectUri = "https://hwoolen03.github.io";
 
     const configureClient = async () => {
         console.log("Configuring Auth0 client...");
