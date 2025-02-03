@@ -1,3 +1,8 @@
+.logo {
+    width: 80px; /* Adjusted logo size */
+    height: auto;
+}
+
 /* HomePageIn.css */
 body {
     margin: 0;
