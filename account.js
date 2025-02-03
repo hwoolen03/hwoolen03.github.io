@@ -137,8 +137,8 @@ const searchRoundtripFlights = async (fromIATA, toIATA, departureDate, returnDat
         const url = new URL('https://booking-com15.p.rapidapi.com/api/v1/flights/searchFlights');
         url.searchParams.append('fromId', fromIATA);
         url.searchParams.append('toId', toIATA);
-        url.searchParams.append('departDate', departureDate);  // Changed parameter name
-        url.searchParams.append('returnDate', returnDate);     // Added return date
+        url.searchParams.append('departDate', departureDate);
+        url.searchParams.append('returnDate', returnDate);
         url.searchParams.append('currency', 'USD');
 
         console.log('Flight Search URL:', url.toString());
@@ -158,12 +158,18 @@ const searchRoundtripFlights = async (fromIATA, toIATA, departureDate, returnDat
         const data = await response.json();
         console.log('Flights API Response:', data);
 
-        if (!data.data || !data.data.flights) {
-            throw new Error('Invalid flight data structure');
+        // Check for API-reported errors first
+        if (data.status === false) {
+            throw new Error(
+                Array.isArray(data.message)
+                    ? data.message.join(', ')
+                    : data.message || 'Flight search failed'
+            );
         }
 
-        if (data.status === false) {
-            throw new Error(data.message?.join(', ') || 'Flight search failed');
+        // Then ensure the expected data structure is present
+        if (!data.data || !data.data.flights) {
+            throw new Error('Invalid flight data structure');
         }
 
         return data;
@@ -190,7 +196,7 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
         console.log('Destination API Response:', destData);
 
         const destId = destData.data?.[0]?.dest_id;
-        const destType = destData.data?.[0]?.dest_type;  // Get destination type
+        const destType = destData.data?.[0]?.dest_type;
         if (!destId) throw new Error('No destination ID found');
 
         if (!destData.data || !Array.isArray(destData.data)) {
@@ -205,7 +211,7 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
         hotelUrl.searchParams.append('price_max', budget);
         hotelUrl.searchParams.append('adults', '1');
         hotelUrl.searchParams.append('currency', 'USD');
-        hotelUrl.searchParams.append('dest_type', destType);  // Add this line
+        hotelUrl.searchParams.append('dest_type', destType);
 
         console.log('Destination Search URL:', destUrl.toString());
         console.log('Hotel Search URL:', hotelUrl.toString());
@@ -221,7 +227,11 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
         console.log('Hotels API Response:', hotelData);
 
         if (hotelData.status === false) {
-            throw new Error(hotelData.message?.map(m => m.message || m).join(', ') || 'Hotel search error');
+            throw new Error(
+                Array.isArray(hotelData.message)
+                    ? hotelData.message.map(m => typeof m === 'object' ? JSON.stringify(m) : m).join(', ')
+                    : hotelData.message || 'Hotel search error'
+            );
         }
 
         return hotelData;
@@ -259,7 +269,7 @@ const personalizeContent = async (user) => {
                 inputs.departureLocation, 
                 destinationIATA, 
                 inputs.checkInDate,
-                inputs.checkOutDate  // Pass return date
+                inputs.checkOutDate
             ),
             fetchHotelData(destinationIATA, inputs.budget, inputs.checkInDate, inputs.checkOutDate)
         ]);
@@ -279,8 +289,18 @@ const personalizeContent = async (user) => {
 
 // UI Handlers
 const showLoading = (show = true) => {
-    document.querySelector('.loading-indicator').hidden = !show;
-    document.getElementById('findMyHolidayButton').disabled = show;
+    const loadingIndicator = document.querySelector('.loading-indicator');
+    if (loadingIndicator) {
+        loadingIndicator.hidden = !show;
+    } else {
+        console.warn("Loading indicator element not found");
+    }
+    const holidayButton = document.getElementById('findMyHolidayButton');
+    if (holidayButton) {
+        holidayButton.disabled = show;
+    } else {
+        console.warn("findMyHolidayButton element not found");
+    }
 };
 
 const showError = (message) => {
@@ -338,3 +358,4 @@ window.onload = async () => {
         console.error('Initialization error:', error);
     }
 };
+
