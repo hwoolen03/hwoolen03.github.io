@@ -153,10 +153,8 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
     console.log('Flights API Response:', data);
 
     if (data.status === false) {
-      const errorMsg = data.message
-        ? data.message.map(err => typeof err === 'object' ? JSON.stringify(err) : err).join(', ')
-        : 'Flight search failed';
-      throw new Error(errorMsg);
+      // Simply stringify the error array for a clear error message
+      throw new Error(JSON.stringify(data.message));
     }
 
     return data;
@@ -206,10 +204,7 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
     console.log('Hotels API Response:', hotelData);
 
     if (hotelData.status === false) {
-      const errorMsg = hotelData.message
-        ? hotelData.message.map(err => typeof err === 'object' ? JSON.stringify(err) : err).join(', ')
-        : 'Hotel search error';
-      throw new Error(errorMsg);
+      throw new Error(JSON.stringify(hotelData.message));
     }
 
     return hotelData;
