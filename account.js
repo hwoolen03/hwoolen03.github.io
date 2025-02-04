@@ -181,16 +181,8 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
         const destId = destData.data?.[0]?.dest_id;
         if (!destId) throw new Error('No destination ID found');
 
-        const hotelUrl = new URL('https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels');
-        hotelUrl.searchParams.append('dest_id', destId);
-        hotelUrl.searchParams.append('search_type', 'CITY');
-        hotelUrl.searchParams.append('date_from', checkInDate);
-        hotelUrl.searchParams.append('date_to', checkOutDate);
-        hotelUrl.searchParams.append('price_max', budget);
-        hotelUrl.searchParams.append('adults', '1');
-        hotelUrl.searchParams.append('currency', 'USD');
+        const hotelUrl = new URL('https
+::contentReference[oaicite:1]{index=1}
+ 
 
-        const hotelResponse = await fetch(hotelUrl, {
-            method: '
-::contentReference[oaicite:0]{index=0}
  
