@@ -1,5 +1,5 @@
 const API_HEADERS = {
-  'x-rapidapi-key': 'YOUR_API_KEY', // REPLACE WITH YOUR API KEY
+  'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3', // REPLACE WITH YOUR API KEY
   'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
 };
 
