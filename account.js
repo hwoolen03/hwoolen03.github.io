@@ -46,16 +46,16 @@ const getCityName = (iataCode) => {
   return mapping[iataCode] || iataCode;
 };
 
-// IATA to Airport ID Mapping (for flights)
-// NOTE: Update these values to the proper IDs required by your flights API.
+// IATA to Numeric Airport ID Mapping (for flights)
+// Update these values according to the API documentation.
 const getAirportId = (iataCode) => {
   const mapping = {
-    SYD: '1',  // Example: Sydney airport ID
-    PAR: '2',  // Example: Paris airport ID
-    JFK: '3',  // Example: New York JFK airport ID
-    LHR: '4',  // Example: London airport ID
-    CDG: '5',  // Example: Paris Charles de Gaulle airport ID
-    HND: '6'   // Example: Tokyo airport ID
+    SYD: '1459',  // Example: Sydney airport numeric ID
+    PAR: '2088',  // Example: Paris airport numeric ID
+    JFK: '1253',  // Example: New York JFK numeric ID
+    LHR: '2042',  // Example: London numeric ID
+    CDG: '2043',  // Example: Paris Charles de Gaulle numeric ID
+    HND: '2078'   // Example: Tokyo numeric ID
   };
   return mapping[iataCode] || iataCode;
 };
@@ -148,14 +148,14 @@ const mapRecommendationToDestination = (score) => {
 // API Functions
 const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
   try {
-    // Map IATA codes to airport IDs
+    // Convert IATA codes to numeric IDs.
     const fromId = getAirportId(fromIATA);
     const toId = getAirportId(toIATA);
+    console.log("Searching flights with fromId:", fromId, "toId:", toId, "departDate:", date);
 
     const url = new URL('https://booking-com15.p.rapidapi.com/api/v1/flights/searchFlights');
     url.searchParams.append('fromId', fromId);
     url.searchParams.append('toId', toId);
-    // Use departDate as required by the API
     url.searchParams.append('departDate', date);
     url.searchParams.append('currency', 'USD');
 
@@ -203,7 +203,6 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
     const hotelUrl = new URL('https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels');
     hotelUrl.searchParams.append('dest_id', destId);
     hotelUrl.searchParams.append('search_type', 'CITY');
-    // Use arrival_date and departure_date as required by the API
     hotelUrl.searchParams.append('arrival_date', checkInDate);
     hotelUrl.searchParams.append('departure_date', checkOutDate);
     hotelUrl.searchParams.append('price_max', budget);
