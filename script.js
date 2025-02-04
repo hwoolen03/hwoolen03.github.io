@@ -62,6 +62,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    await configureClient(); // Ensure auth0Client is initialized
+
     document.getElementById('btn-login-github').addEventListener('click', loginWithGitHub);
     console.log("Added event listener to GitHub login button");
 
@@ -71,7 +73,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-figma').addEventListener('click', loginWithFigma);
     console.log("Added event listener to Figma login button");
 
-    await configureClient();
     await handleAuthCallback();
     updateUI();
 
