@@ -137,7 +137,8 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
     const url = new URL('https://booking-com15.p.rapidapi.com/api/v1/flights/searchFlights');
     url.searchParams.append('fromId', fromIATA);
     url.searchParams.append('toId', toIATA);
-    url.searchParams.append('date', date);
+    // Use departDate as required by the API
+    url.searchParams.append('departDate', date);
     url.searchParams.append('currency', 'USD');
 
     const response = await fetch(url, {
@@ -187,8 +188,9 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
     const hotelUrl = new URL('https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels');
     hotelUrl.searchParams.append('dest_id', destId);
     hotelUrl.searchParams.append('search_type', 'CITY');
-    hotelUrl.searchParams.append('date_from', checkInDate);
-    hotelUrl.searchParams.append('date_to', checkOutDate);
+    // Use arrival_date and departure_date as required by the API
+    hotelUrl.searchParams.append('arrival_date', checkInDate);
+    hotelUrl.searchParams.append('departure_date', checkOutDate);
     hotelUrl.searchParams.append('price_max', budget);
     hotelUrl.searchParams.append('adults', '1');
     hotelUrl.searchParams.append('currency', 'USD');
@@ -334,7 +336,5 @@ window.onload = async () => {
     console.error('Initialization error:', error);
   }
 };
-
- 
 
  
