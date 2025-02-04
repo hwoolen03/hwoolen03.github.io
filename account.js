@@ -185,9 +185,12 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
         hotelUrl.searchParams.append('dest_id', destId);
         hotelUrl.searchParams.append('search_type', 'CITY');
         hotelUrl.searchParams.append('date_from', checkInDate);
-        hotelUrl.searchParams.append('date_to', check
+        hotelUrl.searchParams.append('date_to', checkOutDate);
+        hotelUrl.searchParams.append('price_max', budget);
+        hotelUrl.search
 ::contentReference[oaicite:0]{index=0}
  
+
 
  
 
