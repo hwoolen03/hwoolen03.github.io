@@ -182,19 +182,19 @@ window.onload = async () => {
                 const results = await personalizeContent(user);
 
                 document.getElementById('results').innerHTML = results.map(result => `
-          <div class="destination-card">
-            <h3>${result.city}</h3>
-            <p>Estimated Total: $${result.cost.total}</p>
-            <div class="price-breakdown">
-              <span>✈️ $${result.cost.flight}</span>
-              <span>🏨 $${result.cost.hotel}</span>
-            </div>
-            <div class="api-results">
-              ${result.flights.data ? `<pre>${JSON.stringify(result.flights.data.slice(0,2), null, 2)}</pre>` : ''}
-              ${result.hotels.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0,2), null, 2)}</pre>` : ''}
-            </div>
-          </div>
-        `).join('');
+                    <div class="destination-card">
+                        <h3>${result.city}</h3>
+                        <p>Estimated Total: $${result.cost.total}</p>
+                        <div class="price-breakdown">
+                            <span>✈️ $${result.cost.flight}</span>
+                            <span>🏨 $${result.cost.hotel}</span>
+                        </div>
+                        <div class="api-results">
+                            ${result.flights.data ? `<pre>${JSON.stringify(result.flights.data.slice(0,2), null, 2)}</pre>` : ''}
+                            ${result.hotels.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0,2), null, 2)}</pre>` : ''}
+                        </div>
+                    </div>
+                `).join('');
             } catch (error) {
                 showError(error.message);
             } finally {
@@ -204,6 +204,4 @@ window.onload = async () => {
     } catch (error) {
         showError('Failed to initialize application. Please try again.');
     }
-
-
- 
+};
