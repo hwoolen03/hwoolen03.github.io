@@ -1,15 +1,11 @@
-.logo {
-    width: 80px; /* Adjusted logo size */
-    height: auto;
-}
+/* Updated CSS for multi-card layout */
+.logo { width: 80px; height: auto; }
 
-
-/* Add the following CSS to HomePageIn.css */
 .logo-heading {
     display: flex;
     align-items: center;
     gap: 15px;
-    height: 100%; /* Ensure it takes the full height of the header */
+    height: 100%;
 }
 
 h1 {
@@ -19,7 +15,6 @@ h1 {
     font-family: Arial;
 }
 
-/* HomePageIn.css */
 body {
     margin: 0;
     padding: 0;
@@ -32,29 +27,26 @@ body {
     color: white;
 }
 
-/* Transparent Header */
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    background: rgba(0, 0, 0, 0.4); /* More transparent */
+    background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(5px);
 }
 
-/* Glassmorphism Input Container */
 .input-container {
     max-width: 500px;
     margin: 2rem auto;
     padding: 2rem;
-    background: rgba(255, 255, 255, 0.05); /* Increased transparency */
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     backdrop-filter: blur(8px);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
-/* Transparent Input Fields */
 .input-container input,
 .input-container select {
     width: 100%;
@@ -62,79 +54,53 @@ header {
     margin-bottom: 1rem;
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 25px;
-    background: rgba(255, 255, 255, 0.05); /* More transparent */
+    background: rgba(255, 255, 255, 0.05);
     color: white;
     font-size: 1rem;
     transition: all 0.3s ease;
 }
 
-.input-container input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.input-container input:focus,
-.input-container select:focus {
-    background: rgba(255, 255, 255, 0.1); /* Subtle focus state */
-    outline: none;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-}
-
-/* Transparent Results Container */
 .results-container {
     max-width: 800px;
     margin: 2rem auto;
     padding: 2rem;
-    background: rgba(0, 0, 0, 0.4); /* More transparent */
+    background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     backdrop-filter: blur(8px);
+    display: grid;
+    gap: 1.5rem;
 }
 
-/* Semi-transparent Buttons */
-.center-button, #signOutBtn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    transition: all 0.3s ease;
+.destination-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.center-button:hover, #signOutBtn:hover {
-    background: rgba(255, 255, 255, 0.2);
+.price-breakdown {
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+    color: #aaa;
 }
 
-/* Error Messages with Transparency */
-.error-message {
-    color: #ff4444;
+.api-results pre {
     background: rgba(0, 0, 0, 0.3);
-    padding: 8px;
-    border-radius: 4px;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
 }
-
-.loading-indicator {
-    color: white;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 15px;
-    border-radius: 5px;
-}
-
-.api-error {
-    color: #ff4444;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 68, 68, 0.3);
-}
-
-
 
 #signOutBtn {
     background-color: transparent;
     border: 2px solid white;
     color: white;
     padding: 15px 25px;
-    font-size: 16px;
     border-radius: 30px;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin: 5px;
-    margin-left: 20px;
 }
 
 #signOutBtn:hover {
@@ -142,9 +108,18 @@ header {
     color: black;
 }
 
+.loading-indicator,
+.api-error {
+    padding: 15px;
+    border-radius: 5px;
+    text-align: center;
+}
 
-
-
+.api-error {
+    color: #ff4444;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 68, 68, 0.3);
+}
 
 
 
