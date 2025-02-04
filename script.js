@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOMContentLoaded event fired");
     let auth0Client = null;
-    const redirectUri = window.location.origin + "/indexsignedin.html"; // Updated redirect URI
+    const redirectUri = `${window.location.origin}/indexsignedin.html`; // Ensure correct syntax for redirect URI
 
     const configureClient = async () => {
         console.log("Configuring Auth0 client...");
