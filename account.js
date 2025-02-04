@@ -33,7 +33,7 @@ const signOut = async () => {
   }
 };
 
-// IATA to City Mapping
+// IATA to City Mapping (for hotels)
 const getCityName = (iataCode) => {
   const mapping = {
     SYD: 'Sydney',
@@ -42,6 +42,20 @@ const getCityName = (iataCode) => {
     LHR: 'London',
     CDG: 'Paris',
     HND: 'Tokyo'
+  };
+  return mapping[iataCode] || iataCode;
+};
+
+// IATA to Airport ID Mapping (for flights)
+// NOTE: Update these values to the proper IDs required by your flights API.
+const getAirportId = (iataCode) => {
+  const mapping = {
+    SYD: '1',  // Example: Sydney airport ID
+    PAR: '2',  // Example: Paris airport ID
+    JFK: '3',  // Example: New York JFK airport ID
+    LHR: '4',  // Example: London airport ID
+    CDG: '5',  // Example: Paris Charles de Gaulle airport ID
+    HND: '6'   // Example: Tokyo airport ID
   };
   return mapping[iataCode] || iataCode;
 };
@@ -134,9 +148,13 @@ const mapRecommendationToDestination = (score) => {
 // API Functions
 const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
   try {
+    // Map IATA codes to airport IDs
+    const fromId = getAirportId(fromIATA);
+    const toId = getAirportId(toIATA);
+
     const url = new URL('https://booking-com15.p.rapidapi.com/api/v1/flights/searchFlights');
-    url.searchParams.append('fromId', fromIATA);
-    url.searchParams.append('toId', toIATA);
+    url.searchParams.append('fromId', fromId);
+    url.searchParams.append('toId', toId);
     // Use departDate as required by the API
     url.searchParams.append('departDate', date);
     url.searchParams.append('currency', 'USD');
@@ -153,7 +171,6 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
     console.log('Flights API Response:', data);
 
     if (data.status === false) {
-      // Simply stringify the error array for a clear error message
       throw new Error(JSON.stringify(data.message));
     }
 
@@ -331,5 +348,6 @@ window.onload = async () => {
     console.error('Initialization error:', error);
   }
 };
+
 
  
