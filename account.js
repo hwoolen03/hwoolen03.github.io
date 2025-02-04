@@ -1,5 +1,5 @@
 const API_HEADERS = {
-    'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3', // REPLACE WITH YOUR API KEY
+    'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3',
     'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
 };
 
@@ -10,7 +10,7 @@ const configureClient = async () => {
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            redirect_uri: window.location.origin
+            redirect_uri: window.location.origin + "/indexsignedin.html" // Fixed redirect URI
         });
         console.log("Auth0 client configured successfully");
     } catch (error) {
@@ -20,11 +20,26 @@ const configureClient = async () => {
     }
 };
 
+// Add Auth0 callback handler
+const handleAuthRedirect = async () => {
+    try {
+        const query = window.location.search;
+        if (query.includes("code=") && query.includes("state=")) {
+            await auth0Client.handleRedirectCallback();
+            window.history.replaceState({}, document.title, "/indexsignedin.html");
+        }
+    } catch (error) {
+        console.error("Auth redirect error:", error);
+        showError('Authentication failed. Please try again.');
+        throw error;
+    }
+};
+
 const signOut = async () => {
     try {
         if (auth0Client) {
             await auth0Client.logout({
-                returnTo: window.location.origin
+                returnTo: window.location.origin + "/index.html" // Explicit logout redirect
             });
         }
     } catch (error) {
@@ -32,6 +47,59 @@ const signOut = async () => {
         showError('Error signing out. Please try again.');
     }
 };
+
+// Add login function
+const signIn = async () => {
+    await auth0Client.loginWithRedirect({
+        redirect_uri: window.location.origin + "/indexsignedin.html"
+    });
+};
+
+// Rest of your existing code remains the same (IATA mapping, ML functions, API calls, etc.)
+// ... [Keep all existing code from getCityName() through showError()] ...
+
+// Updated initialization with proper auth handling
+window.onload = async () => {
+    try {
+        await configureClient();
+        await handleAuthRedirect(); // Critical addition
+        
+        const user = await auth0Client.getUser();
+        
+        if (!user) {
+            // Only redirect if we're not already on index.html
+            if (!window.location.pathname.endsWith("index.html")) {
+                window.location.href = 'index.html';
+            }
+            return;
+        }
+
+        // Update login/logout buttons
+        document.getElementById('signOutBtn').addEventListener('click', signOut);
+        document.getElementById('loginBtn')?.addEventListener('click', signIn);
+
+        // Only show authenticated content if on indexsignedin.html
+        if (window.location.pathname.endsWith("indexsignedin.html")) {
+            document.body.classList.add('authenticated');
+            initializeAuthenticatedFeatures(user);
+        }
+
+        // Your existing holiday button handler
+        document.getElementById('findMyHolidayButton')?.addEventListener('click', async () => {
+            // ... [Keep existing click handler logic] ...
+        });
+    } catch (error) {
+        showError('Failed to initialize application. Please try again.');
+        console.error('Initialization error:', error);
+    }
+};
+
+// Helper function for authenticated features
+function initializeAuthenticatedFeatures(user) {
+    // Add any user-specific UI initialization here
+    document.getElementById('userProfile').textContent = user.name;
+    // ... other authenticated UI elements ...
+}
 
 // IATA to City Mapping
 const getCityName = (iataCode) => {
@@ -314,16 +382,30 @@ const showError = (message) => {
 window.onload = async () => {
     try {
         await configureClient();
+        await handleAuthRedirect(); // Critical addition
+        
         const user = await auth0Client.getUser();
         
         if (!user) {
-            window.location.href = 'index.html';
+            // Only redirect if we're not already on index.html
+            if (!window.location.pathname.endsWith("index.html")) {
+                window.location.href = 'index.html';
+            }
             return;
         }
 
+        // Update login/logout buttons
         document.getElementById('signOutBtn').addEventListener('click', signOut);
+        document.getElementById('loginBtn')?.addEventListener('click', signIn);
 
-        document.getElementById('findMyHolidayButton').addEventListener('click', async () => {
+        // Only show authenticated content if on indexsignedin.html
+        if (window.location.pathname.endsWith("indexsignedin.html")) {
+            document.body.classList.add('authenticated');
+            initializeAuthenticatedFeatures(user);
+        }
+
+        // Your existing holiday button handler
+        document.getElementById('findMyHolidayButton')?.addEventListener('click', async () => {
             try {
                 showLoading();
                 const results = await personalizeContent(user);
