@@ -190,8 +190,8 @@ window.onload = async () => {
                             <span>🏨 $${result.cost.hotel}</span>
                         </div>
                         <div class="api-results">
-                            ${result.flights.data ? `<pre>${JSON.stringify(result.flights.data.slice(0,2), null, 2)}</pre>` : ''}
-                            ${result.hotels.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0,2), null, 2)}</pre>` : ''}
+                            ${result.flights.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
+                            ${result.hotels.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
                         </div>
                     </div>
                 `).join('');
