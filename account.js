@@ -1,5 +1,5 @@
 const API_HEADERS = {
-  'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3', // REPLACE WITH YOUR API KEY
+  'x-rapidapi-key': 'YOUR_API_KEY', // REPLACE WITH YOUR API KEY
   'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
 };
 
@@ -152,7 +152,10 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
     console.log('Flights API Response:', data);
 
     if (data.status === false) {
-      throw new Error(data.message?.join(', ') || 'Flight search failed');
+      const errorMsg = data.message
+        ? data.message.map(err => typeof err === 'object' ? JSON.stringify(err) : err).join(', ')
+        : 'Flight search failed';
+      throw new Error(errorMsg);
     }
 
     return data;
@@ -201,7 +204,10 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
     console.log('Hotels API Response:', hotelData);
 
     if (hotelData.status === false) {
-      throw new Error(hotelData.message?.map(m => m.message || m).join(', ') || 'Hotel search error');
+      const errorMsg = hotelData.message
+        ? hotelData.message.map(err => typeof err === 'object' ? JSON.stringify(err) : err).join(', ')
+        : 'Hotel search error';
+      throw new Error(errorMsg);
     }
 
     return hotelData;
@@ -328,7 +334,6 @@ window.onload = async () => {
     console.error('Initialization error:', error);
   }
 };
-
 
  
 
