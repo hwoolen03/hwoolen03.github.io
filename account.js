@@ -10,7 +10,7 @@ const configureClient = async () => {
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            redirect_uri: "https://hwoolen03.github.io/indexsignedin";
+            redirect_uri: redirectUri;
         });
         console.log("Auth0 client configured successfully");
     } catch (error) {
