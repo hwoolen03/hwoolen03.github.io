@@ -168,6 +168,7 @@ const personalizeContent = async (user) => {
 };
 
 // Initialize Application
+// Initialize Application
 window.onload = async () => {
     try {
         await configureClient();
