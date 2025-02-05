@@ -17,7 +17,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("GitHub login button clicked");
         await auth0Client.loginWithRedirect({
             redirect_uri: redirectUri,
-            connection: 'github'
+            connection: 'github',
+            state: Math.random().toString(36).substring(2)
         });
     };
 
@@ -25,7 +26,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("Google login button clicked");
         await auth0Client.loginWithRedirect({
             redirect_uri: redirectUri,
-            connection: 'google-oauth2'
+            connection: 'google-oauth2',
+            state: Math.random().toString(36).substring(2)
         });
     };
 
@@ -33,7 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("Figma login button clicked");
         await auth0Client.loginWithRedirect({
             redirect_uri: redirectUri,
-            connection: 'figma'
+            connection: 'figma',
+            state: Math.random().toString(36).substring(2)
         });
     };
 
