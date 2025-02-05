@@ -89,5 +89,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await configureClient();
     await handleAuthCallback();
     updateUI();
+});
 
     // Smooth video loop
