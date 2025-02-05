@@ -41,9 +41,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const query = window.location.search;
         console.log("Handling auth callback with query:", query);
         if (query.includes("code=") && query.includes("state=")) {
-            await auth0Client.handleRedirectCallback();
-            window.history.replaceState({}, document.title, "/");
-            window.location.href = "indexsignedin.html";
+            try {
+                await auth0Client.handleRedirectCallback();
+                window.history.replaceState({}, document.title, "/");
+                window.location.href = "indexsignedin.html";
+            } catch (error) {
+                console.error("Error handling redirect callback:", error);
+            }
         }
     };
 
