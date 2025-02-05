@@ -173,7 +173,13 @@ window.onload = async () => {
     try {
         await configureClient();
         const user = await auth0Client.getUser();
-        if (!user) window.location.href = 'https://hwoolen03.github.io/';
+        console.log("User authentication status:", user); // Add this line for debugging
+        if (!user) {
+            console.log("No user authenticated, redirecting to index.html"); // Add this line for debugging
+            window.location.href = 'index.html'; // Change this to the intended page if necessary
+        } else {
+            console.log("User authenticated, staying on the current page"); // Add this line for debugging
+        }
 
         document.getElementById('signOutBtn').addEventListener('click', signOut);
 
