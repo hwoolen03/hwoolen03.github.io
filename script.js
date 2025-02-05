@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (query.includes("code=") && query.includes("state=")) {
             await auth0Client.handleRedirectCallback();
             window.history.replaceState({}, document.title, "/");
-            window.location.href = "https://hwoolen03.github.io/indexsignedin.html";
+            window.location.href = "indexsignedin.html";
         }
     };
 
@@ -52,12 +52,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isAuthenticated = await auth0Client.isAuthenticated();
         console.log("Update UI - Is authenticated:", isAuthenticated);
 
-        document.getElementById("btn-logout").style.display = isAuthenticated ? "block" : "none";
-        document.getElementById("btn-login-github").style.display = isAuthenticated ? "none" : "block";
-        document.getElementById("btn-login-google").style.display = isAuthenticated ? "none" : "block";
-        document.getElementById("btn-login-figma").style.display = isAuthenticated ? "none" : "block";
+        const btnLogout = document.getElementById("btn-logout");
+        const btnLoginGitHub = document.getElementById("btn-login-github");
+        const btnLoginGoogle = document.getElementById("btn-login-google");
+        const btnLoginFigma = document.getElementById("btn-login-figma");
+
+        if (!btnLogout || !btnLoginGitHub || !btnLoginGoogle || !btnLoginFigma) {
+            console.error("One or more elements not found in the DOM");
+            return; // Add this to prevent further errors
+        }
+
+        btnLogout.style.display = isAuthenticated ? "block" : "none";
+        btnLoginGitHub.style.display = isAuthenticated ? "none" : "block";
+        btnLoginGoogle.style.display = isAuthenticated ? "none" : "block";
+        btnLoginFigma.style.display = isAuthenticated ? "none" : "block";
 
         if (isAuthenticated) {
+            console.log("User is authenticated, redirecting to indexsignedin.html");
             window.location.href = "https://hwoolen03.github.io/indexsignedin.html";
         }
     };
