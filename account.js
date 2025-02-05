@@ -173,7 +173,7 @@ window.onload = async () => {
     try {
         await configureClient();
         const user = await auth0Client.getUser();
-        if (!user) window.location.href = 'index.html';
+        if (!user) window.location.href = 'https://hwoolen03.github.io/indexsignedin.html';
 
         document.getElementById('signOutBtn').addEventListener('click', signOut);
 
