@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (query.includes("code=") && query.includes("state=")) {
             await auth0Client.handleRedirectCallback();
             window.history.replaceState({}, document.title, "/");
-            window.location.href = "indexsignedin.html";
+            window.location.href = "https://hwoolen03.github.io/indexsignedin.html";
         }
     };
 
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById("btn-login-figma").style.display = isAuthenticated ? "none" : "block";
 
         if (isAuthenticated) {
-            window.location.href = "indexsignedin.html";
+            window.location.href = "https://hwoolen03.github.io/indexsignedin.html";
         }
     };
 
