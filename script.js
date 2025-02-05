@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!btnLogout || !btnLoginGitHub || !btnLoginGoogle || !btnLoginFigma) {
             console.error("One or more elements not found in the DOM");
-            return; // Add this to prevent further errors
+            return; // Prevent further errors
         }
 
         btnLogout.style.display = isAuthenticated ? "block" : "none";
