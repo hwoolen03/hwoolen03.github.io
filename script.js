@@ -1,16 +1,14 @@
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOMContentLoaded event fired");
     let auth0Client = null;
-    const redirectUri = "https://hwoolen03.github.io/indexsignedin.html"; 
+    const redirectUri = "https://hwoolen03.github.io/indexsignedin.html";
 
     const configureClient = async () => {
         console.log("Configuring Auth0 client...");
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
-            clientId: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            authorizationParams: {
-                redirect_uri: redirectUri
-            }
+            client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
+            redirect_uri: redirectUri
         });
         console.log("Auth0 client configured:", auth0Client);
     };
@@ -18,30 +16,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginWithGitHub = async () => {
         console.log("GitHub login button clicked");
         await auth0Client.loginWithRedirect({
-            authorizationParams: {
-                redirect_uri: redirectUri,
-                connection: 'github'
-            }
+            redirect_uri: redirectUri,
+            connection: 'github'
         });
     };
 
     const loginWithGoogle = async () => {
         console.log("Google login button clicked");
         await auth0Client.loginWithRedirect({
-            authorizationParams: {
-                redirect_uri: redirectUri,
-                connection: 'google-oauth2'
-            }
+            redirect_uri: redirectUri,
+            connection: 'google-oauth2'
         });
     };
 
     const loginWithFigma = async () => {
         console.log("Figma login button clicked");
         await auth0Client.loginWithRedirect({
-            authorizationParams: {
-                redirect_uri: redirectUri,
-                connection: 'figma'
-            }
+            redirect_uri: redirectUri,
+            connection: 'figma'
         });
     };
 
@@ -99,5 +91,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     await handleAuthCallback();
     updateUI();
 });
-
 
