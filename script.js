@@ -88,10 +88,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Smooth video loop
     const video = document.getElementById('background-video');
-    video.addEventListener('ended', function () {
-        setTimeout(() => {
-            video.currentTime = 0;
-            video.play();
-        }, 100); // Adjust the timeout as needed for a smoother experience
-    });
+    if (video) {
+        video.addEventListener('ended', function () {
+            setTimeout(() => {
+                video.currentTime = 0;
+                video.play();
+            }, 100); // Adjust the timeout as needed for a smoother experience
+        });
+    } else {
+        console.error("Video element not found in the DOM");
+    }
 });
