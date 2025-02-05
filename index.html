@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="HomePage.css">
     <!-- Load Auth0 SPA JS -->
     <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js"></script>
-    <!-- Load your scriptd.js -->
+    <!-- Load your script.js -->
     <script src="script.js" defer></script>
 </head>
 <body>
@@ -20,6 +20,7 @@
         <button id="btn-login-github">Login with GitHub</button>
         <button id="btn-login-google">Login with Google</button>
         <button id="btn-login-figma">Login with Figma</button>
+        <button id="btn-logout" style="display:none;">Logout</button>
     </div>
 </header>
 
@@ -29,6 +30,14 @@
 </div>
 
 <!-- Registration Form -->
+
+<!-- Video Section -->
+<div>
+    <video id="background-video" width="320" height="240" controls>
+        <source src="movie.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+</div>
 
 </body>
 </html>
