@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOMContentLoaded event fired");
+
     let auth0Client = null;
     const redirectUri = "https://hwoolen03.github.io/indexsignedin.html";
 
@@ -13,33 +14,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("Auth0 client configured:", auth0Client);
     };
 
-    const loginWithGitHub = async () => {
-        console.log("GitHub login button clicked");
+    const loginWithProvider = async (connection) => {
+        console.log(`${connection} login button clicked`);
         await auth0Client.loginWithRedirect({
             redirect_uri: redirectUri,
-            connection: 'github'
-        });
-    };
-
-    const loginWithGoogle = async () => {
-        console.log("Google login button clicked");
-        await auth0Client.loginWithRedirect({
-            redirect_uri: redirectUri,
-            connection: 'google-oauth2'
-        });
-    };
-
-    const loginWithFigma = async () => {
-        console.log("Figma login button clicked");
-        await auth0Client.loginWithRedirect({
-            redirect_uri: redirectUri,
-            connection: 'figma'
+            connection: connection
         });
     };
 
     const handleAuthCallback = async () => {
         const query = window.location.search;
         console.log("Handling auth callback with query:", query);
+
         if (query.includes("code=") && query.includes("state=")) {
             try {
                 const result = await auth0Client.handleRedirectCallback();
@@ -78,17 +64,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    document.getElementById('btn-login-github').addEventListener('click', loginWithGitHub);
+    // Add event listeners for login buttons
+    document.getElementById('btn-login-github').addEventListener('click', () => loginWithProvider('github'));
     console.log("Added event listener to GitHub login button");
 
-    document.getElementById('btn-login-google').addEventListener('click', loginWithGoogle);
+    document.getElementById('btn-login-google').addEventListener('click', () => loginWithProvider('google-oauth2'));
     console.log("Added event listener to Google login button");
 
-    document.getElementById('btn-login-figma').addEventListener('click', loginWithFigma);
+    document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
     console.log("Added event listener to Figma login button");
 
+    // Configure Auth0 client and handle authentication callback
     await configureClient();
     await handleAuthCallback();
     updateUI();
 });
-
