@@ -42,7 +42,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("Handling auth callback with query:", query);
         if (query.includes("code=") && query.includes("state=")) {
             try {
-                await auth0Client.handleRedirectCallback();
+                const result = await auth0Client.handleRedirectCallback();
+                console.log("Auth callback result:", result);
                 window.history.replaceState({}, document.title, "/");
                 window.location.href = "indexsignedin.html";
             } catch (error) {
@@ -90,5 +91,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     await handleAuthCallback();
     updateUI();
 });
-
-    // Smooth video loop
