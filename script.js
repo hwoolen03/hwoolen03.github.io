@@ -29,9 +29,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         console.log("Stored state before redirect:", sessionStorage.getItem("auth_state")); // Debugging step
 
-        // Disable login button to prevent multiple clicks
-        document.getElementById(`btn-login-${connection}`).disabled = true;
+        // Check if button exists before trying to disable it
+        const loginButton = document.getElementById(`btn-login-${connection}`);
+        if (loginButton) {
+            loginButton.disabled = true;  // Disable the button to prevent multiple clicks
+        }
 
+        // Proceed with redirect
         await auth0Client.loginWithRedirect({
             redirect_uri: redirectUri,
             connection: connection,
@@ -125,6 +129,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
     console.log("Added event listener to Figma login button");
 });
-
-
 
