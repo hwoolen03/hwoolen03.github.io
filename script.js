@@ -35,6 +35,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             loginButton.disabled = true;  // Disable the button to prevent multiple clicks
         }
 
+        // Log state before redirect
+        console.log("Redirecting with state:", state);
+
         // Proceed with redirect
         await auth0Client.loginWithRedirect({
             redirect_uri: redirectUri,
@@ -131,4 +134,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
     console.log("Added event listener to Figma login button");
 });
-
