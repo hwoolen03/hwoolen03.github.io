@@ -45,16 +45,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Handle authentication callback
     const handleAuthCallback = async () => {
-        // We want to only handle the callback when it's needed (i.e., when state and code are present)
-        if (!window.location.search) {
-            return;
-        }
-
-        console.log("Handling auth callback...");
-
+        // Only handle the callback if there are query parameters (i.e., state and code)
         const query = new URLSearchParams(window.location.search);
         const receivedState = query.get("state");
-        const storedState = sessionStorage.getItem("auth_state");  // Changed from localStorage to sessionStorage
+        const storedState = sessionStorage.getItem("auth_state");  // Retrieve the state from sessionStorage
+
+        if (!receivedState) {
+            console.error("No state received in the URL!");
+            return;
+        }
 
         console.log("Received state from URL:", receivedState);
         console.log("Stored state from sessionStorage:", storedState);
@@ -69,13 +68,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        // Proceed with handling the callback
         try {
             await auth0Client.handleRedirectCallback();
             console.log("Auth callback handled successfully");
 
             // Clear stored state and URL parameters
             sessionStorage.removeItem("auth_state");
-            window.history.replaceState({}, document.title, window.location.pathname);
+            window.history.replaceState({}, document.title, window.location.pathname);  // Remove URL query params
 
             // Redirect to the signed-in page
             window.location.href = redirectUri;
@@ -131,3 +131,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
     console.log("Added event listener to Figma login button");
 });
+
