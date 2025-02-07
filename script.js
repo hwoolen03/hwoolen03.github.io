@@ -48,37 +48,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("Handling auth callback...");
 
         const query = new URLSearchParams(window.location.search);
+        const receivedState = query.get("state");
+        const storedState = sessionStorage.getItem("auth_state");  // Changed from localStorage to sessionStorage
 
-        if (query.has("code") && query.has("state")) {
-            try {
-                const receivedState = query.get("state");
-                const storedState = sessionStorage.getItem("auth_state");  // Changed from localStorage to sessionStorage
+        console.log("Received state from URL:", receivedState);
+        console.log("Stored state from sessionStorage:", storedState);
 
-                console.log("Received state from URL:", receivedState);
-                console.log("Stored state from sessionStorage:", storedState);
+        if (!storedState) {
+            console.error("Stored state is null! The state was lost.");
+            return;
+        }
 
-                if (!storedState) {
-                    throw new Error("Stored state is null! The state was lost.");
-                }
+        if (receivedState !== storedState) {
+            console.error("State mismatch detected! Possible CSRF or storage issue.");
+            return;
+        }
 
-                if (receivedState !== storedState) {
-                    throw new Error("State mismatch detected! Possible CSRF or storage issue.");
-                }
+        try {
+            await auth0Client.handleRedirectCallback();
+            console.log("Auth callback handled successfully");
 
-                await auth0Client.handleRedirectCallback();
-                console.log("Auth callback handled successfully");
+            // Clear stored state and URL parameters
+            sessionStorage.removeItem("auth_state");
+            window.history.replaceState({}, document.title, window.location.pathname);
 
-                // Clear stored state and URL parameters
-                sessionStorage.removeItem("auth_state");
-                window.history.replaceState({}, document.title, window.location.pathname);
-
-                // Redirect to the signed-in page
-                window.location.href = "indexsignedin.html";
-            } catch (error) {
-                console.error("Error handling redirect callback:", error);
-            }
-        } else {
-            console.log("No auth callback parameters found, skipping handleRedirectCallback.");
+            // Redirect to the signed-in page
+            window.location.href = "indexsignedin.html";
+        } catch (error) {
+            console.error("Error handling redirect callback:", error);
         }
     };
 
@@ -129,4 +126,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
     console.log("Added event listener to Figma login button");
 });
+
 
