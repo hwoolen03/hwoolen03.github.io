@@ -10,41 +10,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
             redirect_uri: redirectUri,
-            cacheLocation: 'localstorage'  // Persist login state
+            cacheLocation: "localstorage"  // Ensures login state persists across redirects
         });
         console.log("Auth0 client configured:", auth0Client);
     };
 
     const loginWithProvider = async (connection) => {
-        const stateValue = Math.random().toString(36).substring(2);
-        console.log("Generated state:", stateValue);
-        localStorage.setItem("auth_state", stateValue);
-
+        console.log(`${connection} login button clicked`);
         await auth0Client.loginWithRedirect({
             redirect_uri: redirectUri,
-            connection: connection,
-            state: stateValue
+            connection: connection
         });
     };
 
     const handleAuthCallback = async () => {
-        const query = new URLSearchParams(window.location.search);
-        console.log("Handling auth callback with query:", query.toString());
-
-        const storedState = localStorage.getItem("auth_state");
-        const receivedState = query.get("state");
-
-        console.log("Stored state:", storedState);
-        console.log("Received state:", receivedState);
-
-        if (storedState !== receivedState) {
-            console.error("State mismatch detected! Possible CSRF or storage issue.");
-            return;
-        }
-
+        console.log("Handling auth callback...");
         try {
-            const result = await auth0Client.handleRedirectCallback();
-            console.log("Auth callback result:", result);
+            await auth0Client.handleRedirectCallback();  // Auth0 will check state automatically
+            console.log("Auth callback handled successfully");
             window.history.replaceState({}, document.title, "/");
             window.location.href = "indexsignedin.html";
         } catch (error) {
