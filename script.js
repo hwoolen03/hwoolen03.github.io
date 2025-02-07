@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Generate and store a unique state value
         const state = Math.random().toString(36).substring(7);
-        
+
         console.log("Attempting to store state before redirect:", state);
         sessionStorage.setItem("auth_state", state);  // Changed from localStorage to sessionStorage
 
@@ -45,6 +45,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Handle authentication callback
     const handleAuthCallback = async () => {
+        // We want to only handle the callback when it's needed (i.e., when state and code are present)
+        if (!window.location.search) {
+            return;
+        }
+
         console.log("Handling auth callback...");
 
         const query = new URLSearchParams(window.location.search);
@@ -73,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.history.replaceState({}, document.title, window.location.pathname);
 
             // Redirect to the signed-in page
-            window.location.href = "indexsignedin.html";
+            window.location.href = redirectUri;
         } catch (error) {
             console.error("Error handling redirect callback:", error);
         }
@@ -103,14 +108,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (isAuthenticated) {
             console.log("User is authenticated, redirecting to indexsignedin.html");
-            window.location.href = redirectUri;
+            window.location.href = redirectUri;  // Ensure correct redirect
         }
     };
 
     // Initialize Auth0 client
     await configureClient();
 
-    // Handle authentication callback (only runs if needed)
+    // Only handle the callback if needed (avoid unnecessary redirects)
     await handleAuthCallback();
 
     // Update UI after authentication check
@@ -126,5 +131,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
     console.log("Added event listener to Figma login button");
 });
-
-
