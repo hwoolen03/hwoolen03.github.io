@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
             redirect_uri: redirectUri,
-            cacheLocation: "localstorage"  // Stores authentication state persistently
+            cacheLocation: "localstorage" // Ensures login state persists across redirects
         });
         console.log("Auth0 client configured:", auth0Client);
     };
@@ -19,28 +19,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Handle login with different providers
     const loginWithProvider = async (connection) => {
         console.log(`${connection} login button clicked`);
+
+        // Generate and store a random state value
+        const state = Math.random().toString(36).substring(7);
+        sessionStorage.setItem("auth_state", state);
+        console.log("Stored state before redirect:", state);
+
         await auth0Client.loginWithRedirect({
             redirect_uri: redirectUri,
-            connection: connection
+            connection: connection,
+            state: state
         });
     };
 
-    // Handle the authentication callback
+    // Handle authentication callback
     const handleAuthCallback = async () => {
         console.log("Handling auth callback...");
-        
+
         const query = new URLSearchParams(window.location.search);
 
-        // Only run if URL contains auth params
         if (query.has("code") && query.has("state")) {
             try {
+                const receivedState = query.get("state");
+                const storedState = sessionStorage.getItem("auth_state");
+
+                console.log("Received state from URL:", receivedState);
+                console.log("Stored state:", storedState);
+
+                if (receivedState !== storedState) {
+                    throw new Error("State mismatch detected! Possible CSRF or storage issue.");
+                }
+
                 await auth0Client.handleRedirectCallback();
                 console.log("Auth callback handled successfully");
-                
-                // Clear URL params after handling authentication
+
+                // Clear the query parameters after authentication
                 window.history.replaceState({}, document.title, window.location.pathname);
-                
-                // Redirect to signed-in page
+
+                // Redirect to the signed-in page
                 window.location.href = "indexsignedin.html";
             } catch (error) {
                 console.error("Error handling redirect callback:", error);
@@ -74,14 +90,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (isAuthenticated) {
             console.log("User is authenticated, redirecting to indexsignedin.html");
-            window.location.href = "https://hwoolen03.github.io/indexsignedin.html";
+            window.location.href = redirectUri;
         }
     };
 
-    // Initialize Auth0 client first
+    // Initialize Auth0 client
     await configureClient();
 
-    // Handle auth callback if applicable
+    // Handle authentication callback (only runs if needed)
     await handleAuthCallback();
 
     // Update UI after authentication check
@@ -97,4 +113,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
     console.log("Added event listener to Figma login button");
 });
+
 
