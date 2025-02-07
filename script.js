@@ -23,11 +23,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Generate and store a unique state value
         const state = Math.random().toString(36).substring(7);
+        
+        console.log("Generated state before redirect:", state);
+        sessionStorage.setItem("auth_state", state);  // Storing state in sessionStorage
 
-        console.log("Attempting to store state before redirect:", state);
-        sessionStorage.setItem("auth_state", state);  // Changed from localStorage to sessionStorage
-
-        console.log("Stored state before redirect:", sessionStorage.getItem("auth_state")); // Debugging step
+        console.log("Stored state in sessionStorage:", sessionStorage.getItem("auth_state")); // Check state in storage
 
         // Check if button exists before trying to disable it
         const loginButton = document.getElementById(`btn-login-${connection}`);
@@ -48,10 +48,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Handle authentication callback
     const handleAuthCallback = async () => {
-        // Only handle the callback if there are query parameters (i.e., state and code)
         const query = new URLSearchParams(window.location.search);
         const receivedState = query.get("state");
         const storedState = sessionStorage.getItem("auth_state");  // Retrieve the state from sessionStorage
+
+        console.log("Current URL:", window.location.href);
+        console.log("Query Parameters:", query.toString());
 
         if (!receivedState) {
             console.error("No state received in the URL!");
@@ -134,3 +136,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
     console.log("Added event listener to Figma login button");
 });
+
