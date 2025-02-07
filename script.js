@@ -23,8 +23,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Generate and store a unique state value
         const state = Math.random().toString(36).substring(7);
-        localStorage.setItem("auth_state", state);
-        console.log("Stored state before redirect:", state);
+        
+        console.log("Attempting to store state before redirect:", state);
+        sessionStorage.setItem("auth_state", state);  // Changed from localStorage to sessionStorage
+
+        console.log("Stored state before redirect:", sessionStorage.getItem("auth_state")); // Debugging step
 
         // Disable login button to prevent multiple clicks
         document.getElementById(`btn-login-${connection}`).disabled = true;
@@ -45,10 +48,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (query.has("code") && query.has("state")) {
             try {
                 const receivedState = query.get("state");
-                const storedState = localStorage.getItem("auth_state");
+                const storedState = sessionStorage.getItem("auth_state");  // Changed from localStorage to sessionStorage
 
                 console.log("Received state from URL:", receivedState);
-                console.log("Stored state:", storedState);
+                console.log("Stored state from sessionStorage:", storedState);
+
+                if (!storedState) {
+                    throw new Error("Stored state is null! The state was lost.");
+                }
 
                 if (receivedState !== storedState) {
                     throw new Error("State mismatch detected! Possible CSRF or storage issue.");
@@ -58,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log("Auth callback handled successfully");
 
                 // Clear stored state and URL parameters
-                localStorage.removeItem("auth_state");
+                sessionStorage.removeItem("auth_state");
                 window.history.replaceState({}, document.title, window.location.pathname);
 
                 // Redirect to the signed-in page
@@ -118,5 +125,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
     console.log("Added event listener to Figma login button");
 });
+
 
 
