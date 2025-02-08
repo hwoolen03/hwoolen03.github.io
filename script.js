@@ -28,15 +28,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             console.log("🔹 Redirecting to Auth0 login...");
-
             await auth0Client.loginWithRedirect({
                 redirect_uri: redirectUri,
                 connection: connection
             });
-
             console.log("✅ Login initiated, redirecting...");
         } catch (error) {
             console.error("⚠️ Error during loginWithRedirect:", error);
+            // Re-enable button on error
+            if (loginButton) loginButton.disabled = false;
+        } finally {
+            // Ensure button is re-enabled after attempt
+            if (loginButton) loginButton.disabled = false;
         }
     };
 
@@ -45,10 +48,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("🔹 Checking for Auth0 callback query parameters...");
 
         const query = new URLSearchParams(window.location.search);
-        console.log("🔹 Full query string:", query.toString());  // ✅ Debugging
+        console.log("🔹 Full query string:", query.toString());
 
         if (!query.has("code")) {
-            console.warn("⚠️ No authentication parameters found. The redirect might have failed.");
+            console.warn("⚠️ No authentication parameters found.");
             return;
         }
 
@@ -57,11 +60,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             await auth0Client.handleRedirectCallback();
             console.log("✅ Auth callback handled successfully!");
 
-            // ✅ Remove query parameters from URL WITHOUT refreshing the page
+            // Remove query parameters without redirecting
             window.history.replaceState({}, document.title, window.location.pathname);
-
-            // ✅ Redirect to signed-in page
-            window.location.href = redirectUri;
         } catch (error) {
             console.error("⚠️ Error handling redirect callback:", error);
         }
@@ -84,35 +84,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        // Toggle button visibility
         btnLogout.style.display = isAuthenticated ? "block" : "none";
         btnLoginGitHub.style.display = isAuthenticated ? "none" : "block";
         btnLoginGoogle.style.display = isAuthenticated ? "none" : "block";
         btnLoginFigma.style.display = isAuthenticated ? "none" : "block";
 
+        // Redirect only if authenticated and not already on the target page
         if (isAuthenticated) {
-            console.log("✅ User is authenticated, redirecting to indexsignedin.html");
-            window.location.href = redirectUri;
+            const currentPath = window.location.pathname;
+            const targetPath = new URL(redirectUri).pathname;
+            if (currentPath !== targetPath) {
+                console.log("✅ Redirecting to signed-in page...");
+                window.location.href = redirectUri;
+            }
         }
     };
 
-    // ✅ Step 5: Initialize Auth0 Client and Handle Callbacks
+    // ✅ Step 5: Initialize and Handle Auth Flow
     await configureClient();
+    await handleAuthCallback(); // Handle callback if present
+    await updateUI(); // Update UI and conditionally redirect
 
-    // ✅ Handle authentication callback if needed
-    await handleAuthCallback();
-
-    // ✅ Update UI after authentication check
-    await updateUI();
-
-    // ✅ Step 6: Add Event Listeners for Login Buttons
+    // ✅ Step 6: Add Event Listeners
     document.getElementById('btn-login-github').addEventListener('click', () => loginWithProvider('github'));
-    console.log("✅ Added event listener to GitHub login button");
-
     document.getElementById('btn-login-google').addEventListener('click', () => loginWithProvider('google-oauth2'));
-    console.log("✅ Added event listener to Google login button");
-
     document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
-    console.log("✅ Added event listener to Figma login button");
+
+    // ✅ Optional: Add logout functionality
+    document.getElementById('btn-logout')?.addEventListener('click', () => {
+        auth0Client.logout({ returnTo: window.location.origin });
+    });
 });
 
 
