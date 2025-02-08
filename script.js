@@ -49,6 +49,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ✅ Step 3: Handle Authentication Callback
     const handleAuthCallback = async () => {
+        if (!auth0Client) {
+            console.warn("⚠️ Auth0 client is not initialized.");
+            return;
+        }
+
         console.log("🔹 Checking for Auth0 callback query parameters...");
 
         const query = new URLSearchParams(window.location.search);
@@ -79,6 +84,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ✅ Step 4: Update UI Based on Authentication State
     const updateUI = async () => {
+        if (!auth0Client) {
+            console.warn("⚠️ Auth0 client is not initialized.");
+            return;
+        }
+
         console.log("🔹 Updating UI...");
 
         const isAuthenticated = await auth0Client.isAuthenticated();
@@ -126,3 +136,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         auth0Client.logout({ returnTo: window.location.origin });
     });
 });
+
