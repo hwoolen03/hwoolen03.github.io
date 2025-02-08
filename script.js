@@ -44,20 +44,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Handle authentication callback after redirect
     const handleAuthCallback = async () => {
+        const query = new URLSearchParams(window.location.search);
+        
+        // ✅ Exit early if there are no auth query parameters
+        if (!query.has("code") || !query.has("state")) {
+            console.log("🔹 No auth query parameters found, skipping redirect callback.");
+            return;
+        }
+
         try {
             console.log("Handling redirect callback...");
-
-            // Process the redirect BEFORE checking state
+            
+            // ✅ Process the redirect BEFORE checking state
             await auth0Client.handleRedirectCallback();
-
-            const query = new URLSearchParams(window.location.search);
+            
             const receivedState = query.get("state");
             const storedState = localStorage.getItem("auth_state");
 
             console.log("Current URL:", window.location.href);
-            console.log("Query Parameters:", query.toString());
-            console.log("Received state from URL:", receivedState);
-            console.log("Stored state from localStorage:", storedState);
+            console.log("Received state:", receivedState);
+            console.log("Stored state:", storedState);
 
             if (!receivedState) {
                 console.error("❌ No state received in the URL!");
@@ -76,11 +82,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             console.log("✅ State validated successfully!");
 
-            // Clear stored state and remove query params from URL
+            // ✅ Clear stored state and remove query params from URL
             localStorage.removeItem("auth_state");
             window.history.replaceState({}, document.title, window.location.pathname);
 
-            // Redirect to signed-in page
+            // ✅ Redirect to signed-in page
             window.location.href = redirectUri;
         } catch (error) {
             console.error("⚠️ Error handling redirect callback:", error);
@@ -134,3 +140,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
     console.log("✅ Added event listener to Figma login button");
 });
+
