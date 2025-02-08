@@ -50,29 +50,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         const query = new URLSearchParams(window.location.search);
         console.log("🔹 Full query string:", query.toString());
 
-        if (query.has("code") && query.has("state")) { // Check both code and state
-            try {
-                console.log("🔹 Handling Auth0 redirect callback...");
-                await auth0Client.handleRedirectCallback();
-                console.log("✅ Auth callback handled successfully!");
-
-                // Remove query parameters from URL without redirecting
-                window.history.replaceState({}, document.title, window.location.pathname);
-
-                // Update the UI based on authentication status
-                await updateUI();
-            } catch (error) {
-                console.error("⚠️ Error handling redirect callback:", error);
-
-                // Check if error is due to invalid state
-                if (error.message.includes("Invalid state")) {
-                    console.log("⚠️ Invalid state detected, reattempting login...");
-                    // Reattempt login with prompt 'none' (silent login)
-                    await auth0Client.loginWithRedirect({ prompt: "none" });
-                }
-            }
-        } else {
+        if (!query.has("code")) {
             console.warn("⚠️ No authentication parameters found.");
+            return;
+        }
+
+        try {
+            console.log("🔹 Handling Auth0 redirect callback...");
+            await auth0Client.handleRedirectCallback();
+            console.log("✅ Auth callback handled successfully!");
+
+            // Remove query parameters without redirecting
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            await updateUI(); // Call to update UI after successful callback
+        } catch (error) {
+            console.error("⚠️ Error handling redirect callback:", error);
+            if (error.message.includes("Invalid authorization code")) {
+                // Handle the error gracefully, potentially prompting a login again
+                await auth0Client.loginWithRedirect(); // Re-attempt login
+            }
         }
     };
 
@@ -125,5 +122,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         auth0Client.logout({ returnTo: window.location.origin });
     });
 });
-
-
