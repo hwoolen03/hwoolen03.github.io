@@ -7,14 +7,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ✅ Step 1: Configure Auth0 Client
     const configureClient = async () => {
         console.log("🔹 Configuring Auth0 client...");
-        auth0Client = await createAuth0Client({
-            domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
-            client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            redirect_uri: redirectUri,
-            cacheLocation: "localstorage",
-            useRefreshTokens: true
-        });
-        console.log("✅ Auth0 client configured:", auth0Client);
+        try {
+            auth0Client = await createAuth0Client({
+                domain: "dev-h4hncqco2n4yrt6z.us.auth0.com", // Your Auth0 domain
+                client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU", // Your Auth0 client ID
+                redirect_uri: redirectUri,
+                cacheLocation: "localstorage",
+                useRefreshTokens: true
+            });
+            console.log("✅ Auth0 client configured:", auth0Client);
+        } catch (error) {
+            console.error("⚠️ Error configuring Auth0 client:", error);
+        }
     };
 
     // ✅ Step 2: Login with a Provider
