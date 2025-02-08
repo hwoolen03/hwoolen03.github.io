@@ -14,76 +14,46 @@ document.addEventListener('DOMContentLoaded', async () => {
             cacheLocation: "localstorage",
             useRefreshTokens: true
         });
-        console.log("Auth0 client configured:", auth0Client);
+        console.log("✅ Auth0 client configured:", auth0Client);
     };
 
     // Handle login with different providers
     const loginWithProvider = async (connection) => {
         console.log(`${connection} login button clicked`);
 
-        // Generate and store a unique state value
-        const state = crypto.randomUUID(); // More secure than Math.random()
-        localStorage.setItem("auth_state", state);
-
-        console.log("Stored state in localStorage:", state);
-
         const loginButton = document.getElementById(`btn-login-${connection}`);
         if (loginButton) {
             loginButton.disabled = true;
         }
 
-        console.log("Redirecting with state:", state);
+        console.log("🔹 Redirecting to Auth0 login...");
 
-        // Redirect user to Auth0 login
+        // ✅ Let Auth0 handle state automatically
         await auth0Client.loginWithRedirect({
             redirect_uri: redirectUri,
-            connection: connection,
-            state: state
+            connection: connection
         });
     };
 
-    // Handle authentication callback after redirect
+    // Handle authentication callback
     const handleAuthCallback = async () => {
         const query = new URLSearchParams(window.location.search);
         
         // ✅ Exit early if there are no auth query parameters
-        if (!query.has("code") || !query.has("state")) {
+        if (!query.has("code")) {
             console.log("🔹 No auth query parameters found, skipping redirect callback.");
             return;
         }
 
         try {
-            console.log("Handling redirect callback...");
+            console.log("🔹 Handling Auth0 redirect callback...");
             
-            // ✅ Process the redirect BEFORE checking state
+            // ✅ Auth0 automatically validates state
             await auth0Client.handleRedirectCallback();
-            
-            const receivedState = query.get("state");
-            const storedState = localStorage.getItem("auth_state");
 
-            console.log("Current URL:", window.location.href);
-            console.log("Received state:", receivedState);
-            console.log("Stored state:", storedState);
+            console.log("✅ Redirect callback handled successfully!");
 
-            if (!receivedState) {
-                console.error("❌ No state received in the URL!");
-                return;
-            }
-
-            if (!storedState) {
-                console.error("❌ Stored state is missing! It may have been lost.");
-                return;
-            }
-
-            if (receivedState !== storedState) {
-                console.error("❌ State mismatch detected! Possible CSRF attack.");
-                return;
-            }
-
-            console.log("✅ State validated successfully!");
-
-            // ✅ Clear stored state and remove query params from URL
-            localStorage.removeItem("auth_state");
+            // ✅ Remove query params from URL WITHOUT refreshing the page
             window.history.replaceState({}, document.title, window.location.pathname);
 
             // ✅ Redirect to signed-in page
@@ -95,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Update UI based on authentication state
     const updateUI = async () => {
-        console.log("Updating UI...");
+        console.log("🔹 Updating UI...");
         
         const isAuthenticated = await auth0Client.isAuthenticated();
         console.log("User authenticated:", isAuthenticated);
@@ -140,4 +110,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
     console.log("✅ Added event listener to Figma login button");
 });
+
 
