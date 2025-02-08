@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
             redirect_uri: redirectUri,
-            cacheLocation: "localstorage",  // Ensures login state persists across redirects
+            cacheLocation: "localstorage",
             useRefreshTokens: true
         });
         console.log("Auth0 client configured:", auth0Client);
@@ -22,23 +22,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log(`${connection} login button clicked`);
 
         // Generate and store a unique state value
-        const state = Math.random().toString(36).substring(7);
-        
-        console.log("Generated state before redirect:", state);
-        sessionStorage.setItem("auth_state", state);  // Storing state in sessionStorage
+        const state = crypto.randomUUID(); // More secure than Math.random()
+        localStorage.setItem("auth_state", state);
 
-        console.log("Stored state in sessionStorage:", sessionStorage.getItem("auth_state")); // Check state in storage
+        console.log("Stored state in localStorage:", state);
 
-        // Check if button exists before trying to disable it
         const loginButton = document.getElementById(`btn-login-${connection}`);
         if (loginButton) {
-            loginButton.disabled = true;  // Disable the button to prevent multiple clicks
+            loginButton.disabled = true;
         }
 
-        // Log state before redirect
         console.log("Redirecting with state:", state);
 
-        // Proceed with redirect
+        // Redirect user to Auth0 login
         await auth0Client.loginWithRedirect({
             redirect_uri: redirectUri,
             connection: connection,
@@ -46,46 +42,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // Handle authentication callback
+    // Handle authentication callback after redirect
     const handleAuthCallback = async () => {
-        const query = new URLSearchParams(window.location.search);
-        const receivedState = query.get("state");
-        const storedState = sessionStorage.getItem("auth_state");  // Retrieve the state from sessionStorage
-
-        console.log("Current URL:", window.location.href);
-        console.log("Query Parameters:", query.toString());
-
-        if (!receivedState) {
-            console.error("No state received in the URL!");
-            return;
-        }
-
-        console.log("Received state from URL:", receivedState);
-        console.log("Stored state from sessionStorage:", storedState);
-
-        if (!storedState) {
-            console.error("Stored state is null! The state was lost.");
-            return;
-        }
-
-        if (receivedState !== storedState) {
-            console.error("State mismatch detected! Possible CSRF or storage issue.");
-            return;
-        }
-
-        // Proceed with handling the callback
         try {
+            console.log("Handling redirect callback...");
+
+            // Process the redirect BEFORE checking state
             await auth0Client.handleRedirectCallback();
-            console.log("Auth callback handled successfully");
 
-            // Clear stored state and URL parameters
-            sessionStorage.removeItem("auth_state");
-            window.history.replaceState({}, document.title, window.location.pathname);  // Remove URL query params
+            const query = new URLSearchParams(window.location.search);
+            const receivedState = query.get("state");
+            const storedState = localStorage.getItem("auth_state");
 
-            // Redirect to the signed-in page
+            console.log("Current URL:", window.location.href);
+            console.log("Query Parameters:", query.toString());
+            console.log("Received state from URL:", receivedState);
+            console.log("Stored state from localStorage:", storedState);
+
+            if (!receivedState) {
+                console.error("❌ No state received in the URL!");
+                return;
+            }
+
+            if (!storedState) {
+                console.error("❌ Stored state is missing! It may have been lost.");
+                return;
+            }
+
+            if (receivedState !== storedState) {
+                console.error("❌ State mismatch detected! Possible CSRF attack.");
+                return;
+            }
+
+            console.log("✅ State validated successfully!");
+
+            // Clear stored state and remove query params from URL
+            localStorage.removeItem("auth_state");
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            // Redirect to signed-in page
             window.location.href = redirectUri;
         } catch (error) {
-            console.error("Error handling redirect callback:", error);
+            console.error("⚠️ Error handling redirect callback:", error);
         }
     };
 
@@ -94,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("Updating UI...");
         
         const isAuthenticated = await auth0Client.isAuthenticated();
-        console.log("Update UI - Is authenticated:", isAuthenticated);
+        console.log("User authenticated:", isAuthenticated);
 
         const btnLogout = document.getElementById("btn-logout");
         const btnLoginGitHub = document.getElementById("btn-login-github");
@@ -102,7 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const btnLoginFigma = document.getElementById("btn-login-figma");
 
         if (!btnLogout || !btnLoginGitHub || !btnLoginGoogle || !btnLoginFigma) {
-            console.error("One or more elements not found in the DOM");
+            console.error("⚠️ One or more elements not found in the DOM");
             return;
         }
 
@@ -112,15 +110,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnLoginFigma.style.display = isAuthenticated ? "none" : "block";
 
         if (isAuthenticated) {
-            console.log("User is authenticated, redirecting to indexsignedin.html");
-            window.location.href = redirectUri;  // Ensure correct redirect
+            console.log("✅ User is authenticated, redirecting to indexsignedin.html");
+            window.location.href = redirectUri;
         }
     };
 
     // Initialize Auth0 client
     await configureClient();
 
-    // Only handle the callback if needed (avoid unnecessary redirects)
+    // Handle authentication callback if needed
     await handleAuthCallback();
 
     // Update UI after authentication check
@@ -128,12 +126,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Add event listeners for login buttons
     document.getElementById('btn-login-github').addEventListener('click', () => loginWithProvider('github'));
-    console.log("Added event listener to GitHub login button");
+    console.log("✅ Added event listener to GitHub login button");
 
     document.getElementById('btn-login-google').addEventListener('click', () => loginWithProvider('google-oauth2'));
-    console.log("Added event listener to Google login button");
+    console.log("✅ Added event listener to Google login button");
 
     document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
-    console.log("Added event listener to Figma login button");
+    console.log("✅ Added event listener to Figma login button");
 });
-
