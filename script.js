@@ -129,9 +129,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         btnLogout.style.display = isAuthenticated ? "block" : "none";
         btnLoginGitHub.style.display = isAuthenticated ? "none" : "block";
-::contentReference[oaicite:0]{index=0}
- 
+        btnLoginGoogle.style.display = isAuthenticated ? "none" : "block";
+        btnLoginFigma.style.display = isAuthenticated ? "none" : "block";
+    };
 
-
-
+    // Initialize the Auth0 client and handle the callback if applicable
+    await configureClient();
+    await handleAuthCallback();
+    await updateUI();
+});
 
