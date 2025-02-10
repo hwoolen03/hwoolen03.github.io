@@ -1,16 +1,47 @@
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("✅ DOMContentLoaded event fired");
 
-    // 1. Verify Auth0 SDK loading
-    if (!window.createAuth0Client) {
-        console.error("❌ Auth0 SDK not loaded. Check:");
-        console.log("- Script URL: https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js");
-        console.log("- Network tab for failed requests");
-        console.log("- Browser console for CSP errors");
+    // Enhanced SDK verification
+    const verifySDK = () => {
+        if (!window.createAuth0Client) {
+            console.error("❌ Auth0 SDK missing. Diagnostics:");
+            console.log("1. Script tags:", document.querySelectorAll('script[src*=\"auth0\"]'));
+            console.log("2. Network requests:", performance.getEntriesByType("resource"));
+            console.log("3. CSP violations:", window.securityPolicyViolation);
+            return false;
+        }
+        return true;
+    };
+
+    // Retry mechanism for SDK loading
+    const waitForSDK = (retries = 3, delay = 500) => {
+        return new Promise((resolve, reject) => {
+            const check = (attempt) => {
+                if (verifySDK()) return resolve();
+                if (attempt >= retries) return reject();
+                setTimeout(() => check(attempt + 1), delay);
+            };
+            check(0);
+        });
+    };
+
+    try {
+        await waitForSDK();
+        console.log("Auth0 SDK version:", window.Auth0Client?.VERSION || 'Unknown version loaded');
+    } catch {
+        document.body.innerHTML = `
+            <h1 style="color: red">Error: Authentication System Unavailable</h1>
+            <p>Please try:</p>
+            <ul>
+                <li>Disable ad blockers</li>
+                <li>Check internet connection</li>
+                <li>Refresh the page (Ctrl+F5)</li>
+            </ul>
+        `;
         return;
     }
 
-    // 2. Auth0 configuration
+    // Rest of your Auth0 configuration
     let auth0Client = null;
     const config = {
         domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
@@ -20,16 +51,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         useRefreshTokens: true
     };
 
-    // 3. Initialize Auth0 client
     try {
         auth0Client = await createAuth0Client(config);
-        console.log("Auth0 client initialized");
+        console.log("Auth0 initialized");
     } catch (error) {
-        console.error("Auth0 initialization failed:", error);
+        console.error("Auth0 init failed:", error);
         return;
     }
 
-    // 4. Handle authentication callback
+    // Existing authentication logic
     const handleAuthCallback = async () => {
         const isCallback = window.location.search.includes("code=");
         
@@ -48,7 +78,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // 5. Login handler
     const loginWithProvider = async (connection) => {
         try {
             await auth0Client.loginWithRedirect({
@@ -61,14 +90,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // 6. Logout handler
     const logout = () => {
         auth0Client.logout({
             returnTo: window.location.origin
         });
     };
 
-    // 7. UI state management
     const updateUI = async () => {
         const isAuthenticated = await auth0Client.isAuthenticated();
         
@@ -80,7 +107,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("UI updated, authenticated:", isAuthenticated);
     };
 
-    // 8. Event listeners
     const setupEventListeners = () => {
         document.getElementById('btn-login-github')?.addEventListener('click', () => loginWithProvider('github'));
         document.getElementById('btn-login-google')?.addEventListener('click', () => loginWithProvider('google-oauth2'));
@@ -88,7 +114,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('btn-logout')?.addEventListener('click', logout);
     };
 
-    // 9. Main execution flow
     try {
         await handleAuthCallback();
         setupEventListeners();
