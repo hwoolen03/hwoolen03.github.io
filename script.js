@@ -128,31 +128,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         btnLogout.style.display = isAuthenticated ? "block" : "none";
-        btnLoginGitHub.style.display = isAuthenticated ? "none" : "block";
-        btnLoginGoogle.style.display = isAuthenticated ? "none" : "block";
-        btnLoginFigma.style.display = isAuthenticated ? "none" : "block";
+        btnLoginGitHub.style.display = isAuthenticated ? "none" : "block
+::contentReference[oaicite:0]{index=0}
+ 
 
-        if (isAuthenticated) {
-            const currentPath = window.location.pathname;
-            const targetPath = new URL(redirectUri).pathname;
-            if (currentPath !== targetPath) {
-                console.log("✅ Redirecting to signed-in page...");
-                window.location.href = redirectUri;
-            }
-        }
-    };
-
-    // Initialize the Auth0 client and handle the Auth flow
-    await configureClient();
-    await handleAuthCallback();
-    await updateUI();
-
-    // Optional logout functionality
-    document.getElementById('btn-logout')?.addEventListener('click', () => {
-        console.log("🔹 Logging out...");
-        auth0Client.logout({ returnTo: window.location.origin });
-    });
-});
 
 
 
