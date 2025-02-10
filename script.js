@@ -23,11 +23,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Function to load Auth0 SDK manually
     const loadAuth0Script = () => {
+        console.log("🔹 Manually loading Auth0 script...");
         const script = document.createElement("script");
         script.src = "https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js";
         script.onload = () => {
             console.log("✅ Auth0 SDK manually loaded.");
             configureClient();
+        };
+        script.onerror = () => {
+            console.error("⚠️ Error loading Auth0 script.");
         };
         document.head.appendChild(script);
     };
@@ -162,13 +166,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     await updateUI(); // Update UI and conditionally redirect
 
     // ✅ Step 6: Add Event Listeners
-    document.getElementById('btn-login-github').addEventListener('click', () => loginWithProvider('github'));
-    document.getElementById('btn-login-google').addEventListener('click', () => loginWithProvider('google-oauth2'));
-    document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
+    document.getElementById('btn-login-github')?.addEventListener('click', () => {
+        console.log("🔹 GitHub login button clicked");
+        loginWithProvider('github');
+    });
+    document.getElementById('btn-login-google')?.addEventListener('click', () => {
+        console.log("🔹 Google login button clicked");
+        loginWithProvider('google-oauth2');
+    });
+    document.getElementById('btn-login-figma')?.addEventListener('click', () => {
+        console.log("🔹 Figma login button clicked");
+        loginWithProvider('figma');
+    });
 
     // ✅ Optional: Add logout functionality
     document.getElementById('btn-logout')?.addEventListener('click', () => {
+        console.log("🔹 Logging out...");
         auth0Client.logout({ returnTo: window.location.origin });
     });
 });
+
 
