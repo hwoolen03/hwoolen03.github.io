@@ -3,13 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Critical CSP meta tag -->
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self';
+          script-src 'self' https://cdn.auth0.com https://cdn.jsdelivr.net;
+          style-src 'self' 'unsafe-inline';
+          img-src 'self' data:;
+          connect-src 'self' https://dev-h4hncqco2n4yrt6z.us.auth0.com">
+    
     <title>Atlas Travel</title>
     <link rel="stylesheet" href="HomePage.css">
     
-    <!-- Auth0 SDK MUST be first -->
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <!-- Primary Auth0 SDK with CDN fallback -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js" 
+            integrity="sha384-xyz123" 
+            crossorigin="anonymous"
+            onerror="loadFallbackAuth0SDK()"></script>
     
-    <!-- Your custom script -->
+    <!-- Fallback SDK loader -->
+    <script>
+        function loadFallbackAuth0SDK() {
+            console.warn("Primary CDN failed, trying jsDelivr...");
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@2.0.0/dist/auth0-spa-js.production.js';
+            document.head.appendChild(script);
+        }
+    </script>
+
     <script src="script.js" defer></script>
 </head>
 <body>
