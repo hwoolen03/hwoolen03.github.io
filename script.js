@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("✅ DOMContentLoaded event fired");
 
-    // Check if Auth0 SDK is loaded
+    // Ensure Auth0 SDK is loaded before continuing
     if (typeof createAuth0Client === 'undefined') {
         console.error("⚠️ Auth0 SDK is not loaded properly.");
         return;
@@ -22,13 +22,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 useRefreshTokens: true
             });
             console.log("✅ Auth0 client configured:", auth0Client);
+            setLoginEventListeners(); // Set up event listeners after client is initialized
         } catch (error) {
             console.error("⚠️ Error configuring Auth0 client:", error);
         }
     };
 
-    // Login with provider
+    // Login with provider (GitHub, Google, Figma)
     const loginWithProvider = async (connection) => {
+        if (!auth0Client) {
+            console.error("⚠️ Auth0 client is not available.");
+            return;
+        }
+
         console.log(`🔹 Login button clicked for ${connection}`);
 
         const loginButton = document.getElementById(`btn-login-${connection}`);
@@ -49,7 +55,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Handle Auth0 callback
+    // Set event listeners for login buttons after Auth0 client is initialized
+    const setLoginEventListeners = () => {
+        document.getElementById('btn-login-github')?.addEventListener('click', () => {
+            console.log("🔹 GitHub login button clicked");
+            loginWithProvider('github');
+        });
+
+        document.getElementById('btn-login-google')?.addEventListener('click', () => {
+            console.log("🔹 Google login button clicked");
+            loginWithProvider('google-oauth2');
+        });
+
+        document.getElementById('btn-login-figma')?.addEventListener('click', () => {
+            console.log("🔹 Figma login button clicked");
+            loginWithProvider('figma');
+        });
+    };
+
+    // Handle the Auth0 callback after redirect
     const handleAuthCallback = async () => {
         if (!auth0Client) {
             console.warn("⚠️ Auth0 client is not initialized.");
@@ -73,16 +97,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Remove query parameters without redirecting
             window.history.replaceState({}, document.title, window.location.pathname);
 
-            await updateUI(); // Call to update UI after successful callback
+            await updateUI(); // Update the UI after successful authentication
         } catch (error) {
             console.error("⚠️ Error handling redirect callback:", error);
             if (error.message.includes("Invalid authorization code")) {
-                await auth0Client.loginWithRedirect(); // Re-attempt login
+                await auth0Client.loginWithRedirect(); // Re-attempt login if needed
             }
         }
     };
 
-    // Update UI based on authentication state
+    // Update the UI based on the authentication status
     const updateUI = async () => {
         if (!auth0Client) {
             console.warn("⚠️ Auth0 client is not initialized.");
@@ -118,20 +142,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Initialize and handle the Auth flow
+    // Initialize the Auth0 client and handle the Auth flow
     await configureClient();
     await handleAuthCallback();
     await updateUI();
 
-    document.getElementById('btn-login-github')?.addEventListener('click', () => {
-        console.log("🔹 GitHub login button clicked");
-        loginWithProvider('github');
+    // Optional logout functionality
+    document.getElementById('btn-logout')?.addEventListener('click', () => {
+        console.log("🔹 Logging out...");
+        auth0Client.logout({ returnTo: window.location.origin });
     });
-    document.getElementById('btn-login-google')?.addEventListener('click', () => {
-        console.log("🔹 Google login button clicked");
-        loginWithProvider('google-oauth2');
+});
 
-::contentReference[oaicite:0]{index=0}
- 
 
 
