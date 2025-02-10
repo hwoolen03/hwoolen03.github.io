@@ -6,7 +6,7 @@
     <title>Atlas Travel</title>
     <link rel="stylesheet" href="HomePage.css">
 
-    <!-- Remove direct inclusion of Auth0 SDK script -->
+    <!-- Remove direct inclusion of Auth0 SDK script here -->
 </head>
 <body>
 <header>
@@ -26,33 +26,32 @@
     <button class="center-button">Find My Holiday</button>
 </div>
 
-<!-- Load Auth0 SDK programmatically after DOMContentLoaded -->
+<!-- Load Auth0 SDK manually -->
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-      let auth0Loaded = false;
-      let scriptRetries = 10;
-      const loadAuth0Script = () => {
-          console.log("🔹 Manually loading Auth0 script...");
-          const script = document.createElement("script");
-          script.src = "https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js";
-          script.onload = () => {
-              auth0Loaded = true;
-              console.log("✅ Auth0 SDK loaded.");
-              initializeApp();
-          };
-          script.onerror = () => {
-              console.error("⚠️ Error loading Auth0 script.");
-          };
-          document.head.appendChild(script);
-      };
+    let auth0Loaded = false;
+    const loadAuth0Script = () => {
+        const script = document.createElement("script");
+        script.src = "https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js";
+        script.onload = () => {
+            auth0Loaded = true;
+            console.log("✅ Auth0 SDK loaded.");
+            initializeApp();  // Initialize app after SDK is loaded
+        };
+        script.onerror = () => {
+            console.error("⚠️ Error loading Auth0 script.");
+        };
+        document.head.appendChild(script);
+    };
 
-      // Start the loading process
-      loadAuth0Script();
-  });
+    // Load the Auth0 SDK after DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+        loadAuth0Script();
+    });
 </script>
 
-<!-- Add the custom script where the login logic will be initialized -->
+<!-- Load your main script after Auth0 SDK is ready -->
 <script src="script.js"></script>
 </body>
 </html>
+
 
