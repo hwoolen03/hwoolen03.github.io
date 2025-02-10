@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         btnLogout.style.display = isAuthenticated ? "block" : "none";
-        btnLoginGitHub.style.display = isAuthenticated ? "none" : "block
+        btnLoginGitHub.style.display = isAuthenticated ? "none" : "block"
 ::contentReference[oaicite:0]{index=0}
  
 
