@@ -1,5 +1,49 @@
-document.addEventListener('DOMContentLoaded', async () => {
+// ✅ Function to manually load the Auth0 SDK if it fails to load
+const loadAuth0SDK = async () => {
+    return new Promise((resolve, reject) => {
+        console.log("🔹 Manually loading Auth0 SDK...");
+        const script = document.createElement("script");
+        script.src = "https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js";
+        script.async = true;
+        script.onload = () => {
+            console.log("✅ Auth0 SDK manually loaded.");
+            resolve();
+        };
+        script.onerror = () => {
+            console.error("⚠️ Failed to load Auth0 SDK.");
+            reject();
+        };
+        document.head.appendChild(script);
+    });
+};
+
+// ✅ Main Authentication Logic
+document.addEventListener("DOMContentLoaded", async () => {
     console.log("✅ DOMContentLoaded event fired");
+
+    // ✅ Ensure the Auth0 SDK is loaded
+    let retries = 10; // Retry up to 10 times
+    while (typeof createAuth0Client === "undefined" && retries > 0) {
+        console.warn(`⏳ Waiting for Auth0 SDK... Retries left: ${retries}`);
+        await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
+        retries--;
+    }
+
+    // ✅ If SDK is still missing, try loading it manually
+    if (typeof createAuth0Client === "undefined") {
+        console.error("⚠️ Auth0 SDK is STILL undefined after retries. Attempting manual load...");
+        await loadAuth0SDK();
+
+        // Wait again to check if manual loading worked
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        if (typeof createAuth0Client === "undefined") {
+            console.error("❌ Auth0 SDK is STILL NOT available after manual load. Exiting script.");
+            return;
+        }
+    }
+
+    console.log("✅ Auth0 SDK is now available.");
 
     let auth0Client = null;
     const redirectUri = "https://hwoolen03.github.io/indexsignedin.html";
@@ -9,8 +53,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("🔹 Configuring Auth0 client...");
         try {
             auth0Client = await createAuth0Client({
-                domain: "dev-h4hncqco2n4yrt6z.us.auth0.com", // Your Auth0 domain
-                client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU", // Your Auth0 client ID
+                domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
+                client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
                 redirect_uri: redirectUri,
                 cacheLocation: "localstorage",
                 useRefreshTokens: true
@@ -21,33 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // ✅ Step 2: Login with a Provider
-    const loginWithProvider = async (connection) => {
-        console.log(`🔹 Login button clicked for ${connection}`);
-
-        const loginButton = document.getElementById(`btn-login-${connection}`);
-        if (loginButton) {
-            loginButton.disabled = true;
-        }
-
-        try {
-            console.log("🔹 Redirecting to Auth0 login...");
-            await auth0Client.loginWithRedirect({
-                redirect_uri: redirectUri,
-                connection: connection
-            });
-            console.log("✅ Login initiated, redirecting...");
-        } catch (error) {
-            console.error("⚠️ Error during loginWithRedirect:", error);
-            // Re-enable button on error
-            if (loginButton) loginButton.disabled = false;
-        } finally {
-            // Ensure button is re-enabled after attempt
-            if (loginButton) loginButton.disabled = false;
-        }
-    };
-
-    // ✅ Step 3: Handle Authentication Callback
+    // ✅ Step 2: Handle Authentication Callback
     const handleAuthCallback = async () => {
         if (!auth0Client) {
             console.warn("⚠️ Auth0 client is not initialized.");
@@ -72,17 +90,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Remove query parameters without redirecting
             window.history.replaceState({}, document.title, window.location.pathname);
 
-            await updateUI(); // Call to update UI after successful callback
+            await updateUI();
         } catch (error) {
             console.error("⚠️ Error handling redirect callback:", error);
             if (error.message.includes("Invalid authorization code")) {
-                // Handle the error gracefully, potentially prompting a login again
-                await auth0Client.loginWithRedirect(); // Re-attempt login
+                await auth0Client.loginWithRedirect();
             }
         }
     };
 
-    // ✅ Step 4: Update UI Based on Authentication State
+    // ✅ Step 3: Update UI Based on Authentication State
     const updateUI = async () => {
         if (!auth0Client) {
             console.warn("⚠️ Auth0 client is not initialized.");
@@ -104,13 +121,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // Toggle button visibility
         btnLogout.style.display = isAuthenticated ? "block" : "none";
         btnLoginGitHub.style.display = isAuthenticated ? "none" : "block";
         btnLoginGoogle.style.display = isAuthenticated ? "none" : "block";
         btnLoginFigma.style.display = isAuthenticated ? "none" : "block";
 
-        // Redirect only if authenticated and not already on the target page
         if (isAuthenticated) {
             const currentPath = window.location.pathname;
             const targetPath = new URL(redirectUri).pathname;
@@ -121,18 +136,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // ✅ Step 5: Initialize and Handle Auth Flow
+    // ✅ Step 4: Initialize and Handle Auth Flow
     await configureClient();
-    await handleAuthCallback(); // Handle callback if present
-    await updateUI(); // Update UI and conditionally redirect
+    await handleAuthCallback();
+    await updateUI();
 
-    // ✅ Step 6: Add Event Listeners
-    document.getElementById('btn-login-github').addEventListener('click', () => loginWithProvider('github'));
-    document.getElementById('btn-login-google').addEventListener('click', () => loginWithProvider('google-oauth2'));
-    document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
+    // ✅ Step 5: Add Event Listeners
+    document.getElementById("btn-login-github").addEventListener("click", () => loginWithProvider("github"));
+    document.getElementById("btn-login-google").addEventListener("click", () => loginWithProvider("google-oauth2"));
+    document.getElementById("btn-login-figma").addEventListener("click", () => loginWithProvider("figma"));
 
-    // ✅ Optional: Add logout functionality
-    document.getElementById('btn-logout')?.addEventListener('click', () => {
+    document.getElementById("btn-logout")?.addEventListener("click", () => {
         auth0Client.logout({ returnTo: window.location.origin });
     });
 });
