@@ -131,4 +131,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-login-google').addEventListener('click', () => loginWithProvider('google-oauth2'));
     document.getElementById('btn-login-figma').addEventListener('click', () => loginWithProvider('figma'));
 
+    // ✅ Optional: Add logout functionality
+    document.getElementById('btn-logout')?.addEventListener('click', () => {
+        auth0Client.logout({ returnTo: window.location.origin });
+    });
+});
 
