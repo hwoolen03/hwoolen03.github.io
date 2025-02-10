@@ -6,30 +6,7 @@
     <title>Atlas Travel</title>
     <link rel="stylesheet" href="HomePage.css">
 
-    <!-- Load Auth0 script **with onload callback** -->
-    <script 
-        src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"
-        onload="auth0Loaded = true;"
-    ></script>
-
-    <!-- Load your script **after Auth0 loads** -->
-    <script>
-        let auth0Loaded = false;
-        let scriptRetries = 10;
-        const waitForAuth0 = () => {
-            if (auth0Loaded || scriptRetries <= 0) {
-                console.log("✅ Auth0 script loaded, running script.js");
-                const script = document.createElement("script");
-                script.src = "script.js";
-                document.body.appendChild(script);
-            } else {
-                console.log(`⏳ Waiting for Auth0 script... Retries left: ${scriptRetries}`);
-                scriptRetries--;
-                setTimeout(waitForAuth0, 500);
-            }
-        };
-        waitForAuth0();
-    </script>
+    <!-- Remove direct inclusion of Auth0 SDK script -->
 </head>
 <body>
 <header>
@@ -48,5 +25,34 @@
     <h2 class="holiday-text">Where Will Atlas Take you?</h2>
     <button class="center-button">Find My Holiday</button>
 </div>
+
+<!-- Load Auth0 SDK programmatically after DOMContentLoaded -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+      let auth0Loaded = false;
+      let scriptRetries = 10;
+      const loadAuth0Script = () => {
+          console.log("🔹 Manually loading Auth0 script...");
+          const script = document.createElement("script");
+          script.src = "https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js";
+          script.onload = () => {
+              auth0Loaded = true;
+              console.log("✅ Auth0 SDK loaded.");
+              initializeApp();
+          };
+          script.onerror = () => {
+              console.error("⚠️ Error loading Auth0 script.");
+          };
+          document.head.appendChild(script);
+      };
+
+      // Start the loading process
+      loadAuth0Script();
+  });
+</script>
+
+<!-- Add the custom script where the login logic will be initialized -->
+<script src="script.js"></script>
 </body>
 </html>
+
