@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atlas Travel</title>
     <link rel="stylesheet" href="HomePage.css">
-    <!-- Load Auth0 SPA JS -->
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
-    <!-- Load your script.js -->
+    
+    <!-- ✅ Load Auth0 SPA SDK asynchronously -->
+    <script async src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+
+    <!-- ✅ Load script.js after the DOM is ready -->
     <script src="script.js" defer></script>
 </head>
 <body>
@@ -28,8 +30,6 @@
     <h2 class="holiday-text">Where Will Atlas Take you?</h2>
     <button class="center-button">Find My Holiday</button>
 </div>
-
-<!-- Registration Form -->
 
 </body>
 </html>
