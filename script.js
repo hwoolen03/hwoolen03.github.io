@@ -4,24 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let auth0Client = null;
     const redirectUri = "https://hwoolen03.github.io/indexsignedin.html";
 
-    // Add retries for waiting for the Auth0 SDK
-    let retries = 10;
-    const checkAuth0Client = () => {
-        if (window.createAuth0Client) {
-            return true;
-        }
-        if (retries > 0) {
-            console.log(`⏳ Waiting for Auth0 script... Retries left: ${retries}`);
-            retries--;
-            setTimeout(checkAuth0Client, 1000);
-        } else {
-            console.error("⚠️ Auth0 SDK is STILL undefined after retries. Attempting manual load...");
-            loadAuth0Script();
-        }
-        return false;
-    };
-
-    // Function to load Auth0 SDK manually
+    // Manually load Auth0 SDK if needed
     const loadAuth0Script = () => {
         console.log("🔹 Manually loading Auth0 script...");
         const script = document.createElement("script");
@@ -36,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.head.appendChild(script);
     };
 
-    // Step 1: Configure Auth0 Client
+    // Configure Auth0 Client
     const configureClient = async () => {
         console.log("🔹 Configuring Auth0 client...");
         try {
@@ -47,15 +30,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 cacheLocation: "localstorage",
                 useRefreshTokens: true
             });
-
-            // Log to confirm client is initialized
             console.log("✅ Auth0 client configured:", auth0Client);
         } catch (error) {
             console.error("⚠️ Error configuring Auth0 client:", error);
         }
     };
 
-    // Step 2: Login with a Provider
+    // Login with provider
     const loginWithProvider = async (connection) => {
         console.log(`🔹 Login button clicked for ${connection}`);
 
@@ -73,15 +54,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log("✅ Login initiated, redirecting...");
         } catch (error) {
             console.error("⚠️ Error during loginWithRedirect:", error);
-            // Re-enable button on error
-            if (loginButton) loginButton.disabled = false;
-        } finally {
-            // Ensure button is re-enabled after attempt
             if (loginButton) loginButton.disabled = false;
         }
     };
 
-    // Step 3: Handle Authentication Callback
+    // Handle Auth0 callback
     const handleAuthCallback = async () => {
         if (!auth0Client) {
             console.warn("⚠️ Auth0 client is not initialized.");
@@ -89,7 +66,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         console.log("🔹 Checking for Auth0 callback query parameters...");
-
         const query = new URLSearchParams(window.location.search);
         console.log("🔹 Full query string:", query.toString());
 
@@ -110,13 +86,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error("⚠️ Error handling redirect callback:", error);
             if (error.message.includes("Invalid authorization code")) {
-                // Handle the error gracefully, potentially prompting a login again
                 await auth0Client.loginWithRedirect(); // Re-attempt login
             }
         }
     };
 
-    // Step 4: Update UI Based on Authentication State
+    // Update UI based on authentication state
     const updateUI = async () => {
         if (!auth0Client) {
             console.warn("⚠️ Auth0 client is not initialized.");
@@ -124,7 +99,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         console.log("🔹 Updating UI...");
-
         const isAuthenticated = await auth0Client.isAuthenticated();
         console.log("✅ User authenticated:", isAuthenticated);
 
@@ -138,13 +112,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // Toggle button visibility
         btnLogout.style.display = isAuthenticated ? "block" : "none";
         btnLoginGitHub.style.display = isAuthenticated ? "none" : "block";
         btnLoginGoogle.style.display = isAuthenticated ? "none" : "block";
         btnLoginFigma.style.display = isAuthenticated ? "none" : "block";
 
-        // Redirect only if authenticated and not already on the target page
         if (isAuthenticated) {
             const currentPath = window.location.pathname;
             const targetPath = new URL(redirectUri).pathname;
@@ -155,17 +127,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Step 5: Initialize and Handle Auth Flow
-    if (!checkAuth0Client()) {
-        loadAuth0Script(); // If not found, load manually
-    }
+    // Initialize and handle the Auth flow
+    loadAuth0Script();
 
-    // ✅ Wait for Auth0 SDK to load and initialize
     await configureClient();
-    await handleAuthCallback(); // Handle callback if present
-    await updateUI(); // Update UI and conditionally redirect
+    await handleAuthCallback();
+    await updateUI();
 
-    // ✅ Step 6: Add Event Listeners
     document.getElementById('btn-login-github')?.addEventListener('click', () => {
         console.log("🔹 GitHub login button clicked");
         loginWithProvider('github');
@@ -179,11 +147,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         loginWithProvider('figma');
     });
 
-    // ✅ Optional: Add logout functionality
+    // Optional logout functionality
     document.getElementById('btn-logout')?.addEventListener('click', () => {
         console.log("🔹 Logging out...");
         auth0Client.logout({ returnTo: window.location.origin });
     });
 });
-
 
