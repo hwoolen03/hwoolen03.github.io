@@ -1,3 +1,5 @@
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("✅ DOMContentLoaded event fired");
 
     // Ensure Auth0 SDK is available
     if (!window.createAuth0Client) {
