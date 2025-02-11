@@ -36,6 +36,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 await auth0Client.handleRedirectCallback();
                 window.history.replaceState({}, document.title, "https://hwoolen03.github.io/indexsignedin");
+                // If authentication is successful, update the UI
+                updateAuthUI();
             } catch (error) {
                 console.error("Redirect handling failed:", error);
                 window.location.replace("https://hwoolen03.github.io");
