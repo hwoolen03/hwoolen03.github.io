@@ -177,7 +177,7 @@ window.onload = async () => {
             // Handle the Auth0 redirect response
             await auth0Client.handleRedirectCallback();
             // Redirect the user to the intended page after successful authentication
-            window.location.replace('https://hwoolen03.github.io/indexsignedin');
+            window.history.replaceState({}, document.title, 'https://hwoolen03.github.io/indexsignedin');
         } else {
             // Check if user is authenticated
             const isAuthenticated = await auth0Client.isAuthenticated();
