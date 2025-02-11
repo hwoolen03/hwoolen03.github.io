@@ -36,13 +36,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (query.includes("code=") && query.includes("state=")) {
             try {
                 await auth0Client.handleRedirectCallback();
-                // Replace the current URL to remove query parameters
+                // Replace the current URL to remove query parameters after successful authentication
                 window.history.replaceState({}, document.title, window.location.pathname);
-                // Update the UI after successful authentication
-                updateAuthUI();
+                // After successful authentication, check user status and update UI
+                await updateAuthUI();
             } catch (error) {
                 console.error("Redirect handling failed:", error);
-                // Redirect to the home page in case of error
+                // In case of error, redirect to the home page
                 window.location.replace("https://hwoolen03.github.io");
             }
         }
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const logoutHandler = () => {
         auth0Client.logout({
-            returnTo: window.location.origin
+            returnTo: window.location.origin // Redirect to the homepage after logout
         });
     };
 
@@ -86,7 +86,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Main Execution Flow
     try {
+        // Handle the Auth0 redirect if any
         await handleAuthRedirect();
+
+        // Initialize the app after handling the redirect
         initializeApp();
 
         // For signed-in page specific logic
@@ -94,7 +97,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const user = await auth0Client.getUser();
             console.log("Authenticated user:", user);
         }
+
+        // Check authentication status and update UI accordingly
+        await updateAuthUI();
     } catch (error) {
         console.error("Application initialization failed:", error);
     }
 });
+
