@@ -94,5 +94,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-
-
