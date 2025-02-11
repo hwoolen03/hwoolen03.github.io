@@ -167,26 +167,32 @@ const personalizeContent = async (user) => {
     }));
 };
 
-// Initialize Application
-// Initialize Application
 window.onload = async () => {
     try {
-        await configureClient();
-        const user = await auth0Client.getUser();
-        console.log("User authentication status:", user); // Add this line for debugging
-        if (!user) {
-            console.log("No user authenticated, redirecting to index.html"); // Add this line for debugging
-            window.location.href = 'index.html'; // Change this to the intended page if necessary
+        await configureClient(); // Configure Auth0 Client
+
+        // Check if user is authenticated
+        const isAuthenticated = await auth0Client.isAuthenticated();
+
+        if (!isAuthenticated) {
+            console.log("No user authenticated, redirecting to index.html");
+            window.location.href = 'index.html';  // Redirect to the login page or a page that handles the initial login
         } else {
-            console.log("User authenticated, staying on the current page"); // Add this line for debugging
+            // If authenticated, proceed with the user logic
+            const user = await auth0Client.getUser();
+            console.log("User authenticated:", user); // Log the authenticated user info
+
+            // You can proceed with the application logic now that the user is authenticated
         }
 
+        // Sign-out button logic
         document.getElementById('signOutBtn').addEventListener('click', signOut);
 
+        // Main button logic for finding holidays
         document.getElementById('findMyHolidayButton').addEventListener('click', async () => {
             try {
                 showLoading();
-                const results = await personalizeContent(user);
+                const results = await personalizeContent(user); // Use the authenticated user details
 
                 document.getElementById('results').innerHTML = results.map(result => `
                     <div class="destination-card">
@@ -208,7 +214,8 @@ window.onload = async () => {
                 showLoading(false);
             }
         });
+
     } catch (error) {
         showError('Failed to initialize application. Please try again.');
     }
-};
+
