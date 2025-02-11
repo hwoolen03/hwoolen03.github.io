@@ -3,40 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Secure CSP Header -->
-    <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self';
-          script-src 'self' https://cdn.auth0.com https://cdn.jsdelivr.net;
-          style-src 'self' 'unsafe-inline';
-          img-src 'self' data:;
-          connect-src 'self' https://*.auth0.com;
-          object-src 'none';
-          base-uri 'self'">
-    
     <title>Atlas Travel</title>
     <link rel="stylesheet" href="HomePage.css">
-    
-    <!-- Load External Script -->
+    <!-- Load Auth0 SPA JS -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js"></script>
+    <!-- Load your script.js -->
     <script src="script.js" defer></script>
 </head>
 <body>
-    <header>
-        <div class="logo-heading">
-            <img src="mock5.png" alt="Atlas Travel Logo" class="logo">
-            <h1>Atlas Travel</h1>
-        </div>
-        <div class="auth-buttons">
-            <button id="btn-login-github">Login with GitHub</button>
-            <button id="btn-login-google">Login with Google</button>
-            <button id="btn-login-figma">Login with Figma</button>
-            <button id="btn-logout" style="display:none;">Logout</button>
-        </div>
-    </header>
-    <div class="center-button-container">
-        <h2 class="holiday-text">Where Will Atlas Take You?</h2>
-        <button class="center-button">Find My Holiday</button>
+<header>
+    <div class="logo-heading">
+        <img src="mock5.png" alt="Atlas Travel Logo" class="logo">
+        <h1>Atlas Travel</h1>
     </div>
+    <div class="auth-buttons">
+        <button id="btn-login-github">Login with GitHub</button>
+        <button id="btn-login-google">Login with Google</button>
+        <button id="btn-login-figma">Login with Figma</button>
+    </div>
+</header>
+
+<div class="center-button-container">
+    <h2 class="holiday-text">Where Will Atlas Take you?</h2>
+    <button id="findMyHolidayButton" class="center-button">Find My Holiday</button>
+</div>
+
+<button id="btn-logout" style="display: none;">Logout</button>
+
+<!-- Registration Form -->
+
 </body>
 </html>
-
