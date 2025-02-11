@@ -25,9 +25,11 @@ const handleAuthRedirect = async () => {
     if (query.includes("code=") && query.includes("state=")) {
         try {
             await auth0Client.handleRedirectCallback();
-            window.history.replaceState({}, document.title, "https://hwoolen03.github.io/indexsignedin");
+            // Clean up the URL to avoid triggering another redirect loop
+            window.history.replaceState({}, document.title, window.location.pathname);
         } catch (error) {
             console.error("Redirect handling failed:", error);
+            // Redirect to the home page if there’s an issue
             window.location.replace("https://hwoolen03.github.io");
         }
     }
@@ -43,89 +45,6 @@ const signOut = async () => {
         showError('Error signing out. Please try again.');
     }
 };
-
-// Client-Side Recommendation Engine
-const DESTINATION_GENERATOR = {
-    regions: {
-        northAmerica: { flightBase: 800, hotelBase: 250, codePrefix: 'NA', multiplier: 1.0 },
-        europe: { flightBase: 900, hotelBase: 300, codePrefix: 'EU', multiplier: 1.1 },
-        asia: { flightBase: 1100, hotelBase: 200, codePrefix: 'AS', multiplier: 0.95 },
-        oceania: { flightBase: 1500, hotelBase: 350, codePrefix: 'OC', multiplier: 1.2 }
-    },
-
-    generateDestinations(perRegion = 25) {
-        const destinations = [];
-        Object.entries(this.regions).forEach(([regionKey, config]) => {
-            for(let i = 1; i <= perRegion; i++) {
-                destinations.push({
-                    iata: `${config.codePrefix}${i.toString().padStart(2,'0')}`,
-                    city: `${this.capitalize(regionKey)} City ${i}`,
-                    region: regionKey,
-                    avgFlightPrice: this.calculateSeasonalPrices(config.flightBase),
-                    avgHotelPrice: Math.round(config.hotelBase * (0.8 + Math.random()*0.4)),
-                    multiplier: config.multiplier
-                });
-            }
-        });
-        return destinations;
-    },
-
-    calculateSeasonalPrices(base) {
-        return {
-            summer: Math.round(base * 1.2),
-            winter: Math.round(base * 0.8),
-            spring: Math.round(base * 1.05),
-            fall: Math.round(base * 1.1)
-        };
-    },
-
-    capitalize(str) {
-        return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-};
-
-const TravelPlanner = {
-    destinations: DESTINATION_GENERATOR.generateDestinations(25),
-
-    getSeason(date) {
-        const month = new Date(date).getMonth() + 1;
-        if ([12, 1, 2].includes(month)) return 'winter';
-        if ([3, 4, 5].includes(month)) return 'spring';
-        if ([6, 7, 8].includes(month)) return 'summer';
-        return 'fall';
-    },
-
-    calculateNights(checkIn, checkOut) {
-        return Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
-    },
-
-    calculateTripCost(destination, checkInDate, nights) {
-        const season = this.getSeason(checkInDate);
-        const flightCost = destination.avgFlightPrice[season] * destination.multiplier;
-        const hotelCost = destination.avgHotelPrice * nights * destination.multiplier;
-        return {
-            flight: Math.round(flightCost),
-            hotel: Math.round(hotelCost),
-            total: Math.round(flightCost + hotelCost)
-        };
-    },
-
-    findDestinations(budget, checkInDate, checkOutDate, maxResults = 5) {
-        const nights = this.calculateNights(checkInDate, checkOutDate);
-        return this.destinations
-            .map(dest => ({
-                ...dest,
-                cost: this.calculateTripCost(dest, checkInDate, nights)
-            }))
-            .filter(dest => dest.cost.total <= budget * 1.15 && dest.cost.total >= budget * 0.85)
-            .sort((a, b) => a.cost.total - b.cost.total)
-            .slice(0, maxResults);
-    }
-};
-
-// API Functions (remain unchanged)
-const searchRoundtripFlights = async (fromIATA, toIATA, date) => { /* existing implementation */ };
-const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate) => { /* existing implementation */ };
 
 // UI Handlers
 const showLoading = (show = true) => {
@@ -182,54 +101,54 @@ const personalizeContent = async (user) => {
 
 window.onload = async () => {
     try {
-        await configureClient(); // Configure Auth0 Client
-        await handleAuthRedirect(); // Handle authentication callback
+        await configureClient();  // Configure Auth0 Client
+        await handleAuthRedirect();  // Handle authentication callback
 
         // Check if user is authenticated
         const isAuthenticated = await auth0Client.isAuthenticated();
 
         if (!isAuthenticated) {
-            console.log("No user authenticated, redirecting to index.html");
-            window.location.href = 'index.html';  // Redirect to the login page or a page that handles the initial login
+            console.log("No user authenticated, redirecting to login page");
+            // Redirect to the login page (update this with your desired login flow)
+            window.location.href = 'login.html'; // Ensure this is your login page, or adjust accordingly
         } else {
             // If authenticated, proceed with the user logic
             const user = await auth0Client.getUser();
             console.log("User authenticated:", user); // Log the authenticated user info
 
-            // You can proceed with the application logic now that the user is authenticated
+            // Main button logic for finding holidays
+            document.getElementById('findMyHolidayButton').addEventListener('click', async () => {
+                try {
+                    showLoading();
+                    const results = await personalizeContent(user); // Use the authenticated user details
+
+                    // Render the results to the UI
+                    document.getElementById('results').innerHTML = results.map(result => `
+                        <div class="destination-card">
+                            <h3>${result.city}</h3>
+                            <p>Estimated Total: $${result.cost.total}</p>
+                            <div class="price-breakdown">
+                                <span>✈️ $${result.cost.flight}</span>
+                                <span>🏨 $${result.cost.hotel}</span>
+                            </div>
+                            <div class="api-results">
+                                ${result.flights.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
+                                ${result.hotels.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    showLoading(false);
+                }
+            });
+
+            // Handle sign-out button
+            document.getElementById('signOutBtn').addEventListener('click', signOut);
         }
-
-        // Sign-out button logic
-        document.getElementById('signOutBtn').addEventListener('click', signOut);
-
-        // Main button logic for finding holidays
-        document.getElementById('findMyHolidayButton').addEventListener('click', async () => {
-            try {
-                showLoading();
-                const results = await personalizeContent(user); // Use the authenticated user details
-
-                document.getElementById('results').innerHTML = results.map(result => `
-                    <div class="destination-card">
-                        <h3>${result.city}</h3>
-                        <p>Estimated Total: $${result.cost.total}</p>
-                        <div class="price-breakdown">
-                            <span>✈️ $${result.cost.flight}</span>
-                            <span>🏨 $${result.cost.hotel}</span>
-                        </div>
-                        <div class="api-results">
-                            ${result.flights.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
-                            ${result.hotels.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
-                        </div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                showLoading(false);
-            }
-        });
-
     } catch (error) {
         showError('Failed to initialize application. Please try again.');
     }
 };
+
