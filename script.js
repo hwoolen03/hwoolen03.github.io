@@ -1,29 +1,45 @@
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("✅ DOMContentLoaded event fired");
 
-    // 1. Wait for Auth0 SDK to load
-    const waitForAuth0SDK = (retries = 3, delay = 500) => {
-        return new Promise((resolve, reject) => {
-            const check = (attempt) => {
-                if (window.createAuth0Client) return resolve();
-                if (attempt >= retries) return reject(new Error('Auth0 SDK failed to load'));
-                setTimeout(() => check(attempt + 1), delay);
-            };
-            check(0);
-        });
-    };
+    // 1. Load Auth0 SDK dynamically
+    async function loadAuth0SDK() {
+        const primarySDK = 'https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@2.0.0/dist/auth0-spa-js.production.js';
+        const fallbackSDK = '/js/auth0-spa-js.production.js';
 
-    try {
-        await waitForAuth0SDK();
-        console.log("Auth0 SDK version:", window.Auth0Client?.VERSION);
-    } catch (error) {
-        console.error("Critical Auth0 load failure:", error);
-        document.body.innerHTML = `
-            <h1 style="color: red">Service Unavailable</h1>
-            <p>Authentication system is currently unavailable. Please try again later.</p>
-        `;
+        const loadScript = (url) => {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = url;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        };
+
+        try {
+            await loadScript(primarySDK);
+        } catch {
+            try {
+                await loadScript(fallbackSDK);
+            } catch (error) {
+                console.error('Both SDK sources failed:', error);
+                document.body.innerHTML = `
+                    <h1 style="color: red">Authentication System Error</h1>
+                    <p>Please refresh the page or try again later.</p>
+                `;
+                return;
+            }
+        }
+    }
+
+    await loadAuth0SDK();
+
+    if (!window.createAuth0Client) {
+        console.error("Auth0 SDK failed to load.");
         return;
     }
+
+    console.log("Auth0 SDK version:", window.Auth0Client?.VERSION);
 
     // 2. Auth0 Configuration
     let auth0Client = null;
@@ -107,3 +123,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("Application initialization failed:", error);
     }
 });
+
