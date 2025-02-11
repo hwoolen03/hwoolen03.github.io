@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <!-- Secure CSP Header -->
     <meta http-equiv="Content-Security-Policy" 
           content="default-src 'self';
@@ -16,36 +17,7 @@
     <title>Atlas Travel</title>
     <link rel="stylesheet" href="HomePage.css">
     
-    <!-- Auth0 SDK with Fallback Loader -->
-    <script>
-        // Async script loader with CORS fallback
-        function loadAuth0SDK() {
-            const primarySDK = 'https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@2.0.0/dist/auth0-spa-js.production.js';
-            const fallbackSDK = '/js/auth0-spa-js.production.js';
-            
-            const loadScript = (url) => {
-                return new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = url;
-                    script.onload = resolve;
-                    script.onerror = reject;
-                    document.head.appendChild(script);
-                });
-            };
-
-            loadScript(primarySDK)
-                .catch(() => loadScript(fallbackSDK))
-                .catch(error => {
-                    console.error('Both SDK sources failed:', error);
-                    document.body.innerHTML = `
-                        <h1 style="color: red">Authentication System Error</h1>
-                        <p>Please refresh the page or try again later.</p>
-                    `;
-                });
-        }
-        loadAuth0SDK();
-    </script>
-
+    <!-- Load External Script -->
     <script src="script.js" defer></script>
 </head>
 <body>
@@ -62,8 +34,9 @@
         </div>
     </header>
     <div class="center-button-container">
-        <h2 class="holiday-text">Where Will Atlas Take you?</h2>
+        <h2 class="holiday-text">Where Will Atlas Take You?</h2>
         <button class="center-button">Find My Holiday</button>
     </div>
 </body>
-</html>>
+</html>
+
