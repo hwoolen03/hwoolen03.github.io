@@ -10,13 +10,26 @@ const configureClient = async () => {
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            redirect_uri: "https://hwoolen03.github.io/indexsignedin" // Set redirect_uri to the current page URL
+            redirect_uri: "https://hwoolen03.github.io/indexsignedin" // Set redirect_uri to the specific page URL
         });
         console.log("Auth0 client configured successfully");
     } catch (error) {
         console.error("Auth0 configuration error:", error);
         showError('Authentication failed. Please refresh the page.');
         throw error;
+    }
+};
+
+const handleAuthRedirect = async () => {
+    const query = window.location.search;
+    if (query.includes("code=") && query.includes("state=")) {
+        try {
+            await auth0Client.handleRedirectCallback();
+            window.history.replaceState({}, document.title, "https://hwoolen03.github.io/indexsignedin");
+        } catch (error) {
+            console.error("Redirect handling failed:", error);
+            window.location.replace("https://hwoolen03.github.io");
+        }
     }
 };
 
@@ -170,6 +183,7 @@ const personalizeContent = async (user) => {
 window.onload = async () => {
     try {
         await configureClient(); // Configure Auth0 Client
+        await handleAuthRedirect(); // Handle authentication callback
 
         // Check if user is authenticated
         const isAuthenticated = await auth0Client.isAuthenticated();
