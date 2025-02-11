@@ -10,7 +10,7 @@ const configureClient = async () => {
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            redirect_uri: "https://hwoolen03.github.io/indexsignedin" // Set redirect_uri to the current page URL
+            redirect_uri: "https://hwoolen03.github.io/indexsignedin"
         });
         console.log("Auth0 client configured successfully");
     } catch (error) {
@@ -171,18 +171,27 @@ window.onload = async () => {
     try {
         await configureClient(); // Configure Auth0 Client
 
-        // Check if user is authenticated
-        const isAuthenticated = await auth0Client.isAuthenticated();
-
-        if (!isAuthenticated) {
-            console.log("No user authenticated, redirecting to index.html");
-            window.location.href = 'index.html';  // Redirect to the login page or a page that handles the initial login
+        // Check if the current URL contains the Auth0 redirect response
+        const isRedirect = window.location.search.includes('code=') || window.location.search.includes('error=');
+        if (isRedirect) {
+            // Handle the Auth0 redirect response
+            await auth0Client.handleRedirectCallback();
+            // Redirect the user to the intended page after successful authentication
+            window.location.replace('https://hwoolen03.github.io/indexsignedin');
         } else {
-            // If authenticated, proceed with the user logic
-            const user = await auth0Client.getUser();
-            console.log("User authenticated:", user); // Log the authenticated user info
+            // Check if user is authenticated
+            const isAuthenticated = await auth0Client.isAuthenticated();
 
-            // You can proceed with the application logic now that the user is authenticated
+            if (!isAuthenticated) {
+                console.log("No user authenticated, redirecting to login page");
+                window.location.href = 'https://hwoolen03.github.io'; // Redirect to the login page
+            } else {
+                // If authenticated, proceed with the user logic
+                const user = await auth0Client.getUser();
+                console.log("User authenticated:", user); // Log the authenticated user info
+
+                // You can proceed with the application logic now that the user is authenticated
+            }
         }
 
         // Sign-out button logic
