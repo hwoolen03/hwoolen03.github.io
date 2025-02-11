@@ -219,4 +219,3 @@ window.onload = async () => {
         showError('Failed to initialize application. Please try again.');
     }
 };
-
