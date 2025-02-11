@@ -10,7 +10,7 @@ const configureClient = async () => {
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            redirect_uri: window.location.origin
+            redirect_uri: "https://hwoolen03.github.io/indexsignedin" // Set redirect_uri to the current page URL
         });
         console.log("Auth0 client configured successfully");
     } catch (error) {
@@ -219,4 +219,3 @@ window.onload = async () => {
         showError('Failed to initialize application. Please try again.');
     }
 };
-
