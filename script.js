@@ -93,3 +93,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("Application initialization failed:", error);
     }
 });
+
