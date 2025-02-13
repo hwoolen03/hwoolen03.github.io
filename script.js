@@ -14,11 +14,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Auth0 Configuration
     let auth0Client = null;
     const config = {
-        domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
-        client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU", // Ensure this client_id is set here
-        redirect_uri: "https://hwoolen03.github.io/indexsignedin",  // Corrected this line
-        cacheLocation: "localstorage",
-        useRefreshTokens: true
+        domain: "dev-h4hncqco2n4yrt6z.us.auth0.com", // Your Auth0 domain
+        client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU", // Your Auth0 client ID
+        redirect_uri: "https://hwoolen03.github.io/indexsignedin",  // Corrected this line to the proper redirect URI
+        cacheLocation: "localstorage", // Storing session in local storage
+        useRefreshTokens: true  // Allows using refresh tokens to maintain the session
     };
 
     try {
@@ -35,10 +35,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (query.includes("code=") && query.includes("state=")) {
             try {
                 await auth0Client.handleRedirectCallback();
-                window.history.replaceState({}, document.title, "https://hwoolen03.github.io/indexsignedin");
+                window.history.replaceState({}, document.title, window.location.origin);  // Correct the redirect URL
             } catch (error) {
                 console.error("🚨 Redirect handling failed:", error);
-                window.location.replace("https://hwoolen03.github.io");
+                window.location.replace("https://hwoolen03.github.io");  // Handle redirect error properly
             }
         }
     };
@@ -103,12 +103,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const updateAuthUI = async () => {
         const isAuthenticated = await auth0Client.isAuthenticated();
         console.log("🔄 Authentication status:", isAuthenticated);
-        
+
+        // Update UI based on authentication status
         document.getElementById('btn-logout').style.display = isAuthenticated ? "block" : "none";
         document.querySelectorAll('.auth-buttons button:not(#btn-logout)').forEach(btn => {
             btn.style.display = isAuthenticated ? "none" : "block";
         });
 
+        // Log user details if authenticated
         if (isAuthenticated) {
             const user = await auth0Client.getUser();
             console.log("👤 Authenticated user:", user);
@@ -130,6 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        // Add event listeners to buttons
         githubBtn.addEventListener('click', loginHandlers.github);
         googleBtn.addEventListener('click', loginHandlers.google);
         figmaBtn.addEventListener('click', loginHandlers.figma);
@@ -141,9 +144,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Main Execution Flow
     try {
-        await handleAuthRedirect();
-        initializeApp();
+        await handleAuthRedirect();  // Handle any potential redirect callback
+        initializeApp();  // Initialize app event listeners
     } catch (error) {
         console.error("🚨 Application initialization failed:", error);
     }
 });
+
