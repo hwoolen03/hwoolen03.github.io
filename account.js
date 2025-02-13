@@ -192,6 +192,11 @@ window.onload = async () => {
                 user = await auth0Client.getUser(); // Assign the user variable
                 console.log("User authenticated:", user); // Log the authenticated user info
 
+                // Ensure authentication buttons are displayed
+                document.getElementById('btn-login-github').style.display = "block";
+                document.getElementById('btn-login-google').style.display = "block";
+                document.getElementById('btn-login-figma').style.display = "block";
+
                 // You can proceed with the application logic now that the user is authenticated
             }
         }
@@ -230,4 +235,3 @@ window.onload = async () => {
         showError('Initialization failed. Please refresh the page.');
     }
 };
-
