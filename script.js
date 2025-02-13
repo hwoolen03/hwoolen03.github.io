@@ -1,5 +1,3 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log("✅ DOMContentLoaded event fired");
 
     // Ensure Auth0 SDK is available
     if (!window.createAuth0Client) {
@@ -16,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const config = {
         domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
         client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-        redirect_uri: window.location.origin,
+        redirect_uri: "https://hwoolen03.github.io/indexsignedin",  // Corrected this line
         cacheLocation: "localstorage",
         useRefreshTokens: true
     };
@@ -35,10 +33,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (query.includes("code=") && query.includes("state=")) {
             try {
                 await auth0Client.handleRedirectCallback();
-                window.history.replaceState({}, document.title, window.location.pathname);
+                window.history.replaceState({}, document.title, "https://hwoolen03.github.io/indexsignedin");
             } catch (error) {
                 console.error("Redirect handling failed:", error);
-                window.location.replace(window.location.origin);
+                window.location.replace("https://hwoolen03.github.io");
             }
         }
     };
