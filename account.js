@@ -215,15 +215,21 @@ window.onload = async () => {
 
         // Add login button event listeners
         document.getElementById('btn-login-github').addEventListener('click', async () => {
-            await auth0Client.loginWithRedirect({ connection: 'github' });
+            const state = Math.random().toString(36).substring(2);
+            localStorage.setItem('auth_state', state);
+            await auth0Client.loginWithRedirect({ connection: 'github', state });
         });
 
         document.getElementById('btn-login-google').addEventListener('click', async () => {
-            await auth0Client.loginWithRedirect({ connection: 'google' });
+            const state = Math.random().toString(36).substring(2);
+            localStorage.setItem('auth_state', state);
+            await auth0Client.loginWithRedirect({ connection: 'google', state });
         });
 
         document.getElementById('btn-login-figma').addEventListener('click', async () => {
-            await auth0Client.loginWithRedirect({ connection: 'figma' });
+            const state = Math.random().toString(36).substring(2);
+            localStorage.setItem('auth_state', state);
+            await auth0Client.loginWithRedirect({ connection: 'figma', state });
         });
 
         // Sign-out button
@@ -236,6 +242,30 @@ window.onload = async () => {
         showError('Failed to initialize. Please refresh.');
     }
 };
+
+// Add class to body based on auth state
+const updateAuthState = async () => {
+    const isAuthed = await auth0Client.isAuthenticated();
+    document.body.classList.toggle('authenticated', isAuthed);
+    document.body.classList.toggle('unauthenticated', !isAuthed);
+    
+    // Force button visibility
+    document.querySelectorAll('.auth-btn').forEach(btn => {
+        btn.style.display = 'block';
+        btn.style.visibility = 'visible';
+    });
+};
+
+// Call this after auth initialization
+window.addEventListener('load', async () => {
+    try {
+        await auth0Client.checkSession();
+        await updateAuthState();
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        document.body.classList.add('unauthenticated');
+    }
+});
 
 // Existing window.onload function content
 window.onload = async () => {
