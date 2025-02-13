@@ -153,4 +153,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+// Updated script.js
+document.addEventListener('DOMContentLoaded', async () => {
+    const auth0Client = await createAuth0Client({
+        domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
+        client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
+        redirect_uri: "https://hwoolen03.github.io/indexsignedin"
+    });
 
+    // Handle redirect callback
+    if (window.location.search.includes("code=")) {
+        await auth0Client.handleRedirectCallback();
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Update UI based on auth state
+    const updateUI = async () => {
+        const isAuthenticated = await auth0Client.isAuthenticated();
+        
+        document.querySelectorAll('.auth-button').forEach(button => {
+            button.classList.add('hidden');
+        });
+
+        if (isAuthenticated) {
+            document.getElementById('btn-logout').classList.remove('hidden');
+        } else {
+            document.getElementById('btn-login-github').classList.remove('hidden');
+            document.getElementById('btn-login-google').classList.remove('hidden');
+            document.getElementById('btn-login-figma').classList.remove('hidden');
+        }
+    };
+
+    // Event listeners
+    document.getElementById('btn-login-github').addEventListener('click', () => 
+        auth0Client.loginWithRedirect({ connection: 'github' }));
+    document.getElementById('btn-login-google').addEventListener('click', () => 
+        auth0Client.loginWithRedirect({ connection: 'google-oauth2' }));
+    document.getElementById('btn-login-figma').addEventListener('click', () => 
+        auth0Client.loginWithRedirect({ connection: 'figma' }));
+    document.getElementById('btn-logout').addEventListener('click', () => 
+        auth0Client.logout({ returnTo: window.location.origin }));
+
+    // Initial UI update
+    await updateUI();
+});
