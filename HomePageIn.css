@@ -123,4 +123,42 @@ header {
 
 
 
+.center-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 20vh; /* Full viewport height */
+    text-align: center;
+}
+
+.center-button {
+    background-color: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.center-button:hover {
+    background-color: white;
+    color: black;
+}
+
+.center-button {
+    background-color: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.center-button:hover {
+    background-color: white;
+    color: black;
+}
+
 
