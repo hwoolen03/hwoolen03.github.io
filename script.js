@@ -47,9 +47,54 @@
 
   // Authentication Handlers
   const loginHandlers = {
-      github: () => auth0Client.loginWithRedirect({ authorizationParams: { connection: 'github' } }),
-      google: () => auth0Client.loginWithRedirect({ authorizationParams: { connection: 'google-oauth2' } }),
-      figma: () => auth0Client.loginWithRedirect({ authorizationParams: { connection: 'figma' } })
+      github: () => {
+          auth0Client.loginWithRedirect({
+              connection: 'github',
+              scope: 'openid profile email',
+              response_type: 'code',
+              state: generateRandomState(),
+              nonce: generateRandomNonce(),
+              code_challenge: generateCodeChallenge(),
+              code_challenge_method: 'S256',
+          });
+      },
+      google: () => {
+          auth0Client.loginWithRedirect({
+              connection: 'google-oauth2',
+              scope: 'openid profile email',
+              response_type: 'code',
+              state: generateRandomState(),
+              nonce: generateRandomNonce(),
+              code_challenge: generateCodeChallenge(),
+              code_challenge_method: 'S256',
+          });
+      },
+      figma: () => {
+          auth0Client.loginWithRedirect({
+              connection: 'figma',
+              scope: 'openid profile email',
+              response_type: 'code',
+              state: generateRandomState(),
+              nonce: generateRandomNonce(),
+              code_challenge: generateCodeChallenge(),
+              code_challenge_method: 'S256',
+          });
+      }
+  };
+
+  // Helper functions for generating state, nonce, and code challenge
+  const generateRandomState = () => {
+      return btoa(Math.random().toString(36).substring(2));  // Base64-encoded random string
+  };
+
+  const generateRandomNonce = () => {
+      return btoa(Math.random().toString(36).substring(2));  // Base64-encoded random string
+  };
+
+  const generateCodeChallenge = () => {
+      // Generate code challenge using PKCE (Code Verifier)
+      const codeVerifier = Math.random().toString(36).substring(2);
+      return btoa(codeVerifier);  // Base64-encoded code verifier
   };
 
   const logoutHandler = () => {
