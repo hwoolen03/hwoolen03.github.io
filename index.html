@@ -5,32 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atlas Travel</title>
     <link rel="stylesheet" href="HomePage.css">
-    <!-- Load Auth0 SPA JS -->
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js"></script>
-    <!-- Load your script.js -->
+
+    <!-- Load Auth0 SPA JS (Updated to latest version) -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js" defer></script>
+
+    <!-- Load script.js -->
     <script src="script.js" defer></script>
 </head>
 <body>
-<header>
-    <div class="logo-heading">
-        <img src="mock5.png" alt="Atlas Travel Logo" class="logo">
-        <h1>Atlas Travel</h1>
-    </div>
-    <div class="auth-buttons">
-        <button id="btn-login-github">Login with GitHub</button>
-        <button id="btn-login-google">Login with Google</button>
-        <button id="btn-login-figma">Login with Figma</button>
-    </div>
-</header>
+    <noscript>
+        <h1 style="color: red;">JavaScript is required for this site to function properly.</h1>
+        <p>Please enable JavaScript in your browser settings.</p>
+    </noscript>
 
-<div class="center-button-container">
-    <h2 class="holiday-text">Where Will Atlas Take you?</h2>
-    <button id="findMyHolidayButton" class="center-button">Find My Holiday</button>
-</div>
+    <header>
+        <div class="logo-heading">
+            <img src="mock5.png" alt="Atlas Travel Logo" class="logo">
+            <h1>Atlas Travel</h1>
+        </div>
 
-<button id="btn-logout" style="display: none;">Logout</button>
+        <div class="auth-buttons">
+            <button id="btn-login-github" aria-label="Login with GitHub">Login with GitHub</button>
+            <button id="btn-login-google" aria-label="Login with Google">Login with Google</button>
+            <button id="btn-login-figma" aria-label="Login with Figma">Login with Figma</button>
+        </div>
+    </header>
 
-<!-- Registration Form -->
+    <main>
+        <div class="center-button-container">
+            <h2 class="holiday-text">Where Will Atlas Take You?</h2>
+            <button id="findMyHolidayButton" class="center-button">Find My Holiday</button>
+        </div>
 
+        <button id="btn-logout" style="display: none;" aria-label="Logout">Logout</button>
+    </main>
+
+    <!-- Registration Form Placeholder -->
 </body>
 </html>
+
