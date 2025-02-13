@@ -5,7 +5,7 @@ const API_HEADERS = {
 
 // Auth0 Configuration
 let auth0Client;
-let user; // Define the user variable in the global scope
+let user;
 
 const configureClient = async () => {
     try {
@@ -106,15 +106,15 @@ const TravelPlanner = {
                 ...dest,
                 cost: this.calculateTripCost(dest, checkInDate, nights)
             }))
-            .filter(dest => dest.cost.total <= budget * 1.3 && dest.cost.total >= budget * 0.7) // Changed from 1.15/0.85
+            .filter(dest => dest.cost.total <= budget * 1.3 && dest.cost.total >= budget * 0.7)
             .sort((a, b) => a.cost.total - b.cost.total)
             .slice(0, maxResults);
     }
 };
 
-// API Functions (remain unchanged)
-const searchRoundtripFlights = async (fromIATA, toIATA, date) => { /* existing implementation */ };
-const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate) => { /* existing implementation */ };
+// API Functions
+const searchRoundtripFlights = async (fromIATA, toIATA, date) => { /* implementation */ };
+const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate) => { /* implementation */ };
 
 // UI Handlers
 const showLoading = (show = true) => {
@@ -169,163 +169,83 @@ const personalizeContent = async (user) => {
     }));
 };
 
-// Add the new window.onload function here
+// Auth State Management
+const updateAuthState = async () => {
+    try {
+        const isAuthed = await auth0Client.isAuthenticated();
+        document.body.classList.toggle('authenticated', isAuthed);
+        document.body.classList.toggle('unauthenticated', !isAuthed);
+    } catch (error) {
+        console.error("Auth state check failed:", error);
+    }
+};
+
+// Main Initialization
 window.onload = async () => {
     try {
-        await configureClient(); // Initialize Auth0
+        await configureClient();
 
+        // Handle Auth0 redirect callback
         const isRedirect = window.location.search.includes('code=') || window.location.search.includes('error=');
-
         if (isRedirect) {
             try {
                 const { appState } = await auth0Client.handleRedirectCallback();
-                
-                // Retrieve stored state from sessionStorage
                 const storedState = sessionStorage.getItem('auth_state');
-
-                console.log("Stored state:", storedState);
-                console.log("Returned state:", appState?.customState);
-
+                
                 if (storedState !== appState?.customState) {
                     throw new Error("Invalid state");
                 }
 
-                sessionStorage.removeItem('auth_state'); // Clean up stored state
-                window.history.replaceState({}, document.title, 'https://hwoolen03.github.io/indexsignedin');
-
+                sessionStorage.removeItem('auth_state');
+                window.history.replaceState({}, document.title, "https://hwoolen03.github.io/indexsignedin");
             } catch (error) {
-                console.error("Redirect callback error:", error);
-                showError('Invalid state during authentication. Please try again.');
+                console.error("Redirect error:", error);
+                showError('Authentication failed. Please try again.');
                 return;
             }
         }
 
-        // Check if user is authenticated
+        // Update authentication state
         const isAuthenticated = await auth0Client.isAuthenticated();
-
-        if (!isAuthenticated) {
-            console.log("User is not authenticated");
-            document.getElementById('btn-login-github').style.display = "block";
-            document.getElementById('btn-login-google').style.display = "block";
-            document.getElementById('btn-login-figma').style.display = "block";
-            document.getElementById('signOutBtn').style.display = "none";
-        } else {
-            // User is authenticated
-            user = await auth0Client.getUser();
-            console.log("User authenticated:", user);
-
-            document.getElementById('btn-login-github').style.display = "none";
-            document.getElementById('btn-login-google').style.display = "none";
-            document.getElementById('btn-login-figma').style.display = "none";
-            document.getElementById('signOutBtn').style.display = "block";
-        }
-
-        // Login event listeners with sessionStorage for state
-        document.getElementById('btn-login-github').addEventListener('click', async () => {
-            const state = Math.random().toString(36).substring(2);
-            sessionStorage.setItem('auth_state', state);
-            await auth0Client.loginWithRedirect({ connection: 'github', appState: { customState: state } });
-        });
-
-        document.getElementById('btn-login-google').addEventListener('click', async () => {
-            const state = Math.random().toString(36).substring(2);
-            sessionStorage.setItem('auth_state', state);
-            await auth0Client.loginWithRedirect({ connection: 'google', appState: { customState: state } });
-        });
-
-        document.getElementById('btn-login-figma').addEventListener('click', async () => {
-            const state = Math.random().toString(36).substring(2);
-            sessionStorage.setItem('auth_state', state);
-            await auth0Client.loginWithRedirect({ connection: 'figma', appState: { customState: state } });
-        });
-
-        // Sign-out button event
-        document.getElementById('signOutBtn').addEventListener('click', signOut);
-
-    } catch (error) {
-        console.error("Initialization error:", error);
-        showError('Failed to initialize. Please refresh.');
-    }
-};
-
-// Add class to body based on auth state
-const updateAuthState = async () => {
-    const isAuthed = await auth0Client.isAuthenticated();
-    document.body.classList.toggle('authenticated', isAuthed);
-    document.body.classList.toggle('unauthenticated', !isAuthed);
-    
-    // Force button visibility
-    document.querySelectorAll('.auth-btn').forEach(btn => {
-        btn.style.display = 'block';
-        btn.style.visibility = 'visible';
-    });
-};
-
-// Call this after auth initialization
-window.addEventListener('load', async () => {
-    try {
-        await auth0Client.checkSession();
         await updateAuthState();
-    } catch (error) {
-        console.error('Auth check failed:', error);
-        document.body.classList.add('unauthenticated');
-    }
-});
 
-// Existing window.onload function content
-window.onload = async () => {
-    try {
-        await configureClient(); // Configure Auth0 Client
+        // Update UI elements
+        document.getElementById('btn-login-github').style.display = isAuthenticated ? 'none' : 'block';
+        document.getElementById('btn-login-google').style.display = isAuthenticated ? 'none' : 'block';
+        document.getElementById('btn-login-figma').style.display = isAuthenticated ? 'none' : 'block';
+        document.getElementById('signOutBtn').style.display = isAuthenticated ? 'block' : 'none';
 
-        // Check if the current URL contains the Auth0 redirect response
-        const isRedirect = window.location.search.includes('code=') || window.location.search.includes('error=');
-        if (isRedirect) {
-            // Handle the Auth0 redirect response
-            try {
-                const { appState } = await auth0Client.handleRedirectCallback();
-                // Retrieve state from local storage
-                const storedState = localStorage.getItem('auth_state');
-                if (storedState !== appState.state) {
-                    throw new Error("Invalid state");
-                }
-                localStorage.removeItem('auth_state'); // Clean up state
-                // Redirect the user to the intended page after successful authentication
-                window.history.replaceState({}, document.title, 'https://hwoolen03.github.io/indexsignedin');
-            } catch (error) {
-                console.error("Invalid state during redirect callback:", error);
-                showError('Invalid state during authentication. Please try again.');
-                return;
-            }
-        } else {
-            // Check if user is authenticated
-            const isAuthenticated = await auth0Client.isAuthenticated();
-
-            if (!isAuthenticated) {
-                console.log("No user authenticated, redirecting to login page");
-                window.location.href = 'https://hwoolen03.github.io'; // Redirect to the login page
-            } else {
-                // If authenticated, proceed with the user logic
-                user = await auth0Client.getUser(); // Assign the user variable
-                console.log("User authenticated:", user); // Log the authenticated user info
-
-                // Ensure authentication buttons are displayed
-                document.getElementById('btn-login-github').style.display = "block";
-                document.getElementById('btn-login-google').style.display = "block";
-                document.getElementById('btn-login-figma').style.display = "block";
-
-                // You can proceed with the application logic now that the user is authenticated
-            }
+        // Get user data if authenticated
+        if (isAuthenticated) {
+            user = await auth0Client.getUser();
+            console.log("Authenticated user:", user);
         }
 
-        // Sign-out button logic
+        // Setup login buttons
+        const setupLoginButton = (id, connection) => {
+            document.getElementById(id).addEventListener('click', async () => {
+                const state = Math.random().toString(36).substring(2);
+                sessionStorage.setItem('auth_state', state);
+                await auth0Client.loginWithRedirect({
+                    connection: connection,
+                    appState: { customState: state }
+                });
+            });
+        };
+
+        setupLoginButton('btn-login-github', 'github');
+        setupLoginButton('btn-login-google', 'google');
+        setupLoginButton('btn-login-figma', 'figma');
+
+        // Setup signout
         document.getElementById('signOutBtn').addEventListener('click', signOut);
 
-        // Main button logic for finding holidays
+        // Main application handler
         document.getElementById('findMyHolidayButton').addEventListener('click', async () => {
             try {
                 showLoading();
-                const results = await personalizeContent(user); // Use the authenticated user details
-
+                const results = await personalizeContent(user);
+                
                 document.getElementById('results').innerHTML = results.map(result => `
                     <div class="destination-card">
                         <h3>${result.city}</h3>
@@ -335,8 +255,8 @@ window.onload = async () => {
                             <span>🏨 $${result.cost.hotel}</span>
                         </div>
                         <div class="api-results">
-                            ${result.flights.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
-                            ${result.hotels.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
+                            ${result.flights?.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
+                            ${result.hotels?.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
                         </div>
                     </div>
                 `).join('');
@@ -346,8 +266,9 @@ window.onload = async () => {
                 showLoading(false);
             }
         });
+
     } catch (error) {
-        console.error("Error during initialization:", error);
-        showError('Initialization failed. Please refresh the page.');
+        console.error("Initialization error:", error);
+        showError('Failed to initialize. Please refresh.');
     }
 };
