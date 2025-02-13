@@ -247,4 +247,3 @@ window.onload = async () => {
         showError('Initialization failed. Please refresh the page.');
     }
 };
-
