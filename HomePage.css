@@ -1,3 +1,4 @@
+/* Existing styles */
 body {
     margin: 0;
     padding: 0;
@@ -103,20 +104,22 @@ h2 {
     height: 60px; /* Adjust the height to match the header height */
 }
 
+/* Update auth buttons to match "Find My Holiday" button */
 .auth-button {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    color: white !important;
-    padding: 8px 20px !important;
-    border-radius: 20px !important;
-    backdrop-filter: blur(5px);
-    transition: all 0.3s ease;
+    background-color: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 15px 40px;
+    font-size: 18px;
+    border-radius: 25px;
     cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 20px;
 }
 
 .auth-button:hover {
-    background: rgba(255, 255, 255, 0.2) !important;
-    border-color: rgba(255, 255, 255, 0.5) !important;
+    background-color: white;
+    color: black;
 }
 
 /* Force auth buttons visibility control */
