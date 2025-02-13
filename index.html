@@ -6,6 +6,11 @@
     <title>Atlas Travel</title>
     <link rel="stylesheet" href="HomePage.css">
 
+    <!-- Check if Auth0 SDK loads correctly before your script -->
+    <script>
+        console.log("Checking if Auth0 SDK is available:", window.Auth0Client);
+    </script>
+
     <!-- Load Auth0 SPA JS (Updated to latest version) -->
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js" defer></script>
 
@@ -43,4 +48,5 @@
     <!-- Registration Form Placeholder -->
 </body>
 </html>
+
 
