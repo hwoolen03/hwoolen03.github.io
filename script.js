@@ -14,10 +14,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Auth0 Configuration
     let auth0Client = null;
     const config = {
-        domain: "dev-h4hncqco2n4yrt6z.us.auth0.com", // Your Auth0 domain
-        client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU", // Your Auth0 client ID
-        redirect_uri: "https://hwoolen03.github.io/indexsignedin",  // Corrected this line to the proper redirect URI
-        cacheLocation: "localstorage", // Storing session in local storage
+        domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
+        client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
+        redirect_uri: "https://hwoolen03.github.io/indexsignedin",
+        cacheLocation: "localstorage",  // Store session in local storage
         useRefreshTokens: true  // Allows using refresh tokens to maintain the session
     };
 
@@ -35,10 +35,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (query.includes("code=") && query.includes("state=")) {
             try {
                 await auth0Client.handleRedirectCallback();
-                window.history.replaceState({}, document.title, window.location.origin);  // Correct the redirect URL
+                console.log("✅ Redirect handled successfully.");
+                window.history.replaceState({}, document.title, window.location.origin);  // Remove the query params after redirect
+                await updateAuthUI();  // Ensure the UI updates after the redirect
             } catch (error) {
                 console.error("🚨 Redirect handling failed:", error);
-                window.location.replace("https://hwoolen03.github.io");  // Handle redirect error properly
+                window.location.replace("https://hwoolen03.github.io");
             }
         }
     };
@@ -150,4 +152,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("🚨 Application initialization failed:", error);
     }
 });
+
 
