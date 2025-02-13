@@ -5,6 +5,8 @@ const API_HEADERS = {
 
 // Auth0 Configuration
 let auth0Client;
+let user; // Define the user variable in the global scope
+
 const configureClient = async () => {
     try {
         auth0Client = await createAuth0Client({
@@ -187,7 +189,7 @@ window.onload = async () => {
                 window.location.href = 'https://hwoolen03.github.io'; // Redirect to the login page
             } else {
                 // If authenticated, proceed with the user logic
-                const user = await auth0Client.getUser();
+                user = await auth0Client.getUser(); // Assign the user variable
                 console.log("User authenticated:", user); // Log the authenticated user info
 
                 // You can proceed with the application logic now that the user is authenticated
