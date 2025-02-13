@@ -1,3 +1,7 @@
+const API_HEADERS = {
+    'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3',
+    'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
+};
 
 // Auth0 Configuration
 let auth0Client;
@@ -160,8 +164,8 @@ const personalizeContent = async (user) => {
 
     return recommendations.map((rec, index) => ({
         ...rec,
-        flights: apiResults[index].value[0],
-        hotels: apiResults[index].value[1]
+        flights: apiResults[index].status === 'fulfilled' && apiResults[index].value[0] ? apiResults[index].value[0] : {},
+        hotels: apiResults[index].status === 'fulfilled' && apiResults[index].value[1] ? apiResults[index].value[1] : {}
     }));
 };
 
