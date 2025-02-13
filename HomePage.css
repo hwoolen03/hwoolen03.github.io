@@ -10,7 +10,6 @@ body {
     overflow: hidden;
 }
 
-
 /* Header Styling */
 header {
     display: flex;
@@ -61,8 +60,6 @@ h2 {
     font-size: 150px;
 }
 
-
-
 #btn-logout {
     background: rgba(231, 76, 60, 0.2) !important;
     border-color: rgba(231, 76, 60, 0.3) !important;
@@ -76,7 +73,6 @@ h2 {
 .auth-button.hidden {
     display: none !important;
 }
-
 
 .center-button {
     background-color: transparent;
@@ -121,6 +117,26 @@ h2 {
 .auth-button:hover {
     background: rgba(255, 255, 255, 0.2) !important;
     border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Force auth buttons visibility control */
+.auth-buttons {
+  display: flex !important;
+  gap: 10px;
+}
+
+#btn-login-github,
+#btn-login-google,
+#btn-login-figma {
+  display: block !important; /* Override any hiding */
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Only hide when authed */
+.authenticated .auth-buttons [id^="btn-login-"],
+.unauthenticated #btn-logout {
+  display: none !important;
 }
 
 /* Responsive Design */
