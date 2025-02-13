@@ -169,6 +169,75 @@ const personalizeContent = async (user) => {
     }));
 };
 
+// Add the new window.onload function here
+window.onload = async () => {
+    try {
+        await configureClient();
+
+        const isRedirect = window.location.search.includes('code=') || window.location.search.includes('error=');
+        if (isRedirect) {
+            try {
+                const { appState } = await auth0Client.handleRedirectCallback();
+                const storedState = localStorage.getItem('auth_state');
+                if (storedState !== appState.state) {
+                    throw new Error("Invalid state");
+                }
+                localStorage.removeItem('auth_state');
+                window.history.replaceState({}, document.title, 'https://hwoolen03.github.io/indexsignedin');
+            } catch (error) {
+                console.error("Redirect callback error:", error);
+                showError('Authentication error. Please try again.');
+                return;
+            }
+        }
+
+        const isAuthenticated = await auth0Client.isAuthenticated();
+
+        // Toggle button visibility based on authentication
+        if (!isAuthenticated) {
+            console.log("User is not authenticated");
+            // Show login buttons
+            document.getElementById('btn-login-github').style.display = "block";
+            document.getElementById('btn-login-google').style.display = "block";
+            document.getElementById('btn-login-figma').style.display = "block";
+            document.getElementById('signOutBtn').style.display = "none";
+        } else {
+            // User is authenticated
+            user = await auth0Client.getUser();
+            console.log("User authenticated:", user);
+            // Hide login buttons, show sign-out
+            document.getElementById('btn-login-github').style.display = "none";
+            document.getElementById('btn-login-google').style.display = "none";
+            document.getElementById('btn-login-figma').style.display = "none";
+            document.getElementById('signOutBtn').style.display = "block";
+            // Proceed with app logic
+        }
+
+        // Add login button event listeners
+        document.getElementById('btn-login-github').addEventListener('click', async () => {
+            await auth0Client.loginWithRedirect({ connection: 'github' });
+        });
+
+        document.getElementById('btn-login-google').addEventListener('click', async () => {
+            await auth0Client.loginWithRedirect({ connection: 'google' });
+        });
+
+        document.getElementById('btn-login-figma').addEventListener('click', async () => {
+            await auth0Client.loginWithRedirect({ connection: 'figma' });
+        });
+
+        // Sign-out button
+        document.getElementById('signOutBtn').addEventListener('click', signOut);
+
+        // Rest of your code (findMyHolidayButton event listener, etc.)
+        // ...
+    } catch (error) {
+        console.error("Initialization error:", error);
+        showError('Failed to initialize. Please refresh.');
+    }
+};
+
+// Existing window.onload function content
 window.onload = async () => {
     try {
         await configureClient(); // Configure Auth0 Client
