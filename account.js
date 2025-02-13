@@ -272,3 +272,14 @@ window.onload = async () => {
         showError('Failed to initialize. Please refresh.');
     }
 };
+
+// Call this after auth initialization
+window.addEventListener('load', async () => {
+    try {
+        await auth0Client.checkSession();
+        await updateAuthState();
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        document.body.classList.add('unauthenticated');
+    }
+});
