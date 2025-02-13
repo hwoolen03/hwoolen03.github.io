@@ -1,7 +1,3 @@
-const API_HEADERS = {
-    'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3',
-    'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
-};
 
 // Auth0 Configuration
 let auth0Client;
@@ -36,10 +32,10 @@ const signOut = async () => {
 // Client-Side Recommendation Engine
 const DESTINATION_GENERATOR = {
     regions: {
-        northAmerica: { flightBase: 800, hotelBase: 250, codePrefix: 'NA', multiplier: 1.0 },
-        europe: { flightBase: 900, hotelBase: 300, codePrefix: 'EU', multiplier: 1.1 },
-        asia: { flightBase: 1100, hotelBase: 200, codePrefix: 'AS', multiplier: 0.95 },
-        oceania: { flightBase: 1500, hotelBase: 350, codePrefix: 'OC', multiplier: 1.2 }
+        northAmerica: { flightBase: 300, hotelBase: 80, codePrefix: 'NA', multiplier: 1.0 },
+        europe: { flightBase: 400, hotelBase: 100, codePrefix: 'EU', multiplier: 1.1 },
+        asia: { flightBase: 500, hotelBase: 60, codePrefix: 'AS', multiplier: 0.95 },
+        oceania: { flightBase: 700, hotelBase: 120, codePrefix: 'OC', multiplier: 1.2 }
     },
 
     generateDestinations(perRegion = 25) {
@@ -106,7 +102,7 @@ const TravelPlanner = {
                 ...dest,
                 cost: this.calculateTripCost(dest, checkInDate, nights)
             }))
-            .filter(dest => dest.cost.total <= budget * 1.15 && dest.cost.total >= budget * 0.85)
+            .filter(dest => dest.cost.total <= budget * 1.3 && dest.cost.total >= budget * 0.7) // Changed from 1.15/0.85
             .sort((a, b) => a.cost.total - b.cost.total)
             .slice(0, maxResults);
     }
