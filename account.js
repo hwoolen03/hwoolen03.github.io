@@ -172,31 +172,39 @@ const personalizeContent = async (user) => {
 // Add the new window.onload function here
 window.onload = async () => {
     try {
-        await configureClient();
+        await configureClient(); // Initialize Auth0
 
         const isRedirect = window.location.search.includes('code=') || window.location.search.includes('error=');
+
         if (isRedirect) {
             try {
                 const { appState } = await auth0Client.handleRedirectCallback();
-                const storedState = localStorage.getItem('auth_state');
-                if (storedState !== appState.state) {
+                
+                // Retrieve stored state from sessionStorage
+                const storedState = sessionStorage.getItem('auth_state');
+
+                console.log("Stored state:", storedState);
+                console.log("Returned state:", appState?.customState);
+
+                if (storedState !== appState?.customState) {
                     throw new Error("Invalid state");
                 }
-                localStorage.removeItem('auth_state');
+
+                sessionStorage.removeItem('auth_state'); // Clean up stored state
                 window.history.replaceState({}, document.title, 'https://hwoolen03.github.io/indexsignedin');
+
             } catch (error) {
                 console.error("Redirect callback error:", error);
-                showError('Authentication error. Please try again.');
+                showError('Invalid state during authentication. Please try again.');
                 return;
             }
         }
 
+        // Check if user is authenticated
         const isAuthenticated = await auth0Client.isAuthenticated();
 
-        // Toggle button visibility based on authentication
         if (!isAuthenticated) {
             console.log("User is not authenticated");
-            // Show login buttons
             document.getElementById('btn-login-github').style.display = "block";
             document.getElementById('btn-login-google').style.display = "block";
             document.getElementById('btn-login-figma').style.display = "block";
@@ -205,38 +213,35 @@ window.onload = async () => {
             // User is authenticated
             user = await auth0Client.getUser();
             console.log("User authenticated:", user);
-            // Hide login buttons, show sign-out
+
             document.getElementById('btn-login-github').style.display = "none";
             document.getElementById('btn-login-google').style.display = "none";
             document.getElementById('btn-login-figma').style.display = "none";
             document.getElementById('signOutBtn').style.display = "block";
-            // Proceed with app logic
         }
 
-        // Add login button event listeners
+        // Login event listeners with sessionStorage for state
         document.getElementById('btn-login-github').addEventListener('click', async () => {
             const state = Math.random().toString(36).substring(2);
-            localStorage.setItem('auth_state', state);
-            await auth0Client.loginWithRedirect({ connection: 'github', state });
+            sessionStorage.setItem('auth_state', state);
+            await auth0Client.loginWithRedirect({ connection: 'github', appState: { customState: state } });
         });
 
         document.getElementById('btn-login-google').addEventListener('click', async () => {
             const state = Math.random().toString(36).substring(2);
-            localStorage.setItem('auth_state', state);
-            await auth0Client.loginWithRedirect({ connection: 'google', state });
+            sessionStorage.setItem('auth_state', state);
+            await auth0Client.loginWithRedirect({ connection: 'google', appState: { customState: state } });
         });
 
         document.getElementById('btn-login-figma').addEventListener('click', async () => {
             const state = Math.random().toString(36).substring(2);
-            localStorage.setItem('auth_state', state);
-            await auth0Client.loginWithRedirect({ connection: 'figma', state });
+            sessionStorage.setItem('auth_state', state);
+            await auth0Client.loginWithRedirect({ connection: 'figma', appState: { customState: state } });
         });
 
-        // Sign-out button
+        // Sign-out button event
         document.getElementById('signOutBtn').addEventListener('click', signOut);
 
-        // Rest of your code (findMyHolidayButton event listener, etc.)
-        // ...
     } catch (error) {
         console.error("Initialization error:", error);
         showError('Failed to initialize. Please refresh.');
