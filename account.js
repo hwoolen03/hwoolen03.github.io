@@ -177,9 +177,15 @@ window.onload = async () => {
         const isRedirect = window.location.search.includes('code=') || window.location.search.includes('error=');
         if (isRedirect) {
             // Handle the Auth0 redirect response
-            await auth0Client.handleRedirectCallback();
-            // Redirect the user to the intended page after successful authentication
-            window.history.replaceState({}, document.title, 'https://hwoolen03.github.io/indexsignedin');
+            try {
+                await auth0Client.handleRedirectCallback();
+                // Redirect the user to the intended page after successful authentication
+                window.history.replaceState({}, document.title, 'https://hwoolen03.github.io/indexsignedin');
+            } catch (error) {
+                console.error("Invalid state during redirect callback:", error);
+                showError('Invalid state during authentication. Please try again.');
+                return;
+            }
         } else {
             // Check if user is authenticated
             const isAuthenticated = await auth0Client.isAuthenticated();
