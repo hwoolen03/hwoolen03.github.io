@@ -17,10 +17,8 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    position: absolute;
-    top: 0;
-    width: 90%;
-    height: 60px; /* Adjust the height to match the height of the sign-in buttons */
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
 }
 
 .logo-heading {
