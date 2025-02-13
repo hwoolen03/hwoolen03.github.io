@@ -119,6 +119,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    // Add class to body based on auth state
+    const updateAuthState = async () => {
+        const isAuthed = await auth0Client.isAuthenticated();
+        document.body.classList.toggle('authenticated', isAuthed);
+        document.body.classList.toggle('unauthenticated', !isAuthed);
+        
+        // Force button visibility
+        document.querySelectorAll('.auth-btn').forEach(btn => {
+            btn.style.display = 'block';
+            btn.style.visibility = 'visible';
+        });
+    };
+
     // Event Listeners
     const initializeApp = () => {
         console.log("🎯 Initializing event listeners...");
@@ -151,6 +164,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error("🚨 Application initialization failed:", error);
     }
+
+    // Call this after auth initialization
+    window.addEventListener('load', async () => {
+        try {
+            await auth0Client.checkSession();
+            await updateAuthState();
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            document.body.classList.add('unauthenticated');
+        }
+    });
 });
 
 // Updated script.js
