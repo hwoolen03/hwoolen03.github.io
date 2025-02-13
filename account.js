@@ -45,13 +45,13 @@ const DESTINATION_GENERATOR = {
     generateDestinations(perRegion = 25) {
         const destinations = [];
         Object.entries(this.regions).forEach(([regionKey, config]) => {
-            for(let i = 1; i <= perRegion; i++) {
+            for (let i = 1; i <= perRegion; i++) {
                 destinations.push({
-                    iata: `${config.codePrefix}${i.toString().padStart(2,'0')}`,
+                    iata: `${config.codePrefix}${i.toString().padStart(2, '0')}`,
                     city: `${this.capitalize(regionKey)} City ${i}`,
                     region: regionKey,
                     avgFlightPrice: this.calculateSeasonalPrices(config.flightBase),
-                    avgHotelPrice: Math.round(config.hotelBase * (0.8 + Math.random()*0.4)),
+                    avgHotelPrice: Math.round(config.hotelBase * (0.8 + Math.random() * 0.4)),
                     multiplier: config.multiplier
                 });
             }
@@ -165,79 +165,7 @@ const personalizeContent = async (user) => {
     return recommendations.map((rec, index) => ({
         ...rec,
         flights: apiResults[index].value[0],
-        hotels: apiResults[index].value[1]
-    }));
-};
+        hotels: apiResults[index].value[1
+::contentReference[oaicite:0]{index=0}
+ 
 
-window.onload = async () => {
-    try {
-        await configureClient(); // Configure Auth0 Client
-
-        // Check if the current URL contains the Auth0 redirect response
-        const isRedirect = window.location.search.includes('code=') || window.location.search.includes('error=');
-        if (isRedirect) {
-            // Handle the Auth0 redirect response
-            try {
-                await auth0Client.handleRedirectCallback();
-                // Redirect the user to the intended page after successful authentication
-                window.history.replaceState({}, document.title, 'https://hwoolen03.github.io/indexsignedin');
-            } catch (error) {
-                console.error("Invalid state during redirect callback:", error);
-                showError('Invalid state during authentication. Please try again.');
-                return;
-            }
-        } else {
-            // Check if user is authenticated
-            const isAuthenticated = await auth0Client.isAuthenticated();
-
-            if (!isAuthenticated) {
-                console.log("No user authenticated, redirecting to login page");
-                window.location.href = 'https://hwoolen03.github.io'; // Redirect to the login page
-            } else {
-                // If authenticated, proceed with the user logic
-                user = await auth0Client.getUser(); // Assign the user variable
-                console.log("User authenticated:", user); // Log the authenticated user info
-
-                // Ensure authentication buttons are displayed
-                document.getElementById('btn-login-github').style.display = "block";
-                document.getElementById('btn-login-google').style.display = "block";
-                document.getElementById('btn-login-figma').style.display = "block";
-
-                // You can proceed with the application logic now that the user is authenticated
-            }
-        }
-
-        // Sign-out button logic
-        document.getElementById('signOutBtn').addEventListener('click', signOut);
-
-        // Main button logic for finding holidays
-        document.getElementById('findMyHolidayButton').addEventListener('click', async () => {
-            try {
-                showLoading();
-                const results = await personalizeContent(user); // Use the authenticated user details
-
-                document.getElementById('results').innerHTML = results.map(result => `
-                    <div class="destination-card">
-                        <h3>${result.city}</h3>
-                        <p>Estimated Total: $${result.cost.total}</p>
-                        <div class="price-breakdown">
-                            <span>✈️ $${result.cost.flight}</span>
-                            <span>🏨 $${result.cost.hotel}</span>
-                        </div>
-                        <div class="api-results">
-                            ${result.flights.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
-                            ${result.hotels.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
-                        </div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                showLoading(false);
-            }
-        });
-    } catch (error) {
-        console.error("Error during initialization:", error);
-        showError('Initialization failed. Please refresh the page.');
-    }
-};
