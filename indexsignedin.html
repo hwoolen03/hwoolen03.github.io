@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atlas Travel - Signed In</title>
-    <link rel="stylesheet" href="HomePageIn.css">
+    <link rel="stylesheet" href="HomePage.css">
+    <!-- Load Auth0 SPA JS -->
     <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js"></script>
-    <script type="module" src="account.js"></script>
+    <!-- Load fireworks-js -->
+    <script src="https://cdn.jsdelivr.net/npm/fireworks-js@2.9.0/dist/fireworks.min.js"></script>
+    <!-- Load your script.js -->
+    <script src="script.js" defer></script>
 </head>
 <body>
 <header>
@@ -19,8 +23,7 @@
 
 <div class="input-container">
     <label for="holidayDate">Check-In Date:</label>
-    <input type="date" id="holidayDate" required
-           onchange="document.getElementById('returnDate').min = this.value">
+    <input type="date" id="holidayDate" required onchange="document.getElementById('returnDate').min = this.value">
 
     <label for="returnDate">Check-Out Date:</label>
     <input type="date" id="returnDate" required>
