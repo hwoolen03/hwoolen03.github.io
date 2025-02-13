@@ -164,8 +164,8 @@ const personalizeContent = async (user) => {
 
     return recommendations.map((rec, index) => ({
         ...rec,
-        flights: apiResults[index].status === 'fulfilled' && apiResults[index].value[0] ? apiResults[index].value[0] : {},
-        hotels: apiResults[index].status === 'fulfilled' && apiResults[index].value[1] ? apiResults[index].value[1] : {}
+        flights: apiResults[index].value[0],
+        hotels: apiResults[index].value[1]
     }));
 };
 
@@ -219,14 +219,56 @@ window.onload = async () => {
                         </div>
                     </div>
                 `).join('');
+
+                // Fireworks animation
+                const container = document.createElement('div');
+                container.style.position = 'fixed';
+                container.style.top = 0;
+                container.style.left = 0;
+                container.style.width = '100%';
+                container.style.height = '100%';
+                container.style.pointerEvents = 'none';
+                document.body.appendChild(container);
+
+                const fireworks = new Fireworks(container, {
+                    autoresize: true,
+                    opacity: 0.5,
+                    acceleration: 1.05,
+                    friction: 0.97,
+                    gravity: 1.5,
+                    particles: 50,
+                    trace: 3,
+                    explosion: 5,
+                    intensity: 30,
+                    flickering: 50,
+                    lineStyle: 'round',
+                    hue: { min: 0, max: 360 },
+                    delay: { min: 15, max: 30 },
+                    rocketsPoint: { min: 50, max: 50 },
+                    lineWidth: { explosion: { min: 1, max: 3 }, trace: { min: 1, max: 2 } },
+                    brightness: { min: 50, max: 80 },
+                    decay: { min: 0.015, max: 0.03 },
+                    mouse: { click: false, move: false, max: 1 },
+                    boundaries: { x: 50, y: 50, width: container.clientWidth, height: container.clientHeight },
+                    sound: { enable: false }
+                });
+
+                fireworks.start();
+
+                setTimeout(() => {
+                    fireworks.stop();
+                    document.body.removeChild(container);
+                }, 5000); // Duration of the fireworks animation
+
             } catch (error) {
                 showError(error.message);
             } finally {
                 showLoading(false);
             }
         });
-
     } catch (error) {
-        showError('Failed to initialize application. Please try again.');
+        console.error("Error during initialization:", error);
+        showError('Initialization failed. Please refresh the page.');
     }
 };
+
