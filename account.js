@@ -13,7 +13,7 @@ const configureClient = async () => {
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            redirect_uri: "https://hwoolen03.github.io/indexsignedin",
+            redirect_uri: window.location.origin, // Use dynamic origin
             advancedOptions: {
                 defaultScope: 'openid profile email',
                 audience: 'https://travel-planner-api',
@@ -209,6 +209,7 @@ const personalizeContent = async (user) => {
 const updateAuthState = async () => {
     try {
         const isAuthed = await auth0Client.isAuthenticated();
+        if (isAuthed) await validateSession();
 
         const toggleElement = (id, visible) => {
             const el = document.getElementById(id);
@@ -234,31 +235,37 @@ const updateAuthState = async () => {
 };
 
 // Handle Auth0 redirect callback
-const generateNonce = () => {
-    const array = new Uint32Array(1);
+const generateState = () => {
+    const array = new Uint32Array(28);
     window.crypto.getRandomValues(array);
-    return array[0].toString(36);
+    return Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
 };
 
 const handleAuth0Redirect = async () => {
     try {
-        const { appState } = await auth0Client.handleRedirectCallback();
-        const storedState = sessionStorage.getItem('auth_state');
+        const query = window.location.search;
+        const shouldRedirect = query.includes('code=') || query.includes('error=');
+        
+        if (shouldRedirect) {
+            const { appState } = await auth0Client.handleRedirectCallback();
+            const storedState = sessionStorage.getItem('auth_state');
 
-        console.debug('Auth0 State Check:', {
-            stored: storedState,
-            received: appState?.customState,
-            match: storedState === appState?.customState
-        });
+            console.log('State comparison:', {
+                stored: storedState,
+                received: appState?.customState,
+                match: storedState === appState?.customState
+            });
 
-        if (!storedState || storedState !== appState?.customState) {
-            console.error('State mismatch - potential CSRF attack');
-            await auth0Client.logout();
-            return window.location.reload();
+            if (!storedState || storedState !== appState?.customState) {
+                console.error('State mismatch detected');
+                await auth0Client.logout();
+                sessionStorage.removeItem('auth_state');
+                return window.location.replace(window.location.origin);
+            }
+
+            sessionStorage.removeItem('auth_state');
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
-
-        sessionStorage.removeItem('auth_state');
-        window.history.replaceState({}, document.title, window.location.origin);
     } catch (error) {
         console.error("Redirect error:", error);
         showError('Authentication failed. Please try again.', true);
@@ -272,15 +279,42 @@ const initializeApp = async () => {
         await handlePotentialRedirect();
         await updateAuthState();
         setupEventListeners();
+        
+        // Clear residual state
+        if (!window.location.search) {
+            sessionStorage.removeItem('auth_state');
+        }
     } catch (error) {
         console.error('App initialization failed:', error);
         showError('Failed to initialize application', true);
     }
 };
 
+// Add session validation check
+const validateSession = async () => {
+    try {
+        const token = await auth0Client.getTokenSilently();
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        
+        if (Math.floor(Date.now() / 1000) - payload.auth_time > 3600) {
+            await auth0Client.logout();
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Session validation failed:', error);
+    }
+};
+
 const handlePotentialRedirect = async () => {
-    if (window.location.search.includes('code=') ||
-        window.location.search.includes('error=')) {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (urlParams.has('error')) {
+        const errorDesc = urlParams.get('error_description');
+        showError(`Authentication failed: ${errorDesc || 'Unknown error'}`, true);
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    if (urlParams.has('code')) {
         await handleAuth0Redirect();
     }
 };
@@ -290,19 +324,16 @@ const setupEventListeners = () => {
         const btn = document.getElementById(id);
         if (btn) {
             btn.addEventListener('click', async () => {
-                const state = generateNonce();
+                const state = generateState();
                 sessionStorage.setItem('auth_state', state);
-                console.log("State stored before redirect:", state);
                 await auth0Client.loginWithRedirect({
-                    connection: connection,
-                    appState: { customState: state },
+                    connection,
                     authorizationParams: {
-                        // Add any additional authorization parameters here
+                        state: state,
+                        redirect_uri: window.location.origin
                     }
                 });
             });
-        } else {
-            console.error(`Element with id ${id} not found`);
         }
     };
 
@@ -338,7 +369,16 @@ const setupEventListeners = () => {
     });
 };
 
-document.addEventListener('DOMContentLoaded', initializeApp);
+document.addEventListener('DOMContentLoaded', () => {
+    // Initial setup
+    initializeApp().then(() => {
+        // Handle edge case for redirected tabs
+        if (window.performance?.navigation?.type === 2) {
+            sessionStorage.removeItem('auth_state');
+            window.location.reload();
+        }
+    });
+});
 
 // Call this after auth initialization
 window.addEventListener('load', async () => {
