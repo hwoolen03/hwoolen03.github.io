@@ -13,7 +13,14 @@ const configureClient = async () => {
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            redirect_uri: "https://hwoolen03.github.io/indexsignedin"
+            redirect_uri: "https://hwoolen03.github.io/indexsignedin",
+            advancedOptions: {
+                defaultScope: 'openid profile email',
+                audience: 'https://travel-planner-api',
+                useRefreshTokens: true,
+            },
+            cacheLocation: 'localstorage',
+            leeway: 30
         });
         console.log("Auth0 client configured successfully");
     } catch (error) {
@@ -107,7 +114,12 @@ const TravelPlanner = {
                 ...dest,
                 cost: this.calculateTripCost(dest, checkInDate, nights)
             }))
-            .filter(dest => dest.cost.total <= budget * 1.3 && dest.cost.total >= budget * 0.7)
+            .filter(dest => {
+                const budgetRange = dest.multiplier > 1
+                    ? [budget * 0.6, budget * 1.4]
+                    : [budget * 0.7, budget * 1.3];
+                return dest.cost.total >= budgetRange[0] && dest.cost.total <= budgetRange[1];
+            })
             .sort((a, b) => a.cost.total - b.cost.total)
             .slice(0, maxResults);
     }
@@ -123,11 +135,18 @@ const showLoading = (show = true) => {
     document.getElementById('findMyHolidayButton').disabled = show;
 };
 
-const showError = (message) => {
-    const errorElement = document.querySelector('.api-error');
-    errorElement.textContent = message;
+const showError = (message, fatal = false) => {
+    const errorElement = document.getElementById('error-message');
+    errorElement.innerHTML = `
+        <div class="error-container ${fatal ? 'fatal' : ''}">
+            <span>⚠️ ${message}</span>
+            ${fatal ? '<button onclick="location.reload()">Reload Page</button>' : ''}
+        </div>
+    `;
     errorElement.hidden = false;
-    setTimeout(() => errorElement.hidden = true, 5000);
+    if (!fatal) {
+        setTimeout(() => errorElement.hidden = true, 5000);
+    }
 };
 
 // Main Workflow
@@ -139,6 +158,12 @@ const personalizeContent = async (user) => {
         budget: parseInt(document.getElementById('budget').value)
     };
 
+    const today = new Date().setHours(0, 0, 0, 0);
+    const checkIn = new Date(inputs.checkInDate).setHours(0, 0, 0, 0);
+
+    if (checkIn < today) {
+        throw new Error('Check-in date cannot be in the past');
+    }
     if (new Date(inputs.checkOutDate) < new Date(inputs.checkInDate)) {
         throw new Error('Check-out date must be after check-in date');
     }
@@ -174,10 +199,19 @@ const personalizeContent = async (user) => {
 const updateAuthState = async () => {
     try {
         const isAuthed = await auth0Client.isAuthenticated();
-        document.body.classList.toggle('authenticated', isAuthed);
-        document.body.classList.toggle('unauthenticated', !isAuthed);
+        const authElements = document.querySelectorAll('[data-auth]');
+
+        authElements.forEach(element => {
+            const state = element.dataset.auth;
+            element.hidden = (state === 'authenticated') ? !isAuthed : isAuthed;
+        });
+
+        if (isAuthed) {
+            await refreshUserProfile();
+            initializeFavoriteDestinations();
+        }
     } catch (error) {
-        console.error("Auth state check failed:", error);
+        console.error("Auth state update failed:", error);
     }
 };
 
@@ -243,12 +277,16 @@ window.onload = async () => {
             const button = document.getElementById(id);
             if (button) {
                 button.addEventListener('click', async () => {
-                    const state = Math.random().toString(36).substring(2);
+                    const state = generateNonce();
                     sessionStorage.setItem('auth_state', state);
                     console.log("State stored before redirect:", state);
                     await auth0Client.loginWithRedirect({
                         connection: connection,
-                        appState: { customState: state }
+                        appState: { customState: state },
+                        authorizationParams: {
+                            code_challenge_method: 'S256',
+                            code_challenge: await auth0Client.createCodeChallenge()
+                        }
                     });
                 });
             } else {
