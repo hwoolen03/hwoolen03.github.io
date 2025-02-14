@@ -181,6 +181,27 @@ const updateAuthState = async () => {
     }
 };
 
+// Handle Auth0 redirect callback
+const handleAuth0Redirect = async () => {
+    try {
+        const { appState } = await auth0Client.handleRedirectCallback();
+        const storedState = sessionStorage.getItem('auth_state');
+
+        console.log("Stored state:", storedState);
+        console.log("App state from Auth0:", appState?.customState);
+
+        if (storedState !== appState?.customState) {
+            throw new Error("Invalid state");
+        }
+
+        sessionStorage.removeItem('auth_state');
+        window.history.replaceState({}, document.title, "https://hwoolen03.github.io/indexsignedin");
+    } catch (error) {
+        console.error("Redirect error:", error);
+        showError('Authentication failed. Please try again.');
+    }
+};
+
 // Main Initialization
 window.onload = async () => {
     try {
@@ -189,24 +210,7 @@ window.onload = async () => {
         // Handle Auth0 redirect callback
         const isRedirect = window.location.search.includes('code=') || window.location.search.includes('error=');
         if (isRedirect) {
-            try {
-                const { appState } = await auth0Client.handleRedirectCallback();
-                const storedState = sessionStorage.getItem('auth_state');
-
-                console.log("Stored state:", storedState);
-                console.log("App state from Auth0:", appState?.customState);
-
-                if (storedState !== appState?.customState) {
-                    throw new Error("Invalid state");
-                }
-
-                sessionStorage.removeItem('auth_state');
-                window.history.replaceState({}, document.title, "https://hwoolen03.github.io/indexsignedin");
-            } catch (error) {
-                console.error("Redirect error:", error);
-                showError('Authentication failed. Please try again.');
-                return;
-            }
+            await handleAuth0Redirect();
         }
 
         // Update authentication state
