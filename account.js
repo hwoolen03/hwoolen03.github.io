@@ -192,10 +192,10 @@ window.onload = async () => {
             try {
                 const { appState } = await auth0Client.handleRedirectCallback();
                 const storedState = sessionStorage.getItem('auth_state');
-                
+
                 console.log("Stored state:", storedState);
                 console.log("App state from Auth0:", appState?.customState);
-                
+
                 if (storedState !== appState?.customState) {
                     throw new Error("Invalid state");
                 }
@@ -250,7 +250,7 @@ window.onload = async () => {
             try {
                 showLoading();
                 const results = await personalizeContent(user);
-                
+
                 document.getElementById('results').innerHTML = results.map(result => `
                     <div class="destination-card">
                         <h3>${result.city}</h3>
