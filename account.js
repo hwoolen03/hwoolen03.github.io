@@ -137,6 +137,10 @@ const showLoading = (show = true) => {
 
 const showError = (message, fatal = false) => {
     const errorElement = document.getElementById('error-message');
+    if (!errorElement) {
+        console.error("Error element not found in the DOM");
+        return;
+    }
     errorElement.innerHTML = `
         <div class="error-container ${fatal ? 'fatal' : ''}">
             <span>⚠️ ${message}</span>
@@ -216,6 +220,12 @@ const updateAuthState = async () => {
 };
 
 // Handle Auth0 redirect callback
+const generateNonce = () => {
+    const array = new Uint32Array(1);
+    window.crypto.getRandomValues(array);
+    return array[0].toString(36);
+};
+
 const handleAuth0Redirect = async () => {
     try {
         const { appState } = await auth0Client.handleRedirectCallback();
