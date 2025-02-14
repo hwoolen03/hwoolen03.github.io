@@ -220,6 +220,14 @@ const updateAuthState = async () => {
         toggleElement('btn-login-figma', !isAuthed);
         toggleElement('signOutBtn', isAuthed);
 
+        if (isAuthed) {
+            // Remove or hide elements or actions specific to signed-in users
+            document.getElementById('someElementToRemoveOrHide').style.display = 'none';
+        } else {
+            // Show elements or actions for non-signed-in users
+            document.getElementById('someElementToRemoveOrHide').style.display = 'block';
+        }
+
     } catch (error) {
         console.error("Auth state update failed:", error);
     }
