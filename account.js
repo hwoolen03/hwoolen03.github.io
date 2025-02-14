@@ -192,6 +192,9 @@ window.onload = async () => {
                 const { appState } = await auth0Client.handleRedirectCallback();
                 const storedState = sessionStorage.getItem('auth_state');
                 
+                console.log("Stored state:", storedState);
+                console.log("App state from Auth0:", appState?.customState);
+                
                 if (storedState !== appState?.customState) {
                     throw new Error("Invalid state");
                 }
@@ -226,6 +229,7 @@ window.onload = async () => {
             document.getElementById(id).addEventListener('click', async () => {
                 const state = Math.random().toString(36).substring(2);
                 sessionStorage.setItem('auth_state', state);
+                console.log("State stored before redirect:", state);
                 await auth0Client.loginWithRedirect({
                     connection: connection,
                     appState: { customState: state }
