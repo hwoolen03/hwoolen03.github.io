@@ -136,19 +136,25 @@ const showLoading = (show = true) => {
 };
 
 const showError = (message, fatal = false) => {
-    const errorElement = document.getElementById('error-message');
+    const errorElement = document.querySelector('.api-error');
     if (!errorElement) {
-        console.error("Error element not found in the DOM");
+        console.error('Error container element not found');
         return;
     }
+
     errorElement.innerHTML = `
-        <div class="error-container ${fatal ? 'fatal' : ''}">
-            <span>⚠️ ${message}</span>
-            ${fatal ? '<button onclick="location.reload()">Reload Page</button>' : ''}
+        <div class="error-message ${fatal ? 'fatal' : ''}">
+            ${message}
+            ${fatal ? '<button class="reload-btn">Reload Page</button>' : ''}
         </div>
     `;
+
     errorElement.hidden = false;
-    if (!fatal) {
+    if (fatal) {
+        errorElement.querySelector('.reload-btn')?.addEventListener('click', () => {
+            window.location.reload();
+        });
+    } else {
         setTimeout(() => errorElement.hidden = true, 5000);
     }
 };
@@ -203,17 +209,17 @@ const personalizeContent = async (user) => {
 const updateAuthState = async () => {
     try {
         const isAuthed = await auth0Client.isAuthenticated();
-        const authElements = document.querySelectorAll('[data-auth]');
 
-        authElements.forEach(element => {
-            const state = element.dataset.auth;
-            element.hidden = (state === 'authenticated') ? !isAuthed : isAuthed;
-        });
+        const toggleElement = (id, visible) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = visible ? 'block' : 'none';
+        };
 
-        if (isAuthed) {
-            await refreshUserProfile();
-            initializeFavoriteDestinations();
-        }
+        toggleElement('btn-login-github', !isAuthed);
+        toggleElement('btn-login-google', !isAuthed);
+        toggleElement('btn-login-figma', !isAuthed);
+        toggleElement('signOutBtn', isAuthed);
+
     } catch (error) {
         console.error("Auth state update failed:", error);
     }
@@ -231,125 +237,100 @@ const handleAuth0Redirect = async () => {
         const { appState } = await auth0Client.handleRedirectCallback();
         const storedState = sessionStorage.getItem('auth_state');
 
-        console.log("Stored state:", storedState);
-        console.log("App state from Auth0:", appState?.customState);
+        console.debug('Auth0 State Check:', {
+            stored: storedState,
+            received: appState?.customState,
+            match: storedState === appState?.customState
+        });
 
-        if (storedState !== appState?.customState) {
-            throw new Error("Invalid state");
+        if (!storedState || storedState !== appState?.customState) {
+            console.error('State mismatch - potential CSRF attack');
+            await auth0Client.logout();
+            return window.location.reload();
         }
 
         sessionStorage.removeItem('auth_state');
-        window.history.replaceState({}, document.title, "https://hwoolen03.github.io/indexsignedin");
+        window.history.replaceState({}, document.title, window.location.origin);
     } catch (error) {
         console.error("Redirect error:", error);
-        showError('Authentication failed. Please try again.');
+        showError('Authentication failed. Please try again.', true);
     }
 };
 
 // Main Initialization
-window.onload = async () => {
+const initializeApp = async () => {
     try {
         await configureClient();
-
-        // Handle Auth0 redirect callback
-        const isRedirect = window.location.search.includes('code=') || window.location.search.includes('error=');
-        if (isRedirect) {
-            await handleAuth0Redirect();
-        }
-
-        // Update authentication state
-        const isAuthenticated = await auth0Client.isAuthenticated();
+        await handlePotentialRedirect();
         await updateAuthState();
-
-        // Update UI elements
-        const githubBtn = document.getElementById('btn-login-github');
-        const googleBtn = document.getElementById('btn-login-google');
-        const figmaBtn = document.getElementById('btn-login-figma');
-        const signOutBtn = document.getElementById('signOutBtn');
-
-        if (githubBtn && googleBtn && figmaBtn && signOutBtn) {
-            githubBtn.style.display = isAuthenticated ? 'none' : 'block';
-            googleBtn.style.display = isAuthenticated ? 'none' : 'block';
-            figmaBtn.style.display = isAuthenticated ? 'none' : 'block';
-            signOutBtn.style.display = isAuthenticated ? 'block' : 'none';
-        } else {
-            console.error("One or more elements not found in the DOM");
-        }
-
-        // Get user data if authenticated
-        if (isAuthenticated) {
-            user = await auth0Client.getUser();
-            console.log("Authenticated user:", user);
-        }
-
-        // Setup login buttons
-        const setupLoginButton = (id, connection) => {
-            const button = document.getElementById(id);
-            if (button) {
-                button.addEventListener('click', async () => {
-                    const state = generateNonce();
-                    sessionStorage.setItem('auth_state', state);
-                    console.log("State stored before redirect:", state);
-                    await auth0Client.loginWithRedirect({
-                        connection: connection,
-                        appState: { customState: state },
-                        authorizationParams: {
-                            code_challenge_method: 'S256',
-                            code_challenge: await auth0Client.createCodeChallenge()
-                        }
-                    });
-                });
-            } else {
-                console.error(`Element with id ${id} not found`);
-            }
-        };
-
-        setupLoginButton('btn-login-github', 'github');
-        setupLoginButton('btn-login-google', 'google');
-        setupLoginButton('btn-login-figma', 'figma');
-
-        // Setup signout
-        if (signOutBtn) {
-            signOutBtn.addEventListener('click', signOut);
-        }
-
-        // Main application handler
-        const findMyHolidayButton = document.getElementById('findMyHolidayButton');
-        if (findMyHolidayButton) {
-            findMyHolidayButton.addEventListener('click', async () => {
-                try {
-                    showLoading();
-                    const results = await personalizeContent(user);
-
-                    document.getElementById('results').innerHTML = results.map(result => `
-                        <div class="destination-card">
-                            <h3>${result.city}</h3>
-                            <p>Estimated Total: $${result.cost.total}</p>
-                            <div class="price-breakdown">
-                                <span>✈️ $${result.cost.flight}</span>
-                                <span>🏨 $${result.cost.hotel}</span>
-                            </div>
-                            <div class="api-results">
-                                ${result.flights?.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
-                                ${result.hotels?.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
-                            </div>
-                        </div>
-                    `).join('');
-                } catch (error) {
-                    showError(error.message);
-                } finally {
-                    showLoading(false);
-                }
-            });
-        } else {
-            console.error("Element with id 'findMyHolidayButton' not found");
-        }
-
+        setupEventListeners();
     } catch (error) {
-        console.error("Initialization error:", error);
-        showError('Failed to initialize. Please refresh.');
+        console.error('App initialization failed:', error);
+        showError('Failed to initialize application', true);
     }
 };
+
+const handlePotentialRedirect = async () => {
+    if (window.location.search.includes('code=') ||
+        window.location.search.includes('error=')) {
+        await handleAuth0Redirect();
+    }
+};
+
+const setupEventListeners = () => {
+    const addAuthHandler = (id, connection) => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener('click', async () => {
+                const state = generateNonce();
+                sessionStorage.setItem('auth_state', state);
+                console.log("State stored before redirect:", state);
+                await auth0Client.loginWithRedirect({
+                    connection: connection,
+                    appState: { customState: state },
+                    authorizationParams: {
+                        // Add any additional authorization parameters here
+                    }
+                });
+            });
+        } else {
+            console.error(`Element with id ${id} not found`);
+        }
+    };
+
+    addAuthHandler('btn-login-github', 'github');
+    addAuthHandler('btn-login-google', 'google');
+    addAuthHandler('btn-login-figma', 'figma');
+
+    document.getElementById('signOutBtn')?.addEventListener('click', signOut);
+    document.getElementById('findMyHolidayButton')?.addEventListener('click', async () => {
+        try {
+            showLoading();
+            const results = await personalizeContent(user);
+
+            document.getElementById('results').innerHTML = results.map(result => `
+                <div class="destination-card">
+                    <h3>${result.city}</h3>
+                    <p>Estimated Total: $${result.cost.total}</p>
+                    <div class="price-breakdown">
+                        <span>✈️ $${result.cost.flight}</span>
+                        <span>🏨 $${result.cost.hotel}</span>
+                    </div>
+                    <div class="api-results">
+                        ${result.flights?.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
+                        ${result.hotels?.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            showError(error.message);
+        } finally {
+            showLoading(false);
+        }
+    });
+};
+
+document.addEventListener('DOMContentLoaded', initializeApp);
 
 // Call this after auth initialization
 window.addEventListener('load', async () => {
