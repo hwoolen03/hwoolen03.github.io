@@ -218,10 +218,19 @@ window.onload = async () => {
         await updateAuthState();
 
         // Update UI elements
-        document.getElementById('btn-login-github').style.display = isAuthenticated ? 'none' : 'block';
-        document.getElementById('btn-login-google').style.display = isAuthenticated ? 'none' : 'block';
-        document.getElementById('btn-login-figma').style.display = isAuthenticated ? 'none' : 'block';
-        document.getElementById('signOutBtn').style.display = isAuthenticated ? 'block' : 'none';
+        const githubBtn = document.getElementById('btn-login-github');
+        const googleBtn = document.getElementById('btn-login-google');
+        const figmaBtn = document.getElementById('btn-login-figma');
+        const signOutBtn = document.getElementById('signOutBtn');
+
+        if (githubBtn && googleBtn && figmaBtn && signOutBtn) {
+            githubBtn.style.display = isAuthenticated ? 'none' : 'block';
+            googleBtn.style.display = isAuthenticated ? 'none' : 'block';
+            figmaBtn.style.display = isAuthenticated ? 'none' : 'block';
+            signOutBtn.style.display = isAuthenticated ? 'block' : 'none';
+        } else {
+            console.error("One or more elements not found in the DOM");
+        }
 
         // Get user data if authenticated
         if (isAuthenticated) {
@@ -231,15 +240,20 @@ window.onload = async () => {
 
         // Setup login buttons
         const setupLoginButton = (id, connection) => {
-            document.getElementById(id).addEventListener('click', async () => {
-                const state = Math.random().toString(36).substring(2);
-                sessionStorage.setItem('auth_state', state);
-                console.log("State stored before redirect:", state);
-                await auth0Client.loginWithRedirect({
-                    connection: connection,
-                    appState: { customState: state }
+            const button = document.getElementById(id);
+            if (button) {
+                button.addEventListener('click', async () => {
+                    const state = Math.random().toString(36).substring(2);
+                    sessionStorage.setItem('auth_state', state);
+                    console.log("State stored before redirect:", state);
+                    await auth0Client.loginWithRedirect({
+                        connection: connection,
+                        appState: { customState: state }
+                    });
                 });
-            });
+            } else {
+                console.error(`Element with id ${id} not found`);
+            }
         };
 
         setupLoginButton('btn-login-github', 'github');
@@ -247,34 +261,41 @@ window.onload = async () => {
         setupLoginButton('btn-login-figma', 'figma');
 
         // Setup signout
-        document.getElementById('signOutBtn').addEventListener('click', signOut);
+        if (signOutBtn) {
+            signOutBtn.addEventListener('click', signOut);
+        }
 
         // Main application handler
-        document.getElementById('findMyHolidayButton').addEventListener('click', async () => {
-            try {
-                showLoading();
-                const results = await personalizeContent(user);
+        const findMyHolidayButton = document.getElementById('findMyHolidayButton');
+        if (findMyHolidayButton) {
+            findMyHolidayButton.addEventListener('click', async () => {
+                try {
+                    showLoading();
+                    const results = await personalizeContent(user);
 
-                document.getElementById('results').innerHTML = results.map(result => `
-                    <div class="destination-card">
-                        <h3>${result.city}</h3>
-                        <p>Estimated Total: $${result.cost.total}</p>
-                        <div class="price-breakdown">
-                            <span>✈️ $${result.cost.flight}</span>
-                            <span>🏨 $${result.cost.hotel}</span>
+                    document.getElementById('results').innerHTML = results.map(result => `
+                        <div class="destination-card">
+                            <h3>${result.city}</h3>
+                            <p>Estimated Total: $${result.cost.total}</p>
+                            <div class="price-breakdown">
+                                <span>✈️ $${result.cost.flight}</span>
+                                <span>🏨 $${result.cost.hotel}</span>
+                            </div>
+                            <div class="api-results">
+                                ${result.flights?.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
+                                ${result.hotels?.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
+                            </div>
                         </div>
-                        <div class="api-results">
-                            ${result.flights?.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
-                            ${result.hotels?.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
-                        </div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                showLoading(false);
-            }
-        });
+                    `).join('');
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    showLoading(false);
+                }
+            });
+        } else {
+            console.error("Element with id 'findMyHolidayButton' not found");
+        }
 
     } catch (error) {
         console.error("Initialization error:", error);
