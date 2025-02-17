@@ -10,11 +10,10 @@ let user;
 
 const configureClient = async () => {
     try {
-        console.log("Configuring Auth0 client...");
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            redirect_uri: window.location.origin, // Use dynamic origin
+            redirect_uri: "https://hwoolen03.github.io/indexsignedin", // Match script.js
             advancedOptions: {
                 defaultScope: 'openid profile email',
                 audience: 'https://travel-planner-api',
@@ -23,7 +22,6 @@ const configureClient = async () => {
             cacheLocation: 'localstorage',
             leeway: 30
         });
-        console.log("Auth0 client configured successfully");
     } catch (error) {
         console.error("Auth0 configuration error:", error);
         showError('Authentication failed. Please refresh the page.');
@@ -33,7 +31,6 @@ const configureClient = async () => {
 
 const signOut = async () => {
     try {
-        console.log("Signing out...");
         if (auth0Client) {
             await auth0Client.logout({ returnTo: window.location.origin });
         }
@@ -210,7 +207,6 @@ const personalizeContent = async (user) => {
 // Auth State Management
 const updateAuthState = async () => {
     try {
-        console.log("Updating auth state...");
         const isAuthed = await auth0Client.isAuthenticated();
         if (isAuthed) await validateSession();
 
@@ -243,21 +239,20 @@ const generateRandomState = () => {
 
 const handleAuth0Redirect = async () => {
     try {
-        console.log("Handling Auth0 redirect...");
         const query = window.location.search;
         const shouldRedirect = query.includes('code=') || query.includes('error=');
 
         if (shouldRedirect) {
-            const { appState } = await auth0Client.handleRedirectCallback();
+            const { state: returnedState } = await auth0Client.handleRedirectCallback();
             const storedState = sessionStorage.getItem('auth_state');
 
             console.log('State comparison:', {
                 stored: storedState,
-                received: appState?.customState,
-                match: storedState === appState?.customState
+                received: returnedState,
+                match: storedState === returnedState
             });
 
-            if (!storedState || storedState !== appState?.customState) {
+            if (!storedState || storedState !== returnedState) {
                 console.error('State mismatch detected');
                 await auth0Client.logout();
                 sessionStorage.removeItem('auth_state');
@@ -276,7 +271,6 @@ const handleAuth0Redirect = async () => {
 // Main Initialization
 const initializeApp = async () => {
     try {
-        console.log("Initializing app...");
         await configureClient();
         await handlePotentialRedirect();
         await updateAuthState();
@@ -294,7 +288,6 @@ const initializeApp = async () => {
 // Add session validation check
 const validateSession = async () => {
     try {
-        console.log("Validating session...");
         const token = await auth0Client.getTokenSilently();
         const payload = JSON.parse(atob(token.split('.')[1]));
 
@@ -328,7 +321,6 @@ const setupEventListeners = () => {
             btn.addEventListener('click', async () => {
                 const state = generateRandomState();
                 sessionStorage.setItem('auth_state', state);
-                console.log("Login with state:", state);
                 await auth0Client.loginWithRedirect({
                     connection,
                     authorizationParams: {
@@ -373,7 +365,6 @@ const setupEventListeners = () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOMContentLoaded event fired");
     initializeApp().then(() => {
         if (window.performance?.navigation?.type === 2) {
             sessionStorage.removeItem('auth_state');
@@ -384,7 +375,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.addEventListener('load', async () => {
     try {
-        console.log("Window load event fired");
         await auth0Client.checkSession();
         await updateAuthState();
     } catch (error) {
