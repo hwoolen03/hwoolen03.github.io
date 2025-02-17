@@ -34,18 +34,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         const query = window.location.search;
         if (query.includes("code=") && query.includes("state=")) {
             try {
+                const currentState = new URLSearchParams(window.location.search).get('state');
                 const storedState = sessionStorage.getItem('auth_state');
+                
+                console.log("Current state from URL:", currentState);
                 console.log("Stored state:", storedState);
-                const { state: returnedState } = await auth0Client.handleRedirectCallback();
-                console.log("Received state:", returnedState);
-                if (storedState !== returnedState) {
-                    throw new Error('Invalid state');
+
+                if (!storedState || storedState !== currentState) {
+                    throw new Error('Invalid state - Authentication attempt may have been compromised');
                 }
-                console.log("✅ Redirect handled successfully.");
-                window.history.replaceState({}, document.title, window.location.origin); // Remove the query params after redirect
-                await updateAuthUI(); // Ensure the UI updates after the redirect
+
+                await auth0Client.handleRedirectCallback();
+                sessionStorage.removeItem('auth_state');
+                window.history.replaceState({}, document.title, window.location.origin);
+                await updateAuthUI();
             } catch (error) {
                 console.error("🚨 Redirect handling failed:", error);
+                sessionStorage.removeItem('auth_state');
                 window.location.replace("https://hwoolen03.github.io");
             }
         }
@@ -56,45 +61,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         github: () => {
             const state = generateRandomState();
             sessionStorage.setItem('auth_state', state);
+            console.log('Storing state before GitHub redirect:', state);
+            
             auth0Client.loginWithRedirect({
                 connection: 'github',
-                authorizationParams: { // Move OAuth params here
+                authorizationParams: {
                     scope: 'openid profile email',
                     response_type: 'code',
                     state: state,
                     nonce: generateRandomNonce(),
-                    code_challenge: generateCodeChallenge(),
-                    code_challenge_method: 'S256',
+                    redirect_uri: 'https://hwoolen03.github.io/indexsignedin'
                 }
             });
         },
         google: () => {
             const state = generateRandomState();
             sessionStorage.setItem('auth_state', state);
+            console.log('Storing state before Google redirect:', state);
+            
             auth0Client.loginWithRedirect({
                 connection: 'google-oauth2',
-                authorizationParams: { // Move OAuth params here
+                authorizationParams: {
                     scope: 'openid profile email',
                     response_type: 'code',
                     state: state,
                     nonce: generateRandomNonce(),
-                    code_challenge: generateCodeChallenge(),
-                    code_challenge_method: 'S256',
+                    redirect_uri: 'https://hwoolen03.github.io/indexsignedin'
                 }
             });
         },
         figma: () => {
             const state = generateRandomState();
             sessionStorage.setItem('auth_state', state);
+            console.log('Storing state before Figma redirect:', state);
+            
             auth0Client.loginWithRedirect({
                 connection: 'figma',
-                authorizationParams: { // Move OAuth params here
+                authorizationParams: {
                     scope: 'openid profile email',
                     response_type: 'code',
                     state: state,
                     nonce: generateRandomNonce(),
-                    code_challenge: generateCodeChallenge(),
-                    code_challenge_method: 'S256',
+                    redirect_uri: 'https://hwoolen03.github.io/indexsignedin'
                 }
             });
         }
