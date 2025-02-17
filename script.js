@@ -125,4 +125,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isAuthenticated = await auth0Client.isAuthenticated();
         console.log("🔄 Authentication status:", isAuthenticated);
 
-        document.getElementById('btn-logout').style.display =
+        document.getElementById('btn-logout').style.display = isAuthenticated ? "block" : "none";
+        document.querySelectorAll('.auth-buttons button:not(#btn-logout)').forEach(btn => {
+            btn.style.display = isAuthenticated ? "none" : "block";
+        });
+
+        if (isAuthenticated) {
+            const user = await auth0Client.getUser();
+            console.log("👤 Authenticated user:", user);
+        }
+    };
+
+    const updateAuthState = async () => {
+        const isAuthed = await auth0Client.isAuthenticated();
+        document.body.classList.toggle('authenticated', isAuthed);
+        document.body.classList.toggle('unauthenticated', !isAuthed);
+
+        document.querySelectorAll('.auth-btn').forEach(btn => {
+            btn.style.display = 'block';
+            btn.style.visibility = 'visible';
+        });
+    };
+
+    const initializeApp = () => {
+        console.log("🎯 Initializing event listeners...");
+
+        const githubBtn = document.getElementById('btn-login-github');
+        const googleBtn = document.getElementById('btn-login-google');
+        const figmaBtn = document.getElementById('btn-login-figma');
+        const logoutBtn = document.getElementById('btn-logout');
+
+        if (!githubBtn || !googleBtn || !figmaBtn || !logoutBtn) {
+            console.error("🚨 One or more buttons are missing from the DOM!");
+            return;
+        }
+
+        githubBtn.addEventListener('click', loginHandlers.github);
+        googleBtn.addEventListener('click', loginHandlers.google);
+        figmaBtn.addEventListener('click', loginHandlers.figma);
+        logoutBtn.addEventListener('click', logoutHandler);
+
+        updateAuthUI();
+    };
+
+    try {
+        await handleAuthRedirect();  // Handle any potential redirect callback
+        initializeApp();  // Initialize app event listeners
+    } catch (error) {
+        console.error("🚨 Application initialization failed:", error);
+    }
+
+    window.addEventListener('load', async () => {
+        try {
+            await auth0Client.checkSession();
+            await updateAuthState();
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            document.body.classList.add('unauthenticated');
+        }
+    });
+});
