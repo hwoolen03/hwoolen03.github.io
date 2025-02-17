@@ -13,7 +13,7 @@ const configureClient = async () => {
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            redirect_uri: window.location.origin, // Changed to use origin instead of specific page
+            redirect_uri: "https://hwoolen03.github.io/indexsignedin",
             advancedOptions: {
                 defaultScope: 'openid profile email',
                 audience: 'https://travel-planner-api',
@@ -325,8 +325,7 @@ const handlePotentialRedirect = async () => {
             await handleAuth0Redirect();
             // After successful authentication, update UI
             await updateAuthState();
-            // Optionally redirect to a specific page
-            // window.location.href = `${window.location.origin}/dashboard.html`;
+            window.location.href = "https://hwoolen03.github.io/indexsignedin";
         } catch (error) {
             console.error('Redirect handling failed:', error);
             showError('Authentication failed. Please try again.');
