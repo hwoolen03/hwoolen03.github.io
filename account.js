@@ -390,7 +390,7 @@ const setupEventListeners = () => {
                     <div class="api-results">
                         ${result.flights?.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
                         ${result.hotels?.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
-                        ${result.photos?.data ? `<pre>${JSON.stringify(result.photos.data.slice(0, 2), null, 2)}</pre>` : ''}
+                        ${result.photos?.data ? result.photos.data.slice(0, 2).map(photo => `<img src="${photo.url}" alt="Hotel Photo"/>`).join('') : ''}
                     </div>
                 </div>
             `).join('');
