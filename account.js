@@ -212,7 +212,9 @@ const updateAuthState = async () => {
 
         const toggleElement = (id, visible) => {
             const el = document.getElementById(id);
-            if (el) el.style.display = visible ? 'block' : 'none';
+            if (el) {
+                el.style.display = visible ? 'block' : 'none';
+            }
         };
 
         toggleElement('btn-login-github', !isAuthed);
@@ -221,9 +223,15 @@ const updateAuthState = async () => {
         toggleElement('signOutBtn', isAuthed);
 
         if (isAuthed) {
-            document.getElementById('someElementToRemoveOrHide').style.display = 'none';
+            const hideElement = document.getElementById('someElementToRemoveOrHide');
+            if (hideElement) {
+                hideElement.style.display = 'none';
+            }
         } else {
-            document.getElementById('someElementToRemoveOrHide').style.display = 'block';
+            const showElement = document.getElementById('someElementToRemoveOrHide');
+            if (showElement) {
+                showElement.style.display = 'block';
+            }
         }
     } catch (error) {
         console.error("Auth state update failed:", error);
@@ -403,5 +411,6 @@ window.addEventListener('load', async () => {
         document.body.classList.add('unauthenticated');
     }
 });
+
 
 
