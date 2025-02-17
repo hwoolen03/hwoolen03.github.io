@@ -34,7 +34,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const query = window.location.search;
         if (query.includes("code=") && query.includes("state=")) {
             try {
-                await auth0Client.handleRedirectCallback();
+                const storedState = sessionStorage.getItem('auth_state');
+                console.log("Stored state:", storedState);
+                const { appState } = await auth0Client.handleRedirectCallback();
+                console.log("Received state:", appState?.state);
+                if (storedState !== appState?.state) {
+                    throw new Error('Invalid state');
+                }
                 console.log("✅ Redirect handled successfully.");
                 window.history.replaceState({}, document.title, window.location.origin);  // Remove the query params after redirect
                 await updateAuthUI();  // Ensure the UI updates after the redirect
@@ -48,33 +54,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Authentication Handlers
     const loginHandlers = {
         github: () => {
+            const state = generateRandomState();
+            sessionStorage.setItem('auth_state', state);
             auth0Client.loginWithRedirect({
                 connection: 'github',
                 scope: 'openid profile email',
                 response_type: 'code',
-                state: generateRandomState(),
+                state: state,
                 nonce: generateRandomNonce(),
                 code_challenge: generateCodeChallenge(),
                 code_challenge_method: 'S256',
             });
         },
         google: () => {
+            const state = generateRandomState();
+            sessionStorage.setItem('auth_state', state);
             auth0Client.loginWithRedirect({
                 connection: 'google-oauth2',
                 scope: 'openid profile email',
                 response_type: 'code',
-                state: generateRandomState(),
+                state: state,
                 nonce: generateRandomNonce(),
                 code_challenge: generateCodeChallenge(),
                 code_challenge_method: 'S256',
             });
         },
         figma: () => {
+            const state = generateRandomState();
+            sessionStorage.setItem('auth_state', state);
             auth0Client.loginWithRedirect({
                 connection: 'figma',
                 scope: 'openid profile email',
                 response_type: 'code',
-                state: generateRandomState(),
+                state: state,
                 nonce: generateRandomNonce(),
                 code_challenge: generateCodeChallenge(),
                 code_challenge_method: 'S256',
@@ -84,7 +96,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Helper functions for generating state, nonce, and code challenge
     const generateRandomState = () => {
-        return btoa(Math.random().toString(36).substring(2));  // Base64-encoded random string
+        const state = btoa(Math.random().toString(36).substring(2));  // Base64-encoded random string
+        console.log("Generated state:", state);
+        return state;
     };
 
     const generateRandomNonce = () => {
@@ -92,7 +106,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const generateCodeChallenge = () => {
-        // Generate code challenge using PKCE (Code Verifier)
         const codeVerifier = Math.random().toString(36).substring(2);
         return btoa(codeVerifier);  // Base64-encoded code verifier
     };
@@ -106,13 +119,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isAuthenticated = await auth0Client.isAuthenticated();
         console.log("🔄 Authentication status:", isAuthenticated);
 
-        // Update UI based on authentication status
         document.getElementById('btn-logout').style.display = isAuthenticated ? "block" : "none";
         document.querySelectorAll('.auth-buttons button:not(#btn-logout)').forEach(btn => {
             btn.style.display = isAuthenticated ? "none" : "block";
         });
 
-        // Log user details if authenticated
         if (isAuthenticated) {
             const user = await auth0Client.getUser();
             console.log("👤 Authenticated user:", user);
@@ -125,7 +136,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.body.classList.toggle('authenticated', isAuthed);
         document.body.classList.toggle('unauthenticated', !isAuthed);
         
-        // Force button visibility
         document.querySelectorAll('.auth-btn').forEach(btn => {
             btn.style.display = 'block';
             btn.style.visibility = 'visible';
@@ -136,7 +146,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const initializeApp = () => {
         console.log("🎯 Initializing event listeners...");
 
-        // Ensure buttons exist before adding event listeners
         const githubBtn = document.getElementById('btn-login-github');
         const googleBtn = document.getElementById('btn-login-google');
         const figmaBtn = document.getElementById('btn-login-figma');
@@ -147,13 +156,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // Add event listeners to buttons
         githubBtn.addEventListener('click', loginHandlers.github);
         googleBtn.addEventListener('click', loginHandlers.google);
         figmaBtn.addEventListener('click', loginHandlers.figma);
         logoutBtn.addEventListener('click', logoutHandler);
 
-        // Initial UI update
         updateAuthUI();
     };
 
@@ -165,7 +172,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("🚨 Application initialization failed:", error);
     }
 
-    // Call this after auth initialization
     window.addEventListener('load', async () => {
         try {
             await auth0Client.checkSession();
@@ -185,13 +191,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         redirect_uri: "https://hwoolen03.github.io/indexsignedin"
     });
 
-    // Handle redirect callback
     if (window.location.search.includes("code=")) {
         await auth0Client.handleRedirectCallback();
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // Update UI based on auth state
     const updateUI = async () => {
         const isAuthenticated = await auth0Client.isAuthenticated();
         
@@ -208,7 +212,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Event listeners
     document.getElementById('btn-login-github').addEventListener('click', () => 
         auth0Client.loginWithRedirect({ connection: 'github' }));
     document.getElementById('btn-login-google').addEventListener('click', () => 
@@ -218,6 +221,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-logout').addEventListener('click', () => 
         auth0Client.logout({ returnTo: window.location.origin }));
 
-    // Initial UI update
     await updateUI();
 });
