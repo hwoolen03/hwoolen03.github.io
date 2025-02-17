@@ -240,31 +240,33 @@ const generateRandomState = () => {
 const handleAuth0Redirect = async () => {
     try {
         const query = window.location.search;
-        const shouldRedirect = query.includes('code=') || query.includes('error=');
-
-        if (shouldRedirect) {
-            const { state: returnedState } = await auth0Client.handleRedirectCallback();
+        if (query.includes('code=') || query.includes('error=')) {
+            // Store current URL state before handling redirect
+            const currentState = new URLSearchParams(window.location.search).get('state');
+            console.log('Current state from URL:', currentState);
+            
+            // Get stored state from session storage
             const storedState = sessionStorage.getItem('auth_state');
+            console.log('Stored state:', storedState);
 
-            console.log('State comparison:', {
-                stored: storedState,
-                received: returnedState,
-                match: storedState === returnedState
-            });
-
-            if (!storedState || storedState !== returnedState) {
-                console.error('State mismatch detected');
-                await auth0Client.logout();
-                sessionStorage.removeItem('auth_state');
-                return window.location.replace(window.location.origin);
+            if (!storedState || storedState !== currentState) {
+                console.error('State validation failed');
+                throw new Error('Invalid state - Authentication attempt may have been compromised');
             }
 
+            // Handle the redirect callback
+            await auth0Client.handleRedirectCallback();
+            
+            // Clear state and redirect params after successful validation
             sessionStorage.removeItem('auth_state');
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     } catch (error) {
         console.error("Redirect error:", error);
+        sessionStorage.removeItem('auth_state');
         showError('Authentication failed. Please try again.', true);
+        // Redirect to home page after error
+        window.location.replace(window.location.origin);
     }
 };
 
@@ -319,15 +321,24 @@ const setupEventListeners = () => {
         const btn = document.getElementById(id);
         if (btn) {
             btn.addEventListener('click', async () => {
-                const state = generateRandomState();
-                sessionStorage.setItem('auth_state', state);
-                await auth0Client.loginWithRedirect({
-                    connection,
-                    authorizationParams: {
-                        state: state,
-                        redirect_uri: window.location.origin
-                    }
-                });
+                try {
+                    const state = generateRandomState();
+                    // Store state before redirect
+                    sessionStorage.setItem('auth_state', state);
+                    console.log('Storing state before redirect:', state);
+                    
+                    await auth0Client.loginWithRedirect({
+                        connection,
+                        authorizationParams: {
+                            state: state,
+                            redirect_uri: `${window.location.origin}/indexsignedin.html` // Ensure this matches Auth0 settings
+                        }
+                    });
+                } catch (error) {
+                    console.error('Login redirect failed:', error);
+                    sessionStorage.removeItem('auth_state');
+                    showError('Login failed. Please try again.');
+                }
             });
         }
     };
@@ -382,3 +393,4 @@ window.addEventListener('load', async () => {
         document.body.classList.add('unauthenticated');
     }
 });
+
