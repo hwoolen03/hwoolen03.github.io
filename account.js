@@ -235,17 +235,15 @@ const updateAuthState = async () => {
 };
 
 // Handle Auth0 redirect callback
-const generateState = () => {
-    const array = new Uint32Array(28);
-    window.crypto.getRandomValues(array);
-    return Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
+const generateRandomState = () => {
+    return btoa(Math.random().toString(36).substring(2));  // Base64-encoded random string
 };
 
 const handleAuth0Redirect = async () => {
     try {
         const query = window.location.search;
         const shouldRedirect = query.includes('code=') || query.includes('error=');
-        
+
         if (shouldRedirect) {
             const { appState } = await auth0Client.handleRedirectCallback();
             const storedState = sessionStorage.getItem('auth_state');
@@ -279,7 +277,7 @@ const initializeApp = async () => {
         await handlePotentialRedirect();
         await updateAuthState();
         setupEventListeners();
-        
+
         // Clear residual state
         if (!window.location.search) {
             sessionStorage.removeItem('auth_state');
@@ -295,7 +293,7 @@ const validateSession = async () => {
     try {
         const token = await auth0Client.getTokenSilently();
         const payload = JSON.parse(atob(token.split('.')[1]));
-        
+
         if (Math.floor(Date.now() / 1000) - payload.auth_time > 3600) {
             await auth0Client.logout();
             window.location.reload();
@@ -307,13 +305,13 @@ const validateSession = async () => {
 
 const handlePotentialRedirect = async () => {
     const urlParams = new URLSearchParams(window.location.search);
-    
+
     if (urlParams.has('error')) {
         const errorDesc = urlParams.get('error_description');
         showError(`Authentication failed: ${errorDesc || 'Unknown error'}`, true);
         window.history.replaceState({}, document.title, window.location.pathname);
     }
-    
+
     if (urlParams.has('code')) {
         await handleAuth0Redirect();
     }
@@ -324,7 +322,7 @@ const setupEventListeners = () => {
         const btn = document.getElementById(id);
         if (btn) {
             btn.addEventListener('click', async () => {
-                const state = generateState();
+                const state = generateRandomState();
                 sessionStorage.setItem('auth_state', state);
                 await auth0Client.loginWithRedirect({
                     connection,
