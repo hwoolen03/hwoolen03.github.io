@@ -1,6 +1,6 @@
 // API Headers
 const API_HEADERS = {
-    'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3',
+    'x-rapidapi-key': '223e1d4481mshc763834ea442154p1feb5cjsnf57de44ce22c',
     'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
 };
 
@@ -127,6 +127,13 @@ const TravelPlanner = {
 // API Functions
 const searchRoundtripFlights = async (fromIATA, toIATA, date) => { /* implementation */ };
 const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate) => { /* implementation */ };
+const fetchHotelPhotos = async () => {
+    const response = await fetch(
+        'https://booking-com15.p.rapidapi.com/api/v1/hotels/getHotelPhotos?hotel_id=5955189',
+        { headers: API_HEADERS }
+    );
+    return response.json();
+};
 
 // UI Handlers
 const showLoading = (show = true) => {
@@ -192,7 +199,8 @@ const personalizeContent = async (user) => {
         recommendations.map(rec =>
             Promise.all([
                 searchRoundtripFlights(inputs.departureLocation, rec.iata, inputs.checkInDate),
-                fetchHotelData(rec.iata, inputs.budget, inputs.checkInDate, inputs.checkOutDate)
+                fetchHotelData(rec.iata, inputs.budget, inputs.checkInDate, inputs.checkOutDate),
+                fetchHotelPhotos()
             ])
         )
     );
@@ -200,7 +208,8 @@ const personalizeContent = async (user) => {
     return recommendations.map((rec, index) => ({
         ...rec,
         flights: apiResults[index].value[0],
-        hotels: apiResults[index].value[1]
+        hotels: apiResults[index].value[1],
+        photos: apiResults[index].value[2]
     }));
 };
 
@@ -381,6 +390,7 @@ const setupEventListeners = () => {
                     <div class="api-results">
                         ${result.flights?.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
                         ${result.hotels?.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
+                        ${result.photos?.data ? `<pre>${JSON.stringify(result.photos.data.slice(0, 2), null, 2)}</pre>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -410,6 +420,5 @@ window.addEventListener('load', async () => {
         document.body.classList.add('unauthenticated');
     }
 });
-
 
 
