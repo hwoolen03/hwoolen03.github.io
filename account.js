@@ -10,6 +10,7 @@ let user;
 
 const configureClient = async () => {
     try {
+        console.log("Configuring Auth0 client...");
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
@@ -32,6 +33,7 @@ const configureClient = async () => {
 
 const signOut = async () => {
     try {
+        console.log("Signing out...");
         if (auth0Client) {
             await auth0Client.logout({ returnTo: window.location.origin });
         }
@@ -208,6 +210,7 @@ const personalizeContent = async (user) => {
 // Auth State Management
 const updateAuthState = async () => {
     try {
+        console.log("Updating auth state...");
         const isAuthed = await auth0Client.isAuthenticated();
         if (isAuthed) await validateSession();
 
@@ -222,13 +225,10 @@ const updateAuthState = async () => {
         toggleElement('signOutBtn', isAuthed);
 
         if (isAuthed) {
-            // Remove or hide elements or actions specific to signed-in users
             document.getElementById('someElementToRemoveOrHide').style.display = 'none';
         } else {
-            // Show elements or actions for non-signed-in users
             document.getElementById('someElementToRemoveOrHide').style.display = 'block';
         }
-
     } catch (error) {
         console.error("Auth state update failed:", error);
     }
@@ -236,11 +236,14 @@ const updateAuthState = async () => {
 
 // Handle Auth0 redirect callback
 const generateRandomState = () => {
-    return btoa(Math.random().toString(36).substring(2));  // Base64-encoded random string
+    const state = btoa(Math.random().toString(36).substring(2));
+    console.log("Generated state:", state);
+    return state;
 };
 
 const handleAuth0Redirect = async () => {
     try {
+        console.log("Handling Auth0 redirect...");
         const query = window.location.search;
         const shouldRedirect = query.includes('code=') || query.includes('error=');
 
@@ -273,12 +276,12 @@ const handleAuth0Redirect = async () => {
 // Main Initialization
 const initializeApp = async () => {
     try {
+        console.log("Initializing app...");
         await configureClient();
         await handlePotentialRedirect();
         await updateAuthState();
         setupEventListeners();
 
-        // Clear residual state
         if (!window.location.search) {
             sessionStorage.removeItem('auth_state');
         }
@@ -291,6 +294,7 @@ const initializeApp = async () => {
 // Add session validation check
 const validateSession = async () => {
     try {
+        console.log("Validating session...");
         const token = await auth0Client.getTokenSilently();
         const payload = JSON.parse(atob(token.split('.')[1]));
 
@@ -324,6 +328,7 @@ const setupEventListeners = () => {
             btn.addEventListener('click', async () => {
                 const state = generateRandomState();
                 sessionStorage.setItem('auth_state', state);
+                console.log("Login with state:", state);
                 await auth0Client.loginWithRedirect({
                     connection,
                     authorizationParams: {
@@ -368,9 +373,8 @@ const setupEventListeners = () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initial setup
+    console.log("DOMContentLoaded event fired");
     initializeApp().then(() => {
-        // Handle edge case for redirected tabs
         if (window.performance?.navigation?.type === 2) {
             sessionStorage.removeItem('auth_state');
             window.location.reload();
@@ -378,9 +382,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Call this after auth initialization
 window.addEventListener('load', async () => {
     try {
+        console.log("Window load event fired");
         await auth0Client.checkSession();
         await updateAuthState();
     } catch (error) {
