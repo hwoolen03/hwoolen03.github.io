@@ -13,7 +13,7 @@ const configureClient = async () => {
         auth0Client = await createAuth0Client({
             domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
             client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-            redirect_uri: "https://hwoolen03.github.io/indexsignedin", // Match script.js
+            redirect_uri: window.location.origin, // Changed to use origin instead of specific page
             advancedOptions: {
                 defaultScope: 'openid profile email',
                 audience: 'https://travel-planner-api',
@@ -309,10 +309,20 @@ const handlePotentialRedirect = async () => {
         const errorDesc = urlParams.get('error_description');
         showError(`Authentication failed: ${errorDesc || 'Unknown error'}`, true);
         window.history.replaceState({}, document.title, window.location.pathname);
+        return;
     }
 
     if (urlParams.has('code')) {
-        await handleAuth0Redirect();
+        try {
+            await handleAuth0Redirect();
+            // After successful authentication, update UI
+            await updateAuthState();
+            // Optionally redirect to a specific page
+            // window.location.href = `${window.location.origin}/dashboard.html`;
+        } catch (error) {
+            console.error('Redirect handling failed:', error);
+            showError('Authentication failed. Please try again.');
+        }
     }
 };
 
@@ -331,7 +341,7 @@ const setupEventListeners = () => {
                         connection,
                         authorizationParams: {
                             state: state,
-                            redirect_uri: `${window.location.origin}/indexsignedin.html` // Ensure this matches Auth0 settings
+                            redirect_uri: window.location.origin // Match the configuration
                         }
                     });
                 } catch (error) {
@@ -393,4 +403,5 @@ window.addEventListener('load', async () => {
         document.body.classList.add('unauthenticated');
     }
 });
+
 
