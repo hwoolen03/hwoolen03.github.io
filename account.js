@@ -567,6 +567,7 @@ const setupEventListeners = () => {
     document.getElementById('findMyHolidayButton')?.addEventListener('click', async () => {
         try {
             showLoading();
+            triggerFireworks(); // Trigger fireworks animation
             const results = await personalizeContent(user);
 
             document.getElementById('results').innerHTML = results.map(result => `
@@ -593,6 +594,24 @@ const setupEventListeners = () => {
     });
 };
 
+const triggerFireworks = () => {
+    const container = document.getElementById('fireworkContainer');
+    if (!container) return;
+
+    for (let i = 0; i < 20; i++) {
+        const firework = document.createElement('div');
+        firework.className = 'firework';
+        firework.style.left = `${Math.random() * 100}%`;
+        firework.style.top = `${Math.random() * 100}%`;
+        firework.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        container.appendChild(firework);
+
+        setTimeout(() => {
+            firework.remove();
+        }, 1000);
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp().then(() => {
         if (window.performance?.navigation?.type === 2) {
@@ -611,5 +630,6 @@ window.addEventListener('load', async () => {
         document.body.classList.add('unauthenticated');
     }
 });
+
 
 
