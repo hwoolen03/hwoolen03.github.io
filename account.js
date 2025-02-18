@@ -304,12 +304,19 @@ const personalizeContent = async (user) => {
         )
     );
 
-    return recommendations.map((rec, index) => ({
-        ...rec,
-        flights: apiResults[index].value[0],
-        hotels: apiResults[index].value[1],
-        photos: apiResults[index].value[2]
-    }));
+    return recommendations.map((rec, index) => {
+        if (apiResults[index].status !== 'fulfilled' || !Array.isArray(apiResults[index].value)) {
+            // Handle rejected or unexpected results
+            return { ...rec, flights: null, hotels: null, photos: null };
+        }
+        const [flightData, hotelData, photoData] = apiResults[index].value;
+        return {
+            ...rec,
+            flights: flightData,
+            hotels: hotelData,
+            photos: photoData
+        };
+    });
 };
 
 // Auth State Management
@@ -519,4 +526,5 @@ window.addEventListener('load', async () => {
         document.body.classList.add('unauthenticated');
     }
 });
+
 
