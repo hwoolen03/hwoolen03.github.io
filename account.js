@@ -125,14 +125,107 @@ const TravelPlanner = {
 };
 
 // API Functions
-const searchRoundtripFlights = async (fromIATA, toIATA, date) => { /* implementation */ };
-const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate) => { /* implementation */ };
-const fetchHotelPhotos = async () => {
-    const response = await fetch(
-        'https://booking-com15.p.rapidapi.com/api/v1/hotels/getHotelPhotos?hotel_id=5955189',
-        { headers: API_HEADERS }
-    );
-    return response.json();
+const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
+    const data = null;
+    const xhr = new XMLHttpRequest();
+    xhr.withCredentials = true;
+
+    xhr.addEventListener('readystatechange', function () {
+        if (this.readyState === this.DONE) {
+            console.log(this.responseText);
+        }
+    });
+
+    xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/flights/searchDestination?query=${toIATA}`);
+    xhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
+    xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
+    xhr.send(data);
+};
+
+const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate) => {
+    return new Promise((resolve, reject) => {
+        const cityQuery = destinationIATA.replace(/^\w{2}/, '') || 'man'; // fallback if needed
+        const destXhr = new XMLHttpRequest();
+        destXhr.withCredentials = true;
+
+        destXhr.addEventListener('readystatechange', function () {
+            if (this.readyState === this.DONE) {
+                try {
+                    const destData = JSON.parse(this.responseText);
+                    const destId = destData?.data?.[0]?.dest_id;
+                    
+                    if (!destId) return reject('No destination ID found');
+
+                    const hotelsXhr = new XMLHttpRequest();
+                    hotelsXhr.withCredentials = true;
+                    hotelsXhr.addEventListener('readystatechange', function () {
+                        if (this.readyState === this.DONE) {
+                            try {
+                                const hotelsData = JSON.parse(this.responseText);
+                                const firstHotel = hotelsData?.data?.[0];
+                                if (!firstHotel?.hotel_id) return reject('No hotel found');
+
+                                const availabilityXhr = new XMLHttpRequest();
+                                availabilityXhr.withCredentials = true;
+                                availabilityXhr.addEventListener('readystatechange', function () {
+                                    if (this.readyState === this.DONE) {
+                                        try {
+                                            const availabilityData = JSON.parse(this.responseText);
+                                            resolve(availabilityData);
+                                        } catch (err) {
+                                            reject(err);
+                                        }
+                                    }
+                                });
+                                availabilityXhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/getAvailability?hotel_id=${firstHotel.hotel_id}&currency_code=USD`);
+                                availabilityXhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
+                                availabilityXhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
+                                availabilityXhr.send(null);
+                            } catch (err) {
+                                reject(err);
+                            }
+                        }
+                    });
+                    hotelsXhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?dest_id=${destId}&search_type=CITY&adults=1&children_age=0%2C17&room_qty=1&page_number=1&units=metric&temperature_unit=c&languagecode=en-us&currency_code=AED`);
+                    hotelsXhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
+                    hotelsXhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
+                    hotelsXhr.send(null);
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        });
+        destXhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${cityQuery}`);
+        destXhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
+        destXhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
+        destXhr.send(null);
+    });
+};
+
+const fetchHotelPhotos = (hotelId) => {
+    return new Promise((resolve, reject) => {
+        const data = null;
+        const xhr = new XMLHttpRequest();
+        xhr.withCredentials = true;
+        xhr.responseType = 'blob';
+
+        xhr.addEventListener('readystatechange', function () {
+            if (this.readyState === this.DONE) {
+                try {
+                    const blob = this.response;
+                    const imageUrl = URL.createObjectURL(blob);
+                    resolve(imageUrl);
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        });
+
+        xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/getHotelPhotos?hotel_id=${hotelId}`);
+        xhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
+        xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
+        xhr.send(data);
+    });
 };
 
 // UI Handlers
@@ -390,7 +483,7 @@ const setupEventListeners = () => {
                     <div class="api-results">
                         ${result.flights?.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
                         ${result.hotels?.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
-                        ${result.photos?.data ? result.photos.data.slice(0, 2).map(photo => `<img src="${photo.url}" alt="Hotel Photo"/>`).join('') : ''}
+                        ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo"/>` : ''}
                     </div>
                 </div>
             `).join('');
