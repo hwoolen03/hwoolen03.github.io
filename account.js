@@ -273,6 +273,10 @@ const fetchHotelPrice = (hotelId, checkInDate, checkOutDate) => {
         xhr.addEventListener('readystatechange', function () {
             if (this.readyState === this.DONE) {
                 try {
+                    if (this.status === 404) {
+                        console.error(`Hotel price not found for hotel ID: ${hotelId}`);
+                        return reject(new Error('Hotel price not found'));
+                    }
                     const priceData = JSON.parse(this.responseText);
                     resolve(priceData);
                 } catch (err) {
