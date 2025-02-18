@@ -160,6 +160,10 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
 
     xhr.addEventListener('readystatechange', function () {
         if (this.readyState === this.DONE) {
+            if (this.status === 404) {
+                console.error(`Flight data not found for route: ${fromIATA} to ${toIATA}`);
+                return;
+            }
             console.log(this.responseText);
         }
     });
@@ -178,6 +182,10 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
 
         destXhr.addEventListener('readystatechange', function () {
             if (this.readyState === this.DONE) {
+                if (this.status === 404) {
+                    console.error(`Destination data not found for: ${cityQuery}`);
+                    return reject(new Error('No destination data found'));
+                }
                 try {
                     const destData = JSON.parse(this.responseText);
                     if (!destData || !Array.isArray(destData.data) || destData.data.length === 0) {
@@ -190,6 +198,10 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
                     hotelsXhr.withCredentials = true;
                     hotelsXhr.addEventListener('readystatechange', function () {
                         if (this.readyState === this.DONE) {
+                            if (this.status === 404) {
+                                console.error(`Hotels data not found for destination ID: ${destId}`);
+                                return reject(new Error('No hotels data found'));
+                            }
                             try {
                                 const hotelsData = JSON.parse(this.responseText);
                                 if (!hotelsData || !Array.isArray(hotelsData.data) || hotelsData.data.length === 0) {
@@ -203,6 +215,10 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
                                 availabilityXhr.withCredentials = true;
                                 availabilityXhr.addEventListener('readystatechange', function () {
                                     if (this.readyState === this.DONE) {
+                                        if (this.status === 404) {
+                                            console.error(`Availability data not found for hotel ID: ${firstHotel.hotel_id}`);
+                                            return reject(new Error('No availability data found'));
+                                        }
                                         try {
                                             const availabilityData = JSON.parse(this.responseText);
                                             resolve(availabilityData);
@@ -246,6 +262,10 @@ const fetchHotelPhotos = (hotelId) => {
 
         xhr.addEventListener('readystatechange', function () {
             if (this.readyState === this.DONE) {
+                if (this.status === 404) {
+                    console.error(`Photos not found for hotel ID: ${hotelId}`);
+                    return reject(new Error('Photos not found'));
+                }
                 try {
                     const blob = this.response;
                     const imageUrl = URL.createObjectURL(blob);
@@ -272,11 +292,11 @@ const fetchHotelPrice = (hotelId, checkInDate, checkOutDate) => {
 
         xhr.addEventListener('readystatechange', function () {
             if (this.readyState === this.DONE) {
+                if (this.status === 404) {
+                    console.error(`Hotel price not found for hotel ID: ${hotelId}`);
+                    return reject(new Error('Hotel price not found'));
+                }
                 try {
-                    if (this.status === 404) {
-                        console.error(`Hotel price not found for hotel ID: ${hotelId}`);
-                        return reject(new Error('Hotel price not found'));
-                    }
                     const priceData = JSON.parse(this.responseText);
                     resolve(priceData);
                 } catch (err) {
