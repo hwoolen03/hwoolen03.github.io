@@ -213,7 +213,7 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
                             }
                         }
                     });
-                    hotelsXhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?dest_id=${destId}&search_type=CITY&adults=1&children_age=0%2C17&room_qty=1&page_number=1&units=metric&temperature_unit=c&languagecode=en-us&currency_code=AED`);
+                    hotelsXhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/search?dest_id=${destId}&checkin=${checkInDate}&checkout=${checkOutDate}&currency_code=USD`);
                     hotelsXhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
                     hotelsXhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
                     hotelsXhr.send();
