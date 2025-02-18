@@ -114,22 +114,42 @@ const TravelPlanner = {
         };
     },
 
-    findDestinations(budget, checkInDate, checkOutDate, maxResults = 5) {
+    findDestinations(budget, checkInDate, checkOutDate, departureLocation, maxResults = 5) {
         const nights = this.calculateNights(checkInDate, checkOutDate);
         return this.destinations
-            .map(dest => ({
-                ...dest,
-                cost: this.calculateTripCost(dest, checkInDate, nights)
-            }))
-            .filter(dest => {
-                const budgetRange = dest.multiplier > 1
-                    ? [budget * 0.6, budget * 1.4]
-                    : [budget * 0.7, budget * 1.3];
-                return dest.cost.total >= budgetRange[0] && dest.cost.total <= budgetRange[1];
+            .map(dest => {
+                const distance = calculateDistance(departureLocation, dest.iata);
+                const estimatedFlightCost = estimateFlightCost(distance);
+                const totalCost = estimatedFlightCost + (dest.avgHotelPrice * nights * dest.multiplier);
+                return {
+                    ...dest,
+                    cost: {
+                        flight: Math.round(estimatedFlightCost),
+                        hotel: Math.round(dest.avgHotelPrice * nights * dest.multiplier),
+                        total: Math.round(totalCost)
+                    }
+                };
             })
+            .filter(dest => dest.cost.total <= budget)
             .sort((a, b) => a.cost.total - b.cost.total)
             .slice(0, maxResults);
     }
+};
+
+const calculateDistance = (fromIATA, toIATA) => {
+    // Placeholder function to calculate distance between two IATA codes
+    // In a real-world scenario, you would use an API or a database to get the actual distance
+    const distances = {
+        'LON': { 'NYC': 5567, 'PAR': 344, 'BER': 930, 'MAD': 1264, 'ROM': 1434 },
+        // Add more distances as needed
+    };
+    return distances[fromIATA]?.[toIATA] || 0;
+};
+
+const estimateFlightCost = (distance) => {
+    // Simple estimation based on distance
+    const costPerKm = 0.1; // Example cost per kilometer
+    return distance * costPerKm;
 };
 
 // API Functions
@@ -144,7 +164,7 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
         }
     });
 
-    xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/flights/searchDestination?query=${toIATA}`);
+    xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/flights/getMinPrice?fromId=${fromIATA}.AIRPORT&toId=${toIATA}.AIRPORT&cabinClass=ECONOMY&currency_code=AED`);
     xhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
     xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
     xhr.send(data);
@@ -245,6 +265,29 @@ const fetchHotelPhotos = (hotelId) => {
     });
 };
 
+const fetchHotelPrice = (hotelId, checkInDate, checkOutDate) => {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.withCredentials = true;
+
+        xhr.addEventListener('readystatechange', function () {
+            if (this.readyState === this.DONE) {
+                try {
+                    const priceData = JSON.parse(this.responseText);
+                    resolve(priceData);
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        });
+
+        xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/getHotelPrice?hotel_id=${hotelId}&checkin_date=${checkInDate}&checkout_date=${checkOutDate}&currency_code=USD`);
+        xhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
+        xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
+        xhr.send(null);
+    });
+};
+
 // UI Handlers
 const showLoading = (show = true) => {
     const loadingIndicator = document.querySelector('.loading-indicator');
@@ -301,7 +344,8 @@ const personalizeContent = async (user) => {
     const recommendations = TravelPlanner.findDestinations(
         inputs.budget,
         inputs.checkInDate,
-        inputs.checkOutDate
+        inputs.checkOutDate,
+        inputs.departureLocation
     );
 
     if (recommendations.length === 0) {
@@ -313,7 +357,8 @@ const personalizeContent = async (user) => {
             Promise.all([
                 searchRoundtripFlights(inputs.departureLocation, rec.iata, inputs.checkInDate),
                 fetchHotelData(rec.iata, inputs.budget, inputs.checkInDate, inputs.checkOutDate),
-                fetchHotelPhotos(rec.iata) // Ensure hotelId is passed correctly
+                fetchHotelPhotos(rec.iata), // Ensure hotelId is passed correctly
+                fetchHotelPrice(rec.iata, inputs.checkInDate, inputs.checkOutDate) // Fetch hotel price
             ])
         )
     );
@@ -321,14 +366,15 @@ const personalizeContent = async (user) => {
     const results = recommendations.map((rec, index) => {
         if (apiResults[index].status !== 'fulfilled' || !Array.isArray(apiResults[index].value)) {
             // Handle rejected or unexpected results
-            return { ...rec, flights: null, hotels: null, photos: null };
+            return { ...rec, flights: null, hotels: null, photos: null, price: null };
         }
-        const [flightData, hotelData, photoData] = apiResults[index].value;
+        const [flightData, hotelData, photoData, priceData] = apiResults[index].value;
         return {
             ...rec,
             flights: flightData,
             hotels: hotelData,
-            photos: photoData
+            photos: photoData, // Ensure photoData is assigned correctly
+            price: priceData // Add price data to the result
         };
     });
 
@@ -343,7 +389,8 @@ const personalizeContent = async (user) => {
             <div class="api-results">
                 ${result.flights?.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
                 ${result.hotels?.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
-                ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo"/>` : ''}
+                ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo"/>` : ''} <!-- Ensure photo URL is displayed -->
+                ${result.price ? `<pre>${JSON.stringify(result.price, null, 2)}</pre>` : ''} <!-- Display hotel price -->
             </div>
         </div>
     `).join('');
@@ -527,6 +574,7 @@ const setupEventListeners = () => {
                         ${result.flights?.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
                         ${result.hotels?.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
                         ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo"/>` : ''}
+                        ${result.price ? `<pre>${JSON.stringify(result.price, null, 2)}</pre>` : ''} <!-- Display hotel price -->
                     </div>
                 </div>
             `).join('');
