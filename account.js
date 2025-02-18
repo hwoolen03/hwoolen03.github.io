@@ -50,12 +50,20 @@ const DESTINATION_GENERATOR = {
     },
 
     generateDestinations(perRegion = 25) {
+        const cityNames = {
+            northAmerica: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'],
+            europe: ['London', 'Paris', 'Berlin', 'Madrid', 'Rome', 'Vienna', 'Amsterdam', 'Prague', 'Brussels', 'Budapest'],
+            asia: ['Tokyo', 'Seoul', 'Shanghai', 'Beijing', 'Bangkok', 'Mumbai', 'Jakarta', 'Manila', 'Kuala Lumpur', 'Singapore'],
+            oceania: ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Auckland', 'Adelaide', 'Gold Coast', 'Canberra', 'Wellington', 'Christchurch']
+        };
+
         const destinations = [];
         Object.entries(this.regions).forEach(([regionKey, config]) => {
-            for (let i = 1; i <= perRegion; i++) {
+            const cities = cityNames[regionKey];
+            for (let i = 0; i < perRegion && i < cities.length; i++) {
                 destinations.push({
-                    iata: `${config.codePrefix}${i.toString().padStart(2, '0')}`,
-                    city: `${config.name} City ${i}`,
+                    iata: `${config.codePrefix}${(i + 1).toString().padStart(2, '0')}`,
+                    city: cities[i],
                     region: regionKey,
                     avgFlightPrice: this.calculateSeasonalPrices(config.flightBase),
                     avgHotelPrice: Math.round(config.hotelBase * (0.8 + Math.random() * 0.4)),
