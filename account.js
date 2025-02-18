@@ -310,7 +310,7 @@ const personalizeContent = async (user) => {
         )
     );
 
-    return recommendations.map((rec, index) => {
+    const results = recommendations.map((rec, index) => {
         if (apiResults[index].status !== 'fulfilled' || !Array.isArray(apiResults[index].value)) {
             // Handle rejected or unexpected results
             return { ...rec, flights: null, hotels: null, photos: null };
@@ -323,6 +323,22 @@ const personalizeContent = async (user) => {
             photos: photoData
         };
     });
+
+    document.getElementById('results').innerHTML = results.map(result => `
+        <div class="destination-card">
+            <h3>${result.city}</h3>
+            <p>Estimated Total: $${result.cost.total}</p>
+            <div class="price-breakdown">
+                <span>✈️ $${result.cost.flight}</span>
+                <span>🏨 $${result.cost.hotel}</span>
+            </div>
+            <div class="api-results">
+                ${result.flights?.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
+                ${result.hotels?.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
+                ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo"/>` : ''}
+            </div>
+        </div>
+    `).join('');
 };
 
 // Auth State Management
@@ -532,3 +548,4 @@ window.addEventListener('load', async () => {
         document.body.classList.add('unauthenticated');
     }
 });
+
