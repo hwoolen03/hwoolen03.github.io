@@ -154,7 +154,6 @@ const estimateFlightCost = (distance) => {
 
 // API Functions
 const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
-    const data = null;
     const xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
 
@@ -171,7 +170,7 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
     xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/flights/getMinPrice?fromId=${fromIATA}.AIRPORT&toId=${toIATA}.AIRPORT&cabinClass=ECONOMY&currency_code=AED`);
     xhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
     xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
-    xhr.send(data);
+    xhr.send();
 };
 
 const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate) => {
@@ -223,7 +222,7 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
                     hotelsXhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?dest_id=${destId}&search_type=CITY&adults=1&children_age=0%2C17&room_qty=1&page_number=1&units=metric&temperature_unit=c&languagecode=en-us&currency_code=AED`);
                     hotelsXhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
                     hotelsXhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
-                    hotelsXhr.send(null);
+                    hotelsXhr.send();
                 } catch (err) {
                     reject(err);
                 }
@@ -232,14 +231,13 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
         destXhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${cityQuery}`);
         destXhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
         destXhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
-        destXhr.send(null);
+        destXhr.send();
     });
 };
 
 const fetchHotelPhotos = (hotelId) => {
     return new Promise((resolve, reject) => {
         console.log(`Fetching photos for hotel ID: ${hotelId}`); // Add logging
-        const data = null;
         const xhr = new XMLHttpRequest();
         xhr.withCredentials = true;
         xhr.responseType = 'blob';
@@ -265,7 +263,7 @@ const fetchHotelPhotos = (hotelId) => {
         xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/getHotelPhotos?hotel_id=${hotelId}`);
         xhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
         xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
-        xhr.send(data);
+        xhr.send();
     });
 };
 
@@ -293,7 +291,7 @@ const fetchHotelPrice = (hotelId, checkInDate, checkOutDate) => {
         xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/getHotelPrice?hotel_id=${hotelId}&checkin_date=${checkInDate}&checkout_date=${checkOutDate}&currency_code=USD`);
         xhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
         xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
-        xhr.send(null);
+        xhr.send();
     });
 };
 
