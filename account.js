@@ -289,6 +289,54 @@ const fetchHotelPrice = (hotelId, checkInDate, checkOutDate) => {
     });
 };
 
+// Function to verify hotel IDs
+const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.withCredentials = true;
+
+        xhr.addEventListener('readystatechange', function () {
+            if (this.readyState === this.DONE) {
+                if (this.status === 404) {
+                    console.error(`Hotel search data not found for location: ${location}`);
+                    return reject(new Error('No hotel search data found'));
+                }
+                try {
+                    const hotelData = JSON.parse(this.responseText);
+                    if (!hotelData || !Array.isArray(hotelData) || hotelData.length === 0) {
+                        return reject('No hotel search data found');
+                    }
+                    resolve(hotelData);
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        });
+
+        xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/search?location=${location}&checkin=${checkInDate}&checkout=${checkOutDate}`);
+        xhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
+        xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
+        xhr.send();
+    });
+};
+
+// Function to validate date inputs
+const validateDates = (checkInDate, checkOutDate) => {
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+    const today = new Date();
+
+    if (isNaN(checkIn) || isNaN(checkOut)) {
+        throw new Error('Invalid date format. Please use YYYY-MM-DD.');
+    }
+    if (checkIn < today) {
+        throw new Error('Check-in date cannot be in the past.');
+    }
+    if (checkOut <= checkIn) {
+        throw new Error('Check-out date must be after check-in date.');
+    }
+};
+
 // UI Handlers
 const showLoading = (show = true) => {
     const loadingIndicator = document.querySelector('.loading-indicator');
@@ -331,16 +379,7 @@ const personalizeContent = async (user) => {
         budget: parseInt(document.getElementById('budget').value)
     };
 
-    const today = new Date().setHours(0, 0, 0, 0);
-    const checkIn = new Date(inputs.checkInDate).setHours(0, 0, 0, 0);
-
-    if (checkIn < today) {
-        throw new Error('Check-in date cannot be in the past');
-    }
-    if (new Date(inputs.checkOutDate) < new Date(inputs.checkInDate)) {
-        throw new Error('Check-out date must be after check-in date');
-    }
-    if (inputs.budget < 300) throw new Error('Budget must be at least $300');
+    validateDates(inputs.checkInDate, inputs.checkOutDate);
 
     const recommendations = TravelPlanner.findDestinations(
         inputs.budget,
@@ -354,19 +393,20 @@ const personalizeContent = async (user) => {
     }
 
     const apiResults = await Promise.allSettled(
-        recommendations.map(rec =>
-            Promise.all([
+        recommendations.map(async rec => {
+            const hotelData = await verifyHotelIds(rec.city, inputs.checkInDate, inputs.checkOutDate);
+            const hotelId = hotelData[0]?.hotelId; // Use the first valid hotel ID
+            return Promise.all([
                 searchRoundtripFlights(inputs.departureLocation, rec.iata, inputs.checkInDate),
-                fetchHotelData(rec.iata, inputs.budget, inputs.checkInDate, inputs.checkOutDate),
-                fetchHotelPhotos(rec.iata), // Ensure hotelId is passed correctly
-                fetchHotelPrice(rec.iata, inputs.checkInDate, inputs.checkOutDate) // Fetch hotel price
-            ])
-        )
+                fetchHotelData(hotelId, inputs.budget, inputs.checkInDate, inputs.checkOutDate),
+                fetchHotelPhotos(hotelId),
+                fetchHotelPrice(hotelId, inputs.checkInDate, inputs.checkOutDate)
+            ]);
+        })
     );
 
     const results = recommendations.map((rec, index) => {
         if (apiResults[index].status !== 'fulfilled' || !Array.isArray(apiResults[index].value)) {
-            // Handle rejected or unexpected results
             return { ...rec, flights: null, hotels: null, photos: null, price: null };
         }
         const [flightData, hotelData, photoData, priceData] = apiResults[index].value;
@@ -374,8 +414,8 @@ const personalizeContent = async (user) => {
             ...rec,
             flights: flightData,
             hotels: hotelData,
-            photos: photoData, // Ensure photoData is assigned correctly
-            price: priceData // Add price data to the result
+            photos: photoData,
+            price: priceData
         };
     });
 
@@ -390,8 +430,8 @@ const personalizeContent = async (user) => {
             <div class="api-results">
                 ${result.flights?.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
                 ${result.hotels?.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
-                ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo"/>` : ''} <!-- Ensure photo URL is displayed -->
-                ${result.price ? `<pre>${JSON.stringify(result.price, null, 2)}</pre>` : ''} <!-- Display hotel price -->
+                ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo"/>` : ''}
+                ${result.price ? `<pre>${JSON.stringify(result.price, null, 2)}</pre>` : ''}
             </div>
         </div>
     `).join('');
