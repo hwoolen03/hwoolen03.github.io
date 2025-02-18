@@ -208,29 +208,13 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
                                     return reject('No hotels data found');
                                 }
 
-                                const firstHotel = hotelsData.data[0];
-                                if (!firstHotel.hotel_id) return reject('No hotel found');
+                                const hotels = hotelsData.data.map(hotel => ({
+                                    hotel_id: hotel.hotel_id,
+                                    name: hotel.name,
+                                    price: hotel.price
+                                }));
 
-                                const availabilityXhr = new XMLHttpRequest();
-                                availabilityXhr.withCredentials = true;
-                                availabilityXhr.addEventListener('readystatechange', function () {
-                                    if (this.readyState === this.DONE) {
-                                        if (this.status === 404) {
-                                            console.error(`Availability data not found for hotel ID: ${firstHotel.hotel_id}`);
-                                            return reject(new Error('No availability data found'));
-                                        }
-                                        try {
-                                            const availabilityData = JSON.parse(this.responseText);
-                                            resolve(availabilityData);
-                                        } catch (err) {
-                                            reject(err);
-                                        }
-                                    }
-                                });
-                                availabilityXhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/getAvailability?hotel_id=${firstHotel.hotel_id}&currency_code=USD`);
-                                availabilityXhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
-                                availabilityXhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
-                                availabilityXhr.send(null);
+                                resolve(hotels);
                             } catch (err) {
                                 reject(err);
                             }
@@ -629,4 +613,5 @@ window.addEventListener('load', async () => {
         document.body.classList.add('unauthenticated');
     }
 });
+
 
