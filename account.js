@@ -43,10 +43,10 @@ const signOut = async () => {
 // Client-Side Recommendation Engine
 const DESTINATION_GENERATOR = {
     regions: {
-        northAmerica: { flightBase: 300, hotelBase: 80, codePrefix: 'NA', multiplier: 1.0 },
-        europe: { flightBase: 400, hotelBase: 100, codePrefix: 'EU', multiplier: 1.1 },
-        asia: { flightBase: 500, hotelBase: 60, codePrefix: 'AS', multiplier: 0.95 },
-        oceania: { flightBase: 700, hotelBase: 120, codePrefix: 'OC', multiplier: 1.2 }
+        northAmerica: { flightBase: 300, hotelBase: 80, codePrefix: 'NA', multiplier: 1.0, name: 'North America' },
+        europe: { flightBase: 400, hotelBase: 100, codePrefix: 'EU', multiplier: 1.1, name: 'Europe' },
+        asia: { flightBase: 500, hotelBase: 60, codePrefix: 'AS', multiplier: 0.95, name: 'Asia' },
+        oceania: { flightBase: 700, hotelBase: 120, codePrefix: 'OC', multiplier: 1.2, name: 'Oceania' }
     },
 
     generateDestinations(perRegion = 25) {
@@ -55,7 +55,7 @@ const DESTINATION_GENERATOR = {
             for (let i = 1; i <= perRegion; i++) {
                 destinations.push({
                     iata: `${config.codePrefix}${i.toString().padStart(2, '0')}`,
-                    city: `${this.capitalize(regionKey)} City ${i}`,
+                    city: `${config.name} City ${i}`,
                     region: regionKey,
                     avgFlightPrice: this.calculateSeasonalPrices(config.flightBase),
                     avgHotelPrice: Math.round(config.hotelBase * (0.8 + Math.random() * 0.4)),
@@ -210,6 +210,7 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
 
 const fetchHotelPhotos = (hotelId) => {
     return new Promise((resolve, reject) => {
+        console.log(`Fetching photos for hotel ID: ${hotelId}`); // Add logging
         const data = null;
         const xhr = new XMLHttpRequest();
         xhr.withCredentials = true;
@@ -220,8 +221,10 @@ const fetchHotelPhotos = (hotelId) => {
                 try {
                     const blob = this.response;
                     const imageUrl = URL.createObjectURL(blob);
+                    console.log(`Fetched photo URL: ${imageUrl}`); // Add logging
                     resolve(imageUrl);
                 } catch (err) {
+                    console.error('Error processing hotel photo:', err); // Add logging
                     reject(err);
                 }
             }
@@ -236,7 +239,10 @@ const fetchHotelPhotos = (hotelId) => {
 
 // UI Handlers
 const showLoading = (show = true) => {
-    document.querySelector('.loading-indicator').hidden = !show;
+    const loadingIndicator = document.querySelector('.loading-indicator');
+    if (loadingIndicator) {
+        loadingIndicator.hidden = !show;
+    }
     document.getElementById('findMyHolidayButton').disabled = show;
 };
 
@@ -299,7 +305,7 @@ const personalizeContent = async (user) => {
             Promise.all([
                 searchRoundtripFlights(inputs.departureLocation, rec.iata, inputs.checkInDate),
                 fetchHotelData(rec.iata, inputs.budget, inputs.checkInDate, inputs.checkOutDate),
-                fetchHotelPhotos()
+                fetchHotelPhotos(rec.iata) // Ensure hotelId is passed correctly
             ])
         )
     );
@@ -526,5 +532,3 @@ window.addEventListener('load', async () => {
         document.body.classList.add('unauthenticated');
     }
 });
-
-
