@@ -152,18 +152,24 @@ const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate
             if (this.readyState === this.DONE) {
                 try {
                     const destData = JSON.parse(this.responseText);
-                    const destId = destData?.data?.[0]?.dest_id;
-                    
-                    if (!destId) return reject('No destination ID found');
+                    if (!destData || !Array.isArray(destData.data) || destData.data.length === 0) {
+                        return reject('No destination data found');
+                    }
 
+                    const destId = destData.data[0].dest_id;
+                    
                     const hotelsXhr = new XMLHttpRequest();
                     hotelsXhr.withCredentials = true;
                     hotelsXhr.addEventListener('readystatechange', function () {
                         if (this.readyState === this.DONE) {
                             try {
                                 const hotelsData = JSON.parse(this.responseText);
-                                const firstHotel = hotelsData?.data?.[0];
-                                if (!firstHotel?.hotel_id) return reject('No hotel found');
+                                if (!hotelsData || !Array.isArray(hotelsData.data) || hotelsData.data.length === 0) {
+                                    return reject('No hotels data found');
+                                }
+
+                                const firstHotel = hotelsData.data[0];
+                                if (!firstHotel.hotel_id) return reject('No hotel found');
 
                                 const availabilityXhr = new XMLHttpRequest();
                                 availabilityXhr.withCredentials = true;
@@ -513,5 +519,4 @@ window.addEventListener('load', async () => {
         document.body.classList.add('unauthenticated');
     }
 });
-
 
