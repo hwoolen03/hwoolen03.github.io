@@ -118,16 +118,10 @@ const TravelPlanner = {
         const nights = this.calculateNights(checkInDate, checkOutDate);
         return this.destinations
             .map(dest => {
-                const distance = calculateDistance(departureLocation, dest.iata);
-                const estimatedFlightCost = estimateFlightCost(distance);
-                const totalCost = estimatedFlightCost + (dest.avgHotelPrice * nights * dest.multiplier);
+                const tripCost = this.calculateTripCost(dest, checkInDate, nights);
                 return {
                     ...dest,
-                    cost: {
-                        flight: Math.round(estimatedFlightCost),
-                        hotel: Math.round(dest.avgHotelPrice * nights * dest.multiplier),
-                        total: Math.round(totalCost)
-                    }
+                    cost: tripCost
                 };
             })
             .filter(dest => dest.cost.total <= budget)
