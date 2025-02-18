@@ -280,6 +280,7 @@ const fetchHotelPrice = (hotelId, checkInDate, checkOutDate) => {
                     const priceData = JSON.parse(this.responseText);
                     resolve(priceData);
                 } catch (err) {
+                    console.error('Error fetching hotel price:', err); // Improved logging
                     reject(err);
                 }
             }
