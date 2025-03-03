@@ -4,6 +4,12 @@ const API_HEADERS = {
     'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
 };
 
+// Add this at the top with other constants
+const API_DELAY = 1000; // Delay between API calls in milliseconds
+
+// Add this utility function for rate limiting
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 // Auth0 Configuration
 let auth0Client;
 let user;
@@ -167,65 +173,50 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
     xhr.send();
 };
 
+// Replace the fetchHotelData function
 const fetchHotelData = async (destinationIATA, budget, checkInDate, checkOutDate) => {
-    return new Promise((resolve, reject) => {
-        const cityQuery = destinationIATA.replace(/^\w{2}/, '') || 'man'; // fallback if needed
-        const destXhr = new XMLHttpRequest();
-        destXhr.withCredentials = true;
+    return new Promise(async (resolve, reject) => {
+        try {
+            // First, search for destination ID
+            const searchUrl = `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${encodeURIComponent(destinationIATA)}`;
+            
+            const destResponse = await fetch(searchUrl, {
+                method: 'GET',
+                headers: API_HEADERS
+            });
 
-        destXhr.addEventListener('readystatechange', function () {
-            if (this.readyState === this.DONE) {
-                if (this.status === 404) {
-                    console.error(`Destination data not found for: ${cityQuery}`);
-                    return reject(new Error('No destination data found'));
-                }
-                try {
-                    const destData = JSON.parse(this.responseText);
-                    if (!destData || !Array.isArray(destData.data) || destData.data.length === 0) {
-                        return reject('No destination data found');
-                    }
-
-                    const destId = destData.data[0].dest_id;
-                    
-                    const hotelsXhr = new XMLHttpRequest();
-                    hotelsXhr.withCredentials = true;
-                    hotelsXhr.addEventListener('readystatechange', function () {
-                        if (this.readyState === this.DONE) {
-                            if (this.status === 404) {
-                                console.error(`Hotels data not found for destination ID: ${destId}`);
-                                return reject(new Error('No hotels data found'));
-                            }
-                            try {
-                                const hotelsData = JSON.parse(this.responseText);
-                                if (!hotelsData || !Array.isArray(hotelsData.data) || hotelsData.data.length === 0) {
-                                    return reject('No hotels data found');
-                                }
-
-                                const hotels = hotelsData.data.map(hotel => ({
-                                    hotel_id: hotel.hotel_id,
-                                    name: hotel.name,
-                                    price: hotel.price
-                                }));
-
-                                resolve(hotels);
-                            } catch (err) {
-                                reject(err);
-                            }
-                        }
-                    });
-                    hotelsXhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/search?dest_id=${destId}&checkin=${checkInDate}&checkout=${checkOutDate}&currency_code=USD`);
-                    hotelsXhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
-                    hotelsXhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
-                    hotelsXhr.send();
-                } catch (err) {
-                    reject(err);
-                }
+            if (!destResponse.ok) {
+                throw new Error(`Destination search failed: ${destResponse.status}`);
             }
-        });
-        destXhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${cityQuery}`);
-        destXhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
-        destXhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
-        destXhr.send();
+
+            const destData = await destResponse.json();
+            
+            if (!destData?.data?.[0]?.dest_id) {
+                throw new Error('No destination ID found');
+            }
+
+            // Add delay before next API call
+            await delay(API_DELAY);
+
+            // Then search for hotels
+            const hotelUrl = `https://booking-com15.p.rapidapi.com/api/v1/hotels/search?dest_id=${destData.data[0].dest_id}&checkin=${checkInDate}&checkout=${checkOutDate}&adults=2&room_qty=1&currency_code=USD`;
+            
+            const hotelResponse = await fetch(hotelUrl, {
+                method: 'GET',
+                headers: API_HEADERS
+            });
+
+            if (!hotelResponse.ok) {
+                throw new Error(`Hotel search failed: ${hotelResponse.status}`);
+            }
+
+            const hotelData = await hotelResponse.json();
+            resolve(hotelData);
+
+        } catch (error) {
+            console.error('Hotel data fetch error:', error);
+            reject(error);
+        }
     });
 };
 
@@ -289,35 +280,46 @@ const fetchHotelPrice = (hotelId, checkInDate, checkOutDate) => {
     });
 };
 
-// Function to verify hotel IDs
+// Update verifyHotelIds function
 const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.withCredentials = true;
-
-        xhr.addEventListener('readystatechange', function () {
-            if (this.readyState === this.DONE) {
-                if (this.status === 404) {
-                    console.error(`Hotel search data not found for location: ${location}`);
-                    return reject(new Error('No hotel search data found'));
-                }
-                try {
-                    const hotelData = JSON.parse(this.responseText);
-                    if (!hotelData || !Array.isArray(hotelData) || hotelData.length === 0) {
-                        return reject('No hotel search data found');
-                    }
-                    resolve(hotelData);
-                } catch (err) {
-                    reject(err);
-                }
-            }
+    try {
+        // First get destination ID
+        const searchUrl = `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${encodeURIComponent(location)}`;
+        
+        const destResponse = await fetch(searchUrl, {
+            method: 'GET',
+            headers: API_HEADERS
         });
 
-        xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/search?location=${location}&checkin=${checkInDate}&checkout=${checkOutDate}`);
-        xhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
-        xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
-        xhr.send();
-    });
+        if (!destResponse.ok) {
+            throw new Error(`Destination search failed: ${destResponse.status}`);
+        }
+
+        const destData = await destResponse.json();
+        
+        if (!destData?.data?.[0]?.dest_id) {
+            throw new Error('No destination ID found');
+        }
+
+        await delay(API_DELAY);
+
+        // Then search for hotels
+        const hotelUrl = `https://booking-com15.p.rapidapi.com/api/v1/hotels/search?dest_id=${destData.data[0].dest_id}&checkin=${checkInDate}&checkout=${checkOutDate}&adults=2&room_qty=1&currency_code=USD`;
+        
+        const hotelResponse = await fetch(hotelUrl, {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+
+        if (!hotelResponse.ok) {
+            throw new Error(`Hotel search failed: ${hotelResponse.status}`);
+        }
+
+        return await hotelResponse.json();
+    } catch (error) {
+        console.error('Hotel verification error:', error);
+        throw error;
+    }
 };
 
 // Function to validate date inputs
@@ -346,11 +348,14 @@ const showLoading = (show = true) => {
     document.getElementById('findMyHolidayButton').disabled = show;
 };
 
+// Update showError function to create container if it doesn't exist
 const showError = (message, fatal = false) => {
-    const errorElement = document.querySelector('.api-error');
+    let errorElement = document.querySelector('.api-error');
+    
     if (!errorElement) {
-        console.error('Error container element not found');
-        return;
+        errorElement = document.createElement('div');
+        errorElement.className = 'api-error';
+        document.body.appendChild(errorElement);
     }
 
     errorElement.innerHTML = `
@@ -371,6 +376,7 @@ const showError = (message, fatal = false) => {
 };
 
 // Main Workflow
+// Update personalizeContent function to handle API calls sequentially
 const personalizeContent = async (user) => {
     const inputs = {
         checkInDate: document.getElementById('holidayDate').value,
@@ -392,32 +398,25 @@ const personalizeContent = async (user) => {
         throw new Error('No destinations match your budget. Try increasing by 20%');
     }
 
-    const apiResults = await Promise.allSettled(
-        recommendations.map(async rec => {
+    const results = [];
+    for (const rec of recommendations) {
+        try {
+            await delay(API_DELAY); // Add delay between each recommendation processing
             const hotelData = await verifyHotelIds(rec.city, inputs.checkInDate, inputs.checkOutDate);
-            const hotelId = hotelData[0]?.hotelId; // Use the first valid hotel ID
-            return Promise.all([
-                searchRoundtripFlights(inputs.departureLocation, rec.iata, inputs.checkInDate),
-                fetchHotelData(hotelId, inputs.budget, inputs.checkInDate, inputs.checkOutDate),
-                fetchHotelPhotos(hotelId),
-                fetchHotelPrice(hotelId, inputs.checkInDate, inputs.checkOutDate)
-            ]);
-        })
-    );
-
-    const results = recommendations.map((rec, index) => {
-        if (apiResults[index].status !== 'fulfilled' || !Array.isArray(apiResults[index].value)) {
-            return { ...rec, flights: null, hotels: null, photos: null, price: null };
+            // ...process hotel data...
+            results.push({
+                ...rec,
+                hotels: hotelData,
+                // ...other data...
+            });
+        } catch (error) {
+            console.error(`Error processing ${rec.city}:`, error);
+            results.push({
+                ...rec,
+                error: error.message
+            });
         }
-        const [flightData, hotelData, photoData, priceData] = apiResults[index].value;
-        return {
-            ...rec,
-            flights: flightData,
-            hotels: hotelData,
-            photos: photoData,
-            price: priceData
-        };
-    });
+    }
 
     document.getElementById('results').innerHTML = results.map(result => `
         <div class="destination-card">
