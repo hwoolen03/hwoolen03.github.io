@@ -1,7 +1,17 @@
-// API Headers
+// API Headers and Configuration
 const API_HEADERS = {
     'x-rapidapi-key': '223e1d4481mshc763834ea442154p1feb5cjsnf57de44ce22c',
     'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
+};
+
+const API_CONFIG = {
+    baseUrl: 'https://booking-com15.p.rapidapi.com/api/v2',
+    delay: 1000,
+    defaultParams: {
+        currency_code: 'USD',
+        units: 'metric',
+        language_code: 'en-us'
+    }
 };
 
 // Add this at the top with other constants
@@ -176,10 +186,12 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
 // Replace the fetchHotelData function
 const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
     try {
-        // First, get the destination ID for the city
-        const destinationUrl = `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${encodeURIComponent(cityName)}`;
+        // Get destination ID
+        const destinationUrl = `${API_CONFIG.baseUrl}/hotels/searchDestination`;
+        const searchUrl = new URL(destinationUrl);
+        searchUrl.searchParams.append('query', cityName);
         
-        const destResponse = await fetch(destinationUrl, {
+        const destResponse = await fetch(searchUrl, {
             method: 'GET',
             headers: API_HEADERS
         });
@@ -195,20 +207,24 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         }
 
         const destId = destData.data[0].dest_id;
-        
-        // Add delay before next API call
-        await delay(API_DELAY);
+        await delay(API_CONFIG.delay);
 
-        // Construct proper hotel search URL with all required parameters
-        const hotelUrl = new URL('https://booking-com15.p.rapidapi.com/api/v1/hotels/search');
-        hotelUrl.searchParams.append('dest_id', destId);
-        hotelUrl.searchParams.append('checkin', checkInDate);
-        hotelUrl.searchParams.append('checkout', checkOutDate);
-        hotelUrl.searchParams.append('adults', '2');
-        hotelUrl.searchParams.append('room_qty', '1');
-        hotelUrl.searchParams.append('currency_code', 'USD');
-        hotelUrl.searchParams.append('units', 'metric');
-        hotelUrl.searchParams.append('language_code', 'en-us');
+        // Updated hotel search URL with v2 endpoint
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/hotels/search`);
+        const searchParams = {
+            ...API_CONFIG.defaultParams,
+            dest_id: destId,
+            checkin: checkInDate,
+            checkout: checkOutDate,
+            adults: '2',
+            room_qty: '1',
+            page_number: '1',
+            sort_by: 'popularity'
+        };
+
+        Object.entries(searchParams).forEach(([key, value]) => {
+            hotelUrl.searchParams.append(key, value);
+        });
 
         const hotelResponse = await fetch(hotelUrl.toString(), {
             method: 'GET',
@@ -236,9 +252,10 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
 // Update verifyHotelIds function
 const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
     try {
-        const destinationUrl = `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${encodeURIComponent(location)}`;
+        const searchUrl = new URL(`${API_CONFIG.baseUrl}/hotels/searchDestination`);
+        searchUrl.searchParams.append('query', location);
         
-        const destResponse = await fetch(destinationUrl, {
+        const destResponse = await fetch(searchUrl, {
             method: 'GET',
             headers: API_HEADERS
         });
@@ -253,18 +270,23 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
             throw new Error(`No destination found for ${location}`);
         }
 
-        await delay(API_DELAY);
+        await delay(API_CONFIG.delay);
 
-        // Construct hotel search URL with all required parameters
-        const hotelUrl = new URL('https://booking-com15.p.rapidapi.com/api/v1/hotels/search');
-        hotelUrl.searchParams.append('dest_id', destData.data[0].dest_id);
-        hotelUrl.searchParams.append('checkin', checkInDate);
-        hotelUrl.searchParams.append('checkout', checkOutDate);
-        hotelUrl.searchParams.append('adults', '2');
-        hotelUrl.searchParams.append('room_qty', '1');
-        hotelUrl.searchParams.append('currency_code', 'USD');
-        hotelUrl.searchParams.append('units', 'metric');
-        hotelUrl.searchParams.append('language_code', 'en-us');
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/hotels/search`);
+        const searchParams = {
+            ...API_CONFIG.defaultParams,
+            dest_id: destData.data[0].dest_id,
+            checkin: checkInDate,
+            checkout: checkOutDate,
+            adults: '2',
+            room_qty: '1',
+            page_number: '1',
+            sort_by: 'popularity'
+        };
+
+        Object.entries(searchParams).forEach(([key, value]) => {
+            hotelUrl.searchParams.append(key, value);
+        });
 
         const hotelResponse = await fetch(hotelUrl.toString(), {
             method: 'GET',
@@ -307,9 +329,9 @@ const fetchHotelPhotos = (hotelId) => {
             }
         });
 
-        xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/getHotelPhotos?hotel_id=${hotelId}`);
-        xhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
-        xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
+        xhr.open('GET', `${API_CONFIG.baseUrl}/hotels/getHotelPhotos?hotel_id=${hotelId}`);
+        xhr.setRequestHeader('x-rapidapi-key', API_HEADERS['x-rapidapi-key']);
+        xhr.setRequestHeader('x-rapidapi-host', API_HEADERS['x-rapidapi-host']);
         xhr.send();
     });
 };
