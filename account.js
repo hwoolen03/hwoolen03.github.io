@@ -222,10 +222,14 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
             throw new Error(`No destination found for ${cityName}`);
         }
 
+        // Log the first destination to see its format
+        console.log('First destination entry:', destData.data[0]);
+        
         const destId = destData.data[0].dest_id;
-        if (!destId || destId.startsWith('-')) {
-            throw new Error(`Invalid destination ID for ${cityName}`);
+        if (!destId) {
+            throw new Error(`Missing destination ID for ${cityName}`);
         }
+        // Remove the validation that rejects IDs starting with '-' since these may be valid
         
         await delay(API_CONFIG.delay);
 
@@ -293,10 +297,14 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
             throw new Error(`No destination found for ${location}`);
         }
 
+        // Log the first destination to see its format
+        console.log('First destination entry:', destData.data[0]);
+        
         const destId = destData.data[0].dest_id;
-        if (!destId || destId.startsWith('-')) {
-            throw new Error(`Invalid destination ID for ${location}`);
+        if (!destId) {
+            throw new Error(`Missing destination ID for ${location}`);
         }
+        // Remove the validation that rejects IDs starting with '-' since these may be valid
         
         await delay(API_CONFIG.delay);
 
