@@ -20,6 +20,20 @@ const API_DELAY = 1000; // Delay between API calls in milliseconds
 // Add this utility function for rate limiting
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+// Add this utility function for API retry mechanism
+const fetchWithRetry = async (url, options, retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      return response;
+    } catch (err) {
+      console.log(`Retry ${i+1}/${retries} failed for ${url}`);
+      if (i === retries - 1) throw err;
+      await delay(2000); // Longer delay for retries
+    }
+  }
+};
+
 // Auth0 Configuration
 let auth0Client;
 let user;
@@ -163,6 +177,7 @@ const estimateFlightCost = (distance) => {
 };
 
 // API Functions
+// Update searchRoundtripFlights function
 const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
     const xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
@@ -177,9 +192,9 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
         }
     });
 
-    xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/flights/getMinPrice?fromId=${fromIATA}.AIRPORT&toId=${toIATA}.AIRPORT&cabinClass=ECONOMY&currency_code=AED`);
-    xhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
-    xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
+    xhr.open('GET', `${API_CONFIG.baseUrl}/flights/getMinPrice?fromId=${fromIATA}.AIRPORT&toId=${toIATA}.AIRPORT&cabinClass=ECONOMY&currency_code=USD`);
+    xhr.setRequestHeader('x-rapidapi-key', API_HEADERS['x-rapidapi-key']);
+    xhr.setRequestHeader('x-rapidapi-host', API_HEADERS['x-rapidapi-host']);
     xhr.send();
 };
 
@@ -191,7 +206,7 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         const searchUrl = new URL(destinationUrl);
         searchUrl.searchParams.append('query', cityName);
         
-        const destResponse = await fetch(searchUrl, {
+        const destResponse = await fetchWithRetry(searchUrl, {
             method: 'GET',
             headers: API_HEADERS
         });
@@ -201,12 +216,17 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         }
 
         const destData = await destResponse.json();
+        console.log('Destination API Response:', destData); // Debug log
         
-        if (!destData?.data?.[0]?.dest_id) {
+        if (!destData?.data?.length) {
             throw new Error(`No destination found for ${cityName}`);
         }
 
         const destId = destData.data[0].dest_id;
+        if (!destId || destId.startsWith('-')) {
+            throw new Error(`Invalid destination ID for ${cityName}`);
+        }
+        
         await delay(API_CONFIG.delay);
 
         // Updated hotel search URL with v2 endpoint
@@ -219,14 +239,15 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
             adults: '2',
             room_qty: '1',
             page_number: '1',
-            sort_by: 'popularity'
+            sort_order: 'PRICE',
+            filter_by: 'HOTEL'
         };
 
         Object.entries(searchParams).forEach(([key, value]) => {
             hotelUrl.searchParams.append(key, value);
         });
 
-        const hotelResponse = await fetch(hotelUrl.toString(), {
+        const hotelResponse = await fetchWithRetry(hotelUrl.toString(), {
             method: 'GET',
             headers: API_HEADERS
         });
@@ -252,10 +273,11 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
 // Update verifyHotelIds function
 const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
     try {
-        const searchUrl = new URL(`${API_CONFIG.baseUrl}/hotels/searchDestination`);
+        const destinationUrl = `${API_CONFIG.baseUrl}/hotels/searchDestination`;
+        const searchUrl = new URL(destinationUrl);
         searchUrl.searchParams.append('query', location);
         
-        const destResponse = await fetch(searchUrl, {
+        const destResponse = await fetchWithRetry(searchUrl, {
             method: 'GET',
             headers: API_HEADERS
         });
@@ -265,42 +287,55 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         }
 
         const destData = await destResponse.json();
+        console.log('Destination API Response:', destData); // Debug log
         
-        if (!destData?.data?.[0]?.dest_id) {
+        if (!destData?.data?.length) {
             throw new Error(`No destination found for ${location}`);
         }
 
+        const destId = destData.data[0].dest_id;
+        if (!destId || destId.startsWith('-')) {
+            throw new Error(`Invalid destination ID for ${location}`);
+        }
+        
         await delay(API_CONFIG.delay);
 
         const hotelUrl = new URL(`${API_CONFIG.baseUrl}/hotels/search`);
         const searchParams = {
             ...API_CONFIG.defaultParams,
-            dest_id: destData.data[0].dest_id,
+            dest_id: destId,
             checkin: checkInDate,
             checkout: checkOutDate,
             adults: '2',
             room_qty: '1',
             page_number: '1',
-            sort_by: 'popularity'
+            sort_order: 'PRICE',
+            filter_by: 'HOTEL'
         };
 
         Object.entries(searchParams).forEach(([key, value]) => {
             hotelUrl.searchParams.append(key, value);
         });
 
-        const hotelResponse = await fetch(hotelUrl.toString(), {
+        const hotelResponse = await fetchWithRetry(hotelUrl.toString(), {
             method: 'GET',
             headers: API_HEADERS
         });
 
         if (!hotelResponse.ok) {
-            throw new Error(`Hotel search failed: ${hotelResponse.status}`);
+            throw new Error(`Hotel search failed: ${hotelResponse.status} - ${await hotelResponse.text()}`);
         }
 
-        return await hotelResponse.json();
+        const hotelData = await hotelResponse.json();
+        
+        if (!hotelData?.data || hotelData.data.length === 0) {
+            throw new Error(`No hotels found in ${location}`);
+        }
+
+        return hotelData;
     } catch (error) {
         console.error('Hotel verification error:', error);
-        throw error;
+        throw new Error(`Couldn't find hotels in ${location}: ${error.message}`);
     }
 };
 
@@ -357,9 +392,9 @@ const fetchHotelPrice = (hotelId, checkInDate, checkOutDate) => {
             }
         });
 
-        xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/getHotelPrice?hotel_id=${hotelId}&checkin_date=${checkInDate}&checkout_date=${checkOutDate}&currency_code=USD`);
-        xhr.setRequestHeader('x-rapidapi-key', '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3');
-        xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
+        xhr.open('GET', `${API_CONFIG.baseUrl}/hotels/getHotelPrice?hotel_id=${hotelId}&checkin_date=${checkInDate}&checkout_date=${checkOutDate}&currency_code=USD`);
+        xhr.setRequestHeader('x-rapidapi-key', API_HEADERS['x-rapidapi-key']);
+        xhr.setRequestHeader('x-rapidapi-host', API_HEADERS['x-rapidapi-host']);
         xhr.send();
     });
 };
@@ -440,17 +475,55 @@ const personalizeContent = async (user) => {
         throw new Error('No destinations match your budget. Try increasing by 20%');
     }
 
+    console.log('Processing recommendations:', recommendations);
+    
     const results = [];
     for (const rec of recommendations) {
         try {
-            await delay(API_DELAY); // Add delay between each recommendation processing
+            console.log(`Processing destination: ${rec.city}`);
+            await delay(API_DELAY);
+            
             const hotelData = await verifyHotelIds(rec.city, inputs.checkInDate, inputs.checkOutDate);
-            // ...process hotel data...
-            results.push({
-                ...rec,
-                hotels: hotelData,
-                // ...other data...
-            });
+            console.log(`Found ${hotelData?.data?.length || 0} hotels for ${rec.city}`);
+            
+            // Only process first hotel to avoid overloading API
+            if (hotelData?.data?.length > 0) {
+                const firstHotel = hotelData.data[0];
+                console.log(`Selected hotel: ${firstHotel.hotel_name || 'Unknown'}`);
+                
+                let hotelPhoto = null;
+                let hotelPrice = null;
+                
+                try {
+                    if (firstHotel.hotel_id) {
+                        await delay(API_DELAY);
+                        hotelPhoto = await fetchHotelPhotos(firstHotel.hotel_id);
+                        
+                        await delay(API_DELAY);
+                        hotelPrice = await fetchHotelPrice(
+                            firstHotel.hotel_id, 
+                            inputs.checkInDate, 
+                            inputs.checkOutDate
+                        );
+                    }
+                } catch (innerError) {
+                    console.warn(`Error fetching hotel details for ${rec.city}:`, innerError);
+                }
+                
+                results.push({
+                    ...rec,
+                    hotels: hotelData,
+                    photos: hotelPhoto,
+                    price: hotelPrice
+                });
+            } else {
+                results.push({
+                    ...rec,
+                    hotels: null,
+                    error: 'No hotels found'
+                });
+            }
+            
         } catch (error) {
             console.error(`Error processing ${rec.city}:`, error);
             results.push({
@@ -460,23 +533,8 @@ const personalizeContent = async (user) => {
         }
     }
 
-    document.getElementById('results').innerHTML = results.map(result => `
-        <div class="destination-card">
-            <h3>${result.city}</h3>
-            <p>Estimated Total: $${result.cost.total}</p>
-            <div class="price-breakdown">
-                <span>✈️ $${result.cost.flight}</span>
-                <span>🏨 $${result.cost.hotel}</span>
-            </div>
-            <div class="api-results">
-                ${result.flights?.data ? `<pre>${JSON.stringify(result.flights.data.slice(0, 2), null, 2)}</pre>` : ''}
-                ${result.hotels?.data ? `<pre>${JSON.stringify(result.hotels.data.slice(0, 2), null, 2)}</pre>` : ''}
-                ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo"/>` : ''}
-                ${result.price ? `<pre>${JSON.stringify(result.price, null, 2)}</pre>` : ''}
-            </div>
-        </div>
-    `).join('');
-};
+    return results;
+}
 
 // Auth State Management
 const updateAuthState = async () => {
