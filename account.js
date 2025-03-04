@@ -5,7 +5,7 @@ const API_HEADERS = {
 };
 
 const API_CONFIG = {
-    baseUrl: 'https://booking-com15.p.rapidapi.com/api/v2',
+    baseUrl: 'https://booking-com15.p.rapidapi.com',  // Removing "/api/v2" from base URL
     delay: 1000,
     defaultParams: {
         currency_code: 'USD',
@@ -192,7 +192,7 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
         }
     });
 
-    xhr.open('GET', `${API_CONFIG.baseUrl}/flights/getMinPrice?fromId=${fromIATA}.AIRPORT&toId=${toIATA}.AIRPORT&cabinClass=ECONOMY&currency_code=USD`);
+    xhr.open('GET', `${API_CONFIG.baseUrl}/api/v1/flights/getMinPrice?fromId=${fromIATA}.AIRPORT&toId=${toIATA}.AIRPORT&cabinClass=ECONOMY&currency_code=USD`);
     xhr.setRequestHeader('x-rapidapi-key', API_HEADERS['x-rapidapi-key']);
     xhr.setRequestHeader('x-rapidapi-host', API_HEADERS['x-rapidapi-host']);
     xhr.send();
@@ -202,9 +202,9 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
 const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
     try {
         // Get destination ID
-        const destinationUrl = `${API_CONFIG.baseUrl}/hotels/searchDestination`;
+        const destinationUrl = `${API_CONFIG.baseUrl}/api/v1/hotels/searchDestination`;  // Changed to v1
         const searchUrl = new URL(destinationUrl);
-        searchUrl.searchParams.append('query', cityName);
+        searchUrl.searchParams.append('query', encodeURIComponent(cityName));  // Properly encode the city name
         
         const destResponse = await fetchWithRetry(searchUrl, {
             method: 'GET',
@@ -230,7 +230,7 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         await delay(API_CONFIG.delay);
 
         // Updated hotel search URL with v2 endpoint
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/hotels/search`);
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);  // Changed to v1 and updated endpoint
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_id: destId,
@@ -273,9 +273,9 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
 // Update verifyHotelIds function
 const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
     try {
-        const destinationUrl = `${API_CONFIG.baseUrl}/hotels/searchDestination`;
+        const destinationUrl = `${API_CONFIG.baseUrl}/api/v1/hotels/searchDestination`;  // Changed to v1
         const searchUrl = new URL(destinationUrl);
-        searchUrl.searchParams.append('query', location);
+        searchUrl.searchParams.append('query', encodeURIComponent(location));  // Properly encode the location
         
         const destResponse = await fetchWithRetry(searchUrl, {
             method: 'GET',
@@ -300,7 +300,7 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         
         await delay(API_CONFIG.delay);
 
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/hotels/search`);
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);  // Changed to v1 and updated endpoint
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_id: destId,
@@ -364,7 +364,7 @@ const fetchHotelPhotos = (hotelId) => {
             }
         });
 
-        xhr.open('GET', `${API_CONFIG.baseUrl}/hotels/getHotelPhotos?hotel_id=${hotelId}`);
+        xhr.open('GET', `${API_CONFIG.baseUrl}/api/v1/hotels/getHotelPhotos?hotel_id=${hotelId}`);
         xhr.setRequestHeader('x-rapidapi-key', API_HEADERS['x-rapidapi-key']);
         xhr.setRequestHeader('x-rapidapi-host', API_HEADERS['x-rapidapi-host']);
         xhr.send();
@@ -392,7 +392,7 @@ const fetchHotelPrice = (hotelId, checkInDate, checkOutDate) => {
             }
         });
 
-        xhr.open('GET', `${API_CONFIG.baseUrl}/hotels/getHotelPrice?hotel_id=${hotelId}&checkin_date=${checkInDate}&checkout_date=${checkOutDate}&currency_code=USD`);
+        xhr.open('GET', `${API_CONFIG.baseUrl}/api/v1/hotels/getHotelPrice?hotel_id=${hotelId}&checkin_date=${checkInDate}&checkout_date=${checkOutDate}&currency_code=USD`);
         xhr.setRequestHeader('x-rapidapi-key', API_HEADERS['x-rapidapi-key']);
         xhr.setRequestHeader('x-rapidapi-host', API_HEADERS['x-rapidapi-host']);
         xhr.send();
