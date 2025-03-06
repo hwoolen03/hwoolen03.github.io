@@ -339,9 +339,8 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
             adults: '2',
             room_qty: '1',
             page_number: '1',
-            sort_order: 'PRICE',
-            categories_filter_ids: 'class::2,class::4,class::5',
-            include_adjacency: 'true'
+            sort_order: 'PRICE'
+            // Removed problematic filters
         };
 
         Object.entries(searchParams).forEach(([key, value]) => {
@@ -361,10 +360,12 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         }
 
         const hotelData = await hotelResponse.json();
-        console.log('Hotel search response:', hotelData);
+        console.log('Full hotel search response:', hotelData); // Debug full response
         
         if (!hotelData?.data || hotelData.data.length === 0) {
-            throw new Error(`No hotels found in ${location}`);
+            // Check if there's an API error message
+            const apiMessage = hotelData.message?.join(', ') || 'No hotels found';
+            throw new Error(`${apiMessage} in ${location}`);
         }
 
         return hotelData;
@@ -378,26 +379,31 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
 const findBestDestinationMatch = (destinations, searchTerm) => {
     searchTerm = searchTerm.toLowerCase();
     
-    // First try exact match on city name
-    const exactMatch = destinations.find(dest => 
-        (dest.city_name?.toLowerCase() === searchTerm) ||
-        (dest.name?.toLowerCase() === searchTerm) ||
-        (dest.label?.toLowerCase() === searchTerm)
-    );
+    // Prefer city, district, or region types first
+    const priorityOrder = ['city', 'district', 'region', 'country'];
     
-    if (exactMatch) return exactMatch;
+    // Create scored list
+    const scored = destinations.map(dest => {
+        let score = 0;
+        
+        // Type priority
+        if (dest.dest_type) {
+            score += (priorityOrder.includes(dest.dest_type) ? 
+                     (priorityOrder.length - priorityOrder.indexOf(dest.dest_type)) * 100 : 0);
+        }
+        
+        // Name matches
+        if (dest.city_name?.toLowerCase() === searchTerm) score += 500;
+        if (dest.name?.toLowerCase() === searchTerm) score += 400;
+        if (dest.label?.toLowerCase().includes(searchTerm)) score += 300;
+        
+        return { dest, score };
+    });
+
+    // Sort by highest score
+    scored.sort((a, b) => b.score - a.score);
     
-    // Then try partial match
-    const partialMatch = destinations.find(dest => 
-        (dest.city_name?.toLowerCase()?.includes(searchTerm)) ||
-        (dest.name?.toLowerCase()?.includes(searchTerm)) ||
-        (dest.label?.toLowerCase()?.includes(searchTerm))
-    );
-    
-    if (partialMatch) return partialMatch;
-    
-    // Otherwise return the first result
-    return destinations[0];
+    return scored[0]?.dest || destinations[0];
 };
 
 // Fallback function for destination search
@@ -423,6 +429,8 @@ const searchDestinationByCountry = async (location, checkInDate, checkOutDate) =
         const searchUrl = new URL(destinationUrl);
         searchUrl.searchParams.append('name', encodeURIComponent(searchLocation));
         searchUrl.searchParams.append('locale', 'en-us');
+        // Add type parameter to prioritize cities
+        searchUrl.searchParams.append('type', 'city');
         
         const destResponse = await fetchWithRetry(searchUrl, {
             method: 'GET',
