@@ -375,33 +375,48 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
     }
 };
 
-// Helper function to find best destination match
+// Helper function to find best destination match - UPDATED
 const findBestDestinationMatch = (destinations, searchTerm) => {
     searchTerm = searchTerm.toLowerCase();
-    
-    // Prefer city, district, or region types first
     const priorityOrder = ['city', 'district', 'region', 'country'];
     
-    // Create scored list
-    const scored = destinations.map(dest => {
+    // Filter out hotel-type destinations first
+    const validDestinations = destinations.filter(dest => 
+        !['hotel', 'property'].includes(dest.dest_type?.toLowerCase())
+    );
+
+    // Use valid destinations if available, otherwise fall back to all destinations
+    const destinationsToScore = validDestinations.length > 0 ? validDestinations : destinations;
+    
+    const scored = destinationsToScore.map(dest => {
         let score = 0;
         
-        // Type priority
-        if (dest.dest_type) {
-            score += (priorityOrder.includes(dest.dest_type) ? 
-                     (priorityOrder.length - priorityOrder.indexOf(dest.dest_type)) * 100 : 0);
+        // Type priority scoring
+        if (dest.dest_type && priorityOrder.includes(dest.dest_type.toLowerCase())) {
+            score += (priorityOrder.length - priorityOrder.indexOf(dest.dest_type.toLowerCase())) * 100;
         }
-        
-        // Name matches
-        if (dest.city_name?.toLowerCase() === searchTerm) score += 500;
-        if (dest.name?.toLowerCase() === searchTerm) score += 400;
-        if (dest.label?.toLowerCase().includes(searchTerm)) score += 300;
-        
+
+        // Name matching scoring
+        const nameMatches = [
+            dest.city_name?.toLowerCase(),
+            dest.name?.toLowerCase(),
+            dest.label?.toLowerCase()
+        ].filter(Boolean);
+
+        nameMatches.forEach(name => {
+            if (name === searchTerm) score += 500;
+            if (name.includes(searchTerm)) score += 300;
+        });
+
         return { dest, score };
     });
 
-    // Sort by highest score
     scored.sort((a, b) => b.score - a.score);
+    console.log('Destination scores:', scored.map(s => ({ 
+        name: s.dest.name || s.dest.city_name || s.dest.label, 
+        type: s.dest.dest_type,
+        score: s.score 
+    })));
     
     return scored[0]?.dest || destinations[0];
 };
