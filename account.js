@@ -5,7 +5,7 @@ const API_HEADERS = {
 };
 
 const API_CONFIG = {
-    baseUrl: 'https://booking-com15.p.rapidapi.com/api/v2',  // Updated to include /api/v2
+    baseUrl: 'https://booking-com15.p.rapidapi.com',  // Remove "/api/v2"
     delay: 1000,
     defaultParams: {
         currency_code: 'USD',
@@ -202,7 +202,7 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
 const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
     try {
         // Get destination ID
-        const destinationUrl = `${API_CONFIG.baseUrl}/hotels/locations`;  // Updated to v2
+        const destinationUrl = `${API_CONFIG.baseUrl}/api/v1/hotels/locations`;  // Updated to v1
         const searchUrl = new URL(destinationUrl);
         searchUrl.searchParams.append('query', encodeURIComponent(cityName));  // Properly encode the city name
         
@@ -232,8 +232,8 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         
         await delay(API_CONFIG.delay);
 
-        // Updated hotel search URL with v2 endpoint
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/hotels/search`);
+        // Updated hotel search URL with v1 endpoint
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/search`);
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_id: destId,
@@ -277,7 +277,7 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
 const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
     try {
         console.log(`Searching for destination: ${location}`);
-        const destinationUrl = `${API_CONFIG.baseUrl}/hotels/locations`;
+        const destinationUrl = `${API_CONFIG.baseUrl}/api/v1/hotels/locations`;
         const searchUrl = new URL(destinationUrl);
         searchUrl.searchParams.append('query', encodeURIComponent(location));
         
@@ -323,7 +323,7 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         await delay(API_CONFIG.delay);
 
         // Updated hotel search URL with correct parameter names
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/hotels/search`);
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/search`);
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_id: destId,
@@ -450,7 +450,7 @@ const searchDestinationByCountry = async (location, checkInDate, checkOutDate) =
         const searchLocation = commonDestinations[location] || location;
         console.log(`Trying alternative search with: ${searchLocation}`);
         
-        const destinationUrl = `${API_CONFIG.baseUrl}/hotels/locations`;
+        const destinationUrl = `${API_CONFIG.baseUrl}/api/v1/hotels/locations`;
         const searchUrl = new URL(destinationUrl);
         searchUrl.searchParams.append('query', encodeURIComponent(searchLocation));
         // Removed type parameter that was causing issues
@@ -483,8 +483,8 @@ const searchDestinationByCountry = async (location, checkInDate, checkOutDate) =
         
         await delay(API_CONFIG.delay);
         
-        // Use v2 endpoint for hotel search
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/hotels/search`);
+        // Use v1 endpoint for hotel search
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/search`);
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_id: destId,
@@ -982,7 +982,7 @@ const showLoading = (isLoading = true) => {
 // Add missing fetchHotelPhotos and fetchHotelPrice functions
 const fetchHotelPhotos = async (hotelId) => {
     try {
-        const url = `${API_CONFIG.baseUrl}/hotels/details?hotel_id=${hotelId}`; // Updated to v2 path
+        const url = `${API_CONFIG.baseUrl}/api/v1/hotels/details?hotel_id=${hotelId}`; // Updated to v1 path
         const response = await fetchWithRetry(url, {
             method: 'GET',
             headers: API_HEADERS
@@ -1004,7 +1004,7 @@ const fetchHotelPhotos = async (hotelId) => {
 
 const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
     try {
-        const url = `${API_CONFIG.baseUrl}/hotels/details?hotel_id=${hotelId}&checkin_date=${checkInDate}&checkout_date=${checkOutDate}`; // Updated parameter names
+        const url = `${API_CONFIG.baseUrl}/api/v1/hotels/details?hotel_id=${hotelId}&checkin_date=${checkInDate}&checkout_date=${checkOutDate}`; // Updated to v1 path
         const response = await fetchWithRetry(url, {
             method: 'GET',
             headers: API_HEADERS
@@ -1016,7 +1016,7 @@ const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
         
         const data = await response.json();
         
-        // Extract price information - updated to match v2 response format
+        // Extract price information - updated to match v1 response format
         const priceInfo = data?.hotel?.price || {};
         return {
             total_price: priceInfo.gross || 0,
