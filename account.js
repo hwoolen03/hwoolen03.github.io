@@ -232,17 +232,17 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         
         await delay(API_CONFIG.delay);
 
-        // Hotel search with updated endpoint
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/search`);
+        // Updated endpoint for hotel search
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_id: destId,
+            search_type: 'CITY',
             checkin_date: checkInDate,
             checkout_date: checkOutDate,
             adults: '2',
             room_qty: '1',
-            page_number: '1',
-            sort_order: 'PRICE'
+            page_number: '1'
         };
 
         Object.entries(searchParams).forEach(([key, value]) => {
@@ -320,17 +320,17 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         
         await delay(API_CONFIG.delay);
 
-        // Updated hotel search URL with correct parameter names
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/search`);
+        // Updated to correct searchHotels endpoint
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_id: destId,
+            search_type: 'CITY',
             checkin_date: checkInDate,
             checkout_date: checkOutDate,
             adults: '2',
             room_qty: '1',
-            page_number: '1',
-            sort_order: 'PRICE'
+            page_number: '1'
         };
 
         Object.entries(searchParams).forEach(([key, value]) => {
@@ -481,11 +481,12 @@ const searchDestinationByCountry = async (location, checkInDate, checkOutDate) =
         
         await delay(API_CONFIG.delay);
         
-        // Use updated endpoint structure
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/search`);
+        // Use updated searchHotels endpoint
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_id: destId,
+            search_type: 'CITY',
             checkin_date: checkInDate,
             checkout_date: checkOutDate,
             adults: '2',
@@ -1035,6 +1036,55 @@ const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
         };
     } catch (error) {
         console.error('Error fetching hotel price:', error);
+        throw error;
+    }
+};
+
+// Add new function for searching hotels by coordinates
+const searchHotelsByCoordinates = async (latitude, longitude, checkInDate, checkOutDate) => {
+    try {
+        console.log(`Searching for hotels at coordinates: ${latitude}, ${longitude}`);
+        
+        // Use the searchHotelsByCoordinates endpoint
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotelsByCoordinates`);
+        const searchParams = {
+            ...API_CONFIG.defaultParams,
+            latitude,
+            longitude,
+            checkin_date: checkInDate,
+            checkout_date: checkOutDate,
+            adults: '2',
+            room_qty: '1',
+            page_number: '1'
+        };
+
+        Object.entries(searchParams).forEach(([key, value]) => {
+            hotelUrl.searchParams.append(key, value);
+        });
+        
+        console.log('Coordinate search URL:', hotelUrl.toString());
+
+        const hotelResponse = await fetchWithRetry(hotelUrl.toString(), {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+
+        if (!hotelResponse.ok) {
+            throw new Error(`Hotel coordinate search failed: ${hotelResponse.status}`);
+        }
+
+        const hotelData = await hotelResponse.json();
+        
+        if (!hotelData?.data || hotelData.data.length === 0) {
+            throw new Error('No hotels found at these coordinates');
+        }
+
+        return {
+            data: hotelData.data,
+            count: hotelData.data.length
+        };
+    } catch (error) {
+        console.error('Coordinate search error:', error);
         throw error;
     }
 };
