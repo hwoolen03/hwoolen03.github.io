@@ -234,14 +234,14 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         await delay(API_CONFIG.delay);
 
         // Updated hotel search URL with v2 endpoint
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);  // Changed to v1 and updated endpoint
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/search`);  // Changed to updated endpoint
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_id: destId,
-            checkin: checkInDate,
-            checkout: checkOutDate,
+            arrival_date: checkInDate, // Changed from checkin
+            departure_date: checkOutDate, // Changed from checkout
             adults: '2',
-            room_qty: '1',
+            rooms: '1', // Changed from room_qty
             page_number: '1',
             sort_order: 'PRICE',
             filter_by: 'HOTEL'
@@ -325,19 +325,25 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
             throw new Error(`Missing destination ID for ${location}`);
         }
         
+        // Validate the destination ID isn't a hotel ID
+        if (destEntry.search_type?.toLowerCase() === 'hotel') {
+            console.log('Detected hotel ID instead of city ID, searching for alternative');
+            return await searchDestinationByCountry(location, checkInDate, checkOutDate);
+        }
+        
         console.log(`Using destination ID: ${destId} for ${location}`);
         
         await delay(API_CONFIG.delay);
 
-        // Updated hotel search URL with more flexible parameters
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
+        // Updated hotel search URL with correct parameter names
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/search`);
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_id: destId,
-            checkin: checkInDate,
-            checkout: checkOutDate,
+            arrival_date: checkInDate, // Changed from checkin
+            departure_date: checkOutDate, // Changed from checkout
             adults: '2',
-            room_qty: '1',
+            rooms: '1', // Changed from room_qty
             page_number: '1',
             sort_order: 'PRICE'
             // Removed problematic filters
@@ -361,6 +367,17 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
 
         const hotelData = await hotelResponse.json();
         console.log('Full hotel search response:', hotelData); // Debug full response
+        
+        // Check for API response status
+        if (hotelData.status === false) {
+            console.log('API Error Details:', hotelData.message);
+            // Format the error messages from the API
+            const errorMessage = Array.isArray(hotelData.message) 
+                ? hotelData.message.join(', ') 
+                : (hotelData.message || 'Unknown API error');
+                
+            throw new Error(`API Error: ${errorMessage}`);
+        }
         
         if (!hotelData?.data || hotelData.data.length === 0) {
             // Improved error message formatting for API errors
@@ -403,7 +420,7 @@ const findBestDestinationMatch = (destinations, searchTerm) => {
     
     // Filter out hotel-type destinations first
     const validDestinations = destinations.filter(dest => 
-        !['hotel', 'property'].includes(dest.dest_type?.toLowerCase())
+        !['hotel', 'property'].includes(dest.search_type?.toLowerCase())
     );
 
     // Use valid destinations if available, otherwise fall back to all destinations
@@ -497,16 +514,16 @@ const searchDestinationByCountry = async (location, checkInDate, checkOutDate) =
         await delay(API_CONFIG.delay);
         
         // Try different endpoint for hotel search
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotelsByFilter`);
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/search`);
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_ids: destId,
             search_type: 'CITY',
-            arrival_date: checkInDate,
-            departure_date: checkOutDate, 
+            arrival_date: checkInDate, // Changed from checkin
+            departure_date: checkOutDate, // Changed from checkout
             adults: '2',
             children_age: '',
-            room_qty: '1',
+            rooms: '1', // Changed from room_qty
             page_number: '1'
         };
 
@@ -1024,7 +1041,7 @@ const fetchHotelPhotos = async (hotelId) => {
 
 const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
     try {
-        const url = `${API_CONFIG.baseUrl}/api/v1/hotels/getHotelDetails?hotel_id=${hotelId}&checkin=${checkInDate}&checkout=${checkOutDate}`;
+        const url = `${API_CONFIG.baseUrl}/api/v1/hotels/getHotelDetails?hotel_id=${hotelId}&arrival_date=${checkInDate}&departure_date=${checkOutDate}`; // Changed parameter names
         const response = await fetchWithRetry(url, {
             method: 'GET',
             headers: API_HEADERS
