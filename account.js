@@ -203,9 +203,9 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
 const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
     try {
         // Get destination ID using the correct endpoint
-        const destinationUrl = `${API_CONFIG.baseUrl}/api/v1/locations/auto-complete`;
+        const destinationUrl = `${API_CONFIG.baseUrl}/locations/search`;
         const searchUrl = new URL(destinationUrl);
-        searchUrl.searchParams.append('query', cityName); // No encoding, URL API handles it
+        searchUrl.searchParams.append('name', cityName);
         searchUrl.searchParams.append('locale', 'en-us'); // Required parameter
         
         const destResponse = await fetchWithRetry(searchUrl, {
@@ -220,12 +220,12 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         const destData = await destResponse.json();
         console.log('Destination API Response:', destData); // Debug log
         
-        if (!destData?.data?.length) {
+        if (!destData || !destData.length) {
             throw new Error(`No destination found for ${cityName}`);
         }
 
         // Updated path to access destination ID
-        const destId = destData.data[0]?.dest_id;
+        const destId = destData[0]?.id || destData[0]?.dest_id;
         if (!destId) {
             throw new Error(`Missing destination ID for ${cityName}`);
         }
@@ -233,15 +233,15 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         await delay(API_CONFIG.delay);
 
         // Updated endpoint for hotel search
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/hotels/search`);
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_id: destId,
             search_type: 'CITY',
-            checkin_date: checkInDate,
-            checkout_date: checkOutDate,
-            adults: '2',
-            room_qty: '1',
+            arrival_date: checkInDate,
+            departure_date: checkOutDate,
+            adults_number: '2',
+            room_number: '1',
             page_number: '1'
         };
 
@@ -260,11 +260,14 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
 
         const hotelData = await hotelResponse.json();
         
-        if (!hotelData?.data || hotelData.data.length === 0) {
+        if (!hotelData?.result || hotelData.result.length === 0) {
             throw new Error(`No hotels found in ${cityName}`);
         }
 
-        return hotelData;
+        return {
+            data: hotelData.result,
+            count: hotelData.result.length
+        };
 
     } catch (error) {
         console.error('Hotel data fetch error:', error);
@@ -276,10 +279,10 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
 const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
     try {
         console.log(`Searching for destination: ${location}`);
-        // Updated endpoint for location search
-        const destinationUrl = `${API_CONFIG.baseUrl}/api/v1/locations/auto-complete`;
+        // Updated to use the correct locations endpoint
+        const destinationUrl = `${API_CONFIG.baseUrl}/locations/search`;
         const searchUrl = new URL(destinationUrl);
-        searchUrl.searchParams.append('query', location); // No encoding, URL API handles it
+        searchUrl.searchParams.append('name', location);
         searchUrl.searchParams.append('locale', 'en-us'); // Required parameter
         
         const destResponse = await fetchWithRetry(searchUrl, {
@@ -295,14 +298,14 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         const destData = await destResponse.json();
         console.log('Destination API Response:', destData); // Debug log
         
-        if (!destData?.data || !destData.data.length) {
+        if (!destData || !destData.length) {
             console.log('Empty destination data, trying alternative search');
             // Try with a broader search term
             return await searchDestinationByCountry(location, checkInDate, checkOutDate);
         }
 
         // Extract destination ID from new response structure
-        const destEntry = findBestDestinationMatch(destData.data, location);
+        const destEntry = findBestDestinationMatch(destData, location);
         if (!destEntry) {
             throw new Error(`No suitable destination found for ${location}`);
         }
@@ -310,7 +313,7 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         console.log('Selected destination entry:', destEntry);
         
         // Extract destination ID
-        const destId = destEntry.dest_id;
+        const destId = destEntry.dest_id || destEntry.id;
         
         if (!destId) {
             throw new Error(`Missing destination ID for ${location}`);
@@ -320,16 +323,16 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         
         await delay(API_CONFIG.delay);
 
-        // Updated to correct searchHotels endpoint
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
+        // Updated to use the correct hotels endpoint
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/hotels/search`);
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_id: destId,
             search_type: 'CITY',
-            checkin_date: checkInDate,
-            checkout_date: checkOutDate,
-            adults: '2',
-            room_qty: '1',
+            arrival_date: checkInDate,
+            departure_date: checkOutDate,
+            adults_number: '2',
+            room_number: '1',
             page_number: '1'
         };
 
@@ -362,15 +365,15 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
             throw new Error(`API Error: ${errorMessage}`);
         }
         
-        if (!hotelData?.data || hotelData.data.length === 0) {
+        if (!hotelData?.result || hotelData.result.length === 0) {
             // Fall back to mock data
             console.log(`No hotels found for ${location}, falling back to mock data`);
             return createMockHotelData(location);
         }
 
         return {
-            data: hotelData.data,
-            count: hotelData.data.length
+            data: hotelData.result,
+            count: hotelData.result.length
         };
     } catch (error) {
         console.error('Hotel verification error:', error);
@@ -385,7 +388,7 @@ const findBestDestinationMatch = (destinations, searchTerm) => {
     
     // Filter out hotel-type destinations first, prefer cities
     const cityDestinations = destinations.filter(dest => 
-        dest.dest_type?.toLowerCase() === 'city'
+        dest.dest_type?.toLowerCase() === 'city' || dest.type?.toLowerCase() === 'city'
     );
 
     // Use city destinations if available, otherwise fall back to all destinations
@@ -395,11 +398,12 @@ const findBestDestinationMatch = (destinations, searchTerm) => {
         let score = 0;
         
         // Type priority scoring - prefer cities
-        if (dest.dest_type?.toLowerCase() === 'city') {
+        const destType = dest.dest_type?.toLowerCase() || dest.type?.toLowerCase();
+        if (destType === 'city') {
             score += 500;
-        } else if (dest.dest_type?.toLowerCase() === 'district') {
+        } else if (destType === 'district') {
             score += 300;
-        } else if (dest.dest_type?.toLowerCase() === 'region') {
+        } else if (destType === 'region') {
             score += 200;
         }
 
@@ -421,7 +425,7 @@ const findBestDestinationMatch = (destinations, searchTerm) => {
     scored.sort((a, b) => b.score - a.score);
     console.log('Destination scores:', scored.map(s => ({ 
         name: s.dest.name || s.dest.city_name || s.dest.label, 
-        type: s.dest.dest_type,
+        type: s.dest.dest_type || s.dest.type,
         score: s.score 
     })));
     
@@ -448,9 +452,9 @@ const searchDestinationByCountry = async (location, checkInDate, checkOutDate) =
         console.log(`Trying alternative search with: ${searchLocation}`);
         
         // Use the updated endpoint for location search
-        const destinationUrl = `${API_CONFIG.baseUrl}/api/v1/locations/auto-complete`;
+        const destinationUrl = `${API_CONFIG.baseUrl}/locations/search`;
         const searchUrl = new URL(destinationUrl);
-        searchUrl.searchParams.append('query', searchLocation);
+        searchUrl.searchParams.append('name', searchLocation);
         searchUrl.searchParams.append('locale', 'en-us'); // Required parameter
         
         const destResponse = await fetchWithRetry(searchUrl, {
@@ -465,13 +469,13 @@ const searchDestinationByCountry = async (location, checkInDate, checkOutDate) =
         const locationsData = await destResponse.json();
         console.log('Alternative location search response:', locationsData);
         
-        if (!locationsData?.data || !locationsData.data.length) {
+        if (!locationsData || !locationsData.length) {
             throw new Error(`No alternative destinations found for ${searchLocation}`);
         }
         
         // Find city type destination in updated data structure
-        const cityDest = locationsData.data.find(loc => loc.dest_type === 'city');
-        const destId = cityDest?.dest_id || locationsData.data[0]?.dest_id;
+        const cityDest = locationsData.find(loc => loc.type === 'city' || loc.dest_type === 'city');
+        const destId = cityDest?.id || cityDest?.dest_id || locationsData[0]?.id || locationsData[0]?.dest_id;
         
         if (!destId) {
             throw new Error(`No valid destination ID found for ${searchLocation}`);
@@ -481,16 +485,16 @@ const searchDestinationByCountry = async (location, checkInDate, checkOutDate) =
         
         await delay(API_CONFIG.delay);
         
-        // Use updated searchHotels endpoint
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
+        // Use updated hotels search endpoint
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/hotels/search`);
         const searchParams = {
             ...API_CONFIG.defaultParams,
             dest_id: destId,
             search_type: 'CITY',
-            checkin_date: checkInDate,
-            checkout_date: checkOutDate,
-            adults: '2',
-            room_qty: '1',
+            arrival_date: checkInDate,
+            departure_date: checkOutDate,
+            adults_number: '2',
+            room_number: '1',
             page_number: '1'
         };
 
@@ -511,15 +515,15 @@ const searchDestinationByCountry = async (location, checkInDate, checkOutDate) =
 
         const hotelData = await hotelResponse.json();
         
-        if (!hotelData?.data || hotelData.data.length === 0) {
+        if (!hotelData?.result || hotelData.result.length === 0) {
             // Try to create mock data as final fallback
             return createMockHotelData(location);
         }
         
         // Return in standard format
         return {
-            data: hotelData.data,
-            count: hotelData.data.length
+            data: hotelData.result,
+            count: hotelData.result.length
         };
     } catch (error) {
         console.error('Alternative search error:', error);
@@ -617,7 +621,7 @@ const personalizeContent = async (user) => {
             // Only process if we have hotel data
             if (hotelData?.data?.length > 0) {
                 const firstHotel = hotelData.data[0];
-                console.log(`Selected hotel: ${firstHotel.hotel_name || 'Unknown'}`);
+                console.log(`Selected hotel: ${firstHotel.hotel_name || firstHotel.name || 'Unknown'}`);
                 
                 let hotelPhoto = null;
                 let hotelPrice = null;
@@ -646,18 +650,28 @@ const personalizeContent = async (user) => {
                 // Always have a fallback price
                 if (!hotelPrice) {
                     hotelPrice = {
-                        total_price: firstHotel.price || rec.cost.hotel,
+                        total_price: firstHotel.price || firstHotel.min_total_price || rec.cost.hotel,
                         currency: "USD",
-                        is_estimate: !firstHotel.price
+                        is_estimate: !firstHotel.price && !firstHotel.min_total_price
                     };
                 }
+                
+                // Update the hotel name and address extraction to handle different response formats
+                const hotelName = firstHotel.hotel_name || firstHotel.name || `${rec.city} Hotel`;
+                const hotelAddress = firstHotel.address || firstHotel.city_name || rec.city;
+                const reviewScore = firstHotel.review_score || firstHotel.rating || null;
                 
                 results.push({
                     ...rec,
                     hotels: hotelData,
                     photos: hotelPhoto,
                     price: hotelPrice,
-                    firstHotel: firstHotel
+                    firstHotel: {
+                        ...firstHotel,
+                        hotel_name: hotelName,
+                        address: hotelAddress,
+                        review_score: reviewScore
+                    }
                 });
                 
                 successCount++;
@@ -982,7 +996,7 @@ const showLoading = (isLoading = true) => {
 const fetchHotelPhotos = async (hotelId) => {
     try {
         // Updated to correct endpoint
-        const url = `${API_CONFIG.baseUrl}/api/v1/hotels/details`;
+        const url = `${API_CONFIG.baseUrl}/hotels/get-description`;
         const detailsUrl = new URL(url);
         detailsUrl.searchParams.append('hotel_id', hotelId);
         detailsUrl.searchParams.append('locale', 'en-us');
@@ -998,8 +1012,8 @@ const fetchHotelPhotos = async (hotelId) => {
         
         const data = await response.json();
         
-        // Updated path to photo in response
-        return data?.data?.photos?.[0]?.url_max || null;
+        // Updated path to photo in response - adjust based on actual response structure
+        return data?.photos?.[0] || null;
     } catch (error) {
         console.error('Error fetching hotel photos:', error);
         return null;
@@ -1009,13 +1023,14 @@ const fetchHotelPhotos = async (hotelId) => {
 const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
     try {
         // Updated to correct endpoint
-        const url = `${API_CONFIG.baseUrl}/api/v1/hotels/details`;
+        const url = `${API_CONFIG.baseUrl}/hotels/get-room-list`;
         const detailsUrl = new URL(url);
         detailsUrl.searchParams.append('hotel_id', hotelId);
-        detailsUrl.searchParams.append('checkin_date', checkInDate);
-        detailsUrl.searchParams.append('checkout_date', checkOutDate);
+        detailsUrl.searchParams.append('arrival_date', checkInDate);
+        detailsUrl.searchParams.append('departure_date', checkOutDate);
         detailsUrl.searchParams.append('locale', 'en-us');
         detailsUrl.searchParams.append('currency', 'USD');
+        detailsUrl.searchParams.append('adults_number', '2');
         
         const response = await fetchWithRetry(detailsUrl.toString(), {
             method: 'GET',
@@ -1028,11 +1043,18 @@ const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
         
         const data = await response.json();
         
-        // Updated to match new response format
-        const priceInfo = data?.data?.price || {};
+        // Updated to match new response format - adjust based on actual structure
+        const rooms = data?.rooms || [];
+        const cheapestRoom = rooms.reduce((cheapest, room) => {
+            const price = parseFloat(room?.price || '0');
+            return price > 0 && (price < cheapest.price || cheapest.price === 0) 
+                ? { price, currency: room.currency || 'USD' }
+                : cheapest;
+        }, { price: 0, currency: 'USD' });
+        
         return {
-            total_price: priceInfo.gross || 0,
-            currency: priceInfo.currency || 'USD'
+            total_price: cheapestRoom.price,
+            currency: cheapestRoom.currency
         };
     } catch (error) {
         console.error('Error fetching hotel price:', error);
@@ -1046,15 +1068,15 @@ const searchHotelsByCoordinates = async (latitude, longitude, checkInDate, check
         console.log(`Searching for hotels at coordinates: ${latitude}, ${longitude}`);
         
         // Use the searchHotelsByCoordinates endpoint
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotelsByCoordinates`);
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/hotels/search-by-coordinates`);
         const searchParams = {
             ...API_CONFIG.defaultParams,
             latitude,
             longitude,
-            checkin_date: checkInDate,
-            checkout_date: checkOutDate,
-            adults: '2',
-            room_qty: '1',
+            arrival_date: checkInDate,
+            departure_date: checkOutDate,
+            adults_number: '2',
+            room_number: '1',
             page_number: '1'
         };
 
@@ -1075,13 +1097,13 @@ const searchHotelsByCoordinates = async (latitude, longitude, checkInDate, check
 
         const hotelData = await hotelResponse.json();
         
-        if (!hotelData?.data || hotelData.data.length === 0) {
+        if (!hotelData?.result || hotelData.result.length === 0) {
             throw new Error('No hotels found at these coordinates');
         }
 
         return {
-            data: hotelData.data,
-            count: hotelData.data.length
+            data: hotelData.result,
+            count: hotelData.result.length
         };
     } catch (error) {
         console.error('Coordinate search error:', error);
