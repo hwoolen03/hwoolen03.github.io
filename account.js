@@ -35,6 +35,86 @@ const fetchWithRetry = async (url, options, retries = 3) => {
   }
 };
 
+// Location ID cache to minimize API calls
+const locationIdCache = {};
+
+// New function to get location ID from Booking.com API
+const getLocationIdFromAPI = async (cityName) => {
+    try {
+        // Check cache first
+        if (locationIdCache[cityName]) {
+            console.log(`Using cached location ID for ${cityName}: ${locationIdCache[cityName]}`);
+            return locationIdCache[cityName];
+        }
+        
+        console.log(`Fetching location ID for ${cityName} from API`);
+        const url = `${API_CONFIG.baseUrl}/locations/search`;
+        const searchUrl = new URL(url);
+        
+        searchUrl.searchParams.append('name', cityName);
+        searchUrl.searchParams.append('locale', 'en-us');
+        
+        const response = await fetchWithRetry(searchUrl.toString(), {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to get location ID: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Location search response:', data);
+        
+        if (!data || data.length === 0) {
+            throw new Error(`No location found for ${cityName}`);
+        }
+        
+        // Find the first city-type result (dest_type = "city")
+        const cityResult = data.find(loc => loc.dest_type === "city") || data[0];
+        const locationId = cityResult.dest_id;
+        
+        // Cache the result
+        locationIdCache[cityName] = locationId;
+        
+        console.log(`Found location ID for ${cityName}: ${locationId}`);
+        return locationId;
+        
+    } catch (error) {
+        console.error(`Error getting location ID for ${cityName}:`, error);
+        // Fall back to the helper function
+        return getLocationIdForCity(cityName);
+    }
+};
+
+// Helper function to map city names to location IDs
+const getLocationIdForCity = (cityName) => {
+    // Common city IDs mapping (fallback only)
+    const cityIdMap = {
+        'New York': '-74.00597,40.71427', // Using lat/long for New York
+        'London': '-0.12574,51.50853',    // Using lat/long for London
+        'Paris': '2.3488,48.85341',       // Using lat/long for Paris
+        'Tokyo': '139.69171,35.6895',     // Using lat/long for Tokyo
+        'Chicago': '-87.62979,41.87811',  // Using lat/long for Chicago
+        'Los Angeles': '-118.24368,34.05223',
+        'Dallas': '-96.80667,32.78306',
+        'Manila': '120.9822,14.6042',
+        'Berlin': '13.41053,52.52437',
+        'Bangkok': '100.50144,13.75398',
+        'Mumbai': '72.88261,19.07283',
+        'Sydney': '151.20732,-33.86785'
+    };
+    
+    // If we have a direct mapping, use it
+    if (cityIdMap[cityName]) {
+        return cityIdMap[cityName];
+    }
+    
+    // Otherwise return a fallback (could be improved with a geocoding service)
+    console.log(`No location ID mapping for ${cityName}, using fallback`);
+    return cityName; // Use the name as a fallback search term
+};
+
 // Auth0 Configuration
 let auth0Client;
 let user;
@@ -202,12 +282,16 @@ const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
 // Replace fetchHotelData function
 const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
     try {
-        // Use properties/list endpoint instead of locations/search
+        // Get the proper location ID first
+        const locationId = await getLocationIdFromAPI(cityName);
+        console.log(`Using location ID for ${cityName}: ${locationId}`);
+        
+        // Use properties/list endpoint
         const propertiesUrl = `${API_CONFIG.baseUrl}/properties/list`;
         const searchUrl = new URL(propertiesUrl);
         
         // Set required parameters for properties/list endpoint
-        searchUrl.searchParams.append('location_id', getLocationIdForCity(cityName)); // Using a helper function to get location ID
+        searchUrl.searchParams.append('location_id', locationId);
         searchUrl.searchParams.append('search_type', 'CITY');
         searchUrl.searchParams.append('checkin_date', checkInDate);
         searchUrl.searchParams.append('checkout_date', checkOutDate);
@@ -216,6 +300,8 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         searchUrl.searchParams.append('page_number', '1');
         searchUrl.searchParams.append('locale', 'en-us');
         searchUrl.searchParams.append('currency', 'USD');
+        
+        console.log('Property search URL:', searchUrl.toString());
         
         const response = await fetchWithRetry(searchUrl, {
             method: 'GET',
@@ -245,45 +331,20 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
     }
 };
 
-// Add helper function to map city names to location IDs
-const getLocationIdForCity = (cityName) => {
-    // Common city IDs mapping (you would expand this based on your needs)
-    const cityIdMap = {
-        'New York': '-74.00597,40.71427', // Using lat/long for New York
-        'London': '-0.12574,51.50853',    // Using lat/long for London
-        'Paris': '2.3488,48.85341',       // Using lat/long for Paris
-        'Tokyo': '139.69171,35.6895',     // Using lat/long for Tokyo
-        'Chicago': '-87.62979,41.87811',  // Using lat/long for Chicago
-        'Los Angeles': '-118.24368,34.05223',
-        'Dallas': '-96.80667,32.78306',
-        'Manila': '120.9822,14.6042',
-        'Berlin': '13.41053,52.52437',
-        'Bangkok': '100.50144,13.75398',
-        'Mumbai': '72.88261,19.07283',
-        'Sydney': '151.20732,-33.86785'
-    };
-    
-    // If we have a direct mapping, use it
-    if (cityIdMap[cityName]) {
-        return cityIdMap[cityName];
-    }
-    
-    // Otherwise return a fallback (could be improved with a geocoding service)
-    console.log(`No location ID mapping for ${cityName}, using fallback`);
-    return cityName; // Use the name as a fallback search term
-};
-
 // Update verifyHotelIds function
 const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
     try {
         console.log(`Searching for properties in: ${location}`);
+        
+        // Get the proper location ID first
+        const locationId = await getLocationIdFromAPI(location);
         
         // Use properties/list endpoint
         const propertiesUrl = `${API_CONFIG.baseUrl}/properties/list`;
         const searchUrl = new URL(propertiesUrl);
         
         // Set required parameters
-        searchUrl.searchParams.append('location_id', getLocationIdForCity(location));
+        searchUrl.searchParams.append('location_id', locationId);
         searchUrl.searchParams.append('checkin_date', checkInDate);
         searchUrl.searchParams.append('checkout_date', checkOutDate);
         searchUrl.searchParams.append('adults_number', '2');
@@ -324,52 +385,19 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
     }
 };
 
-// Helper function to try alternative search methods
-const tryCoordinateSearch = async (location, checkInDate, checkOutDate) => {
-    try {
-        // Try to use coordinates if we have them
-        const coordinates = getLocationIdForCity(location);
-        if (coordinates && coordinates.includes(',')) {
-            // Looks like we have coordinates
-            const [longitude, latitude] = coordinates.split(',');
-            
-            console.log(`Trying coordinate search for ${location}: ${latitude}, ${longitude}`);
-            return await searchHotelsByCoordinates(latitude, longitude, checkInDate, checkOutDate);
-        }
-    } catch (error) {
-        console.error('Coordinate search failed:', error);
-    }
-    
-    // Fall back to mock data
-    console.log(`No properties found for ${location}, falling back to mock data`);
-    return createMockHotelData(location);
-};
-
-// Update searchDestinationByCountry to use properties/list
+// Update searchDestinationByCountry to use location IDs
 const searchDestinationByCountry = async (location, checkInDate, checkOutDate) => {
     try {
-        // For cities, try searching with broader location
-        const commonDestinations = {
-            'New York': 'New York, United States',
-            'Los Angeles': 'Los Angeles, United States',
-            'Chicago': 'Chicago, United States',
-            'Dallas': 'Dallas, United States',
-            'Manila': 'Manila, Philippines',
-            'London': 'London, United Kingdom',
-            'Paris': 'Paris, France',
-            'Tokyo': 'Tokyo, Japan'
-            // Add more as needed
-        };
-        
-        const searchLocation = commonDestinations[location] || location;
-        console.log(`Trying alternative search with: ${searchLocation}`);
+        // Use location_id from API
+        const locationId = await getLocationIdFromAPI(location);
+        console.log(`Using location ID for alternate search: ${locationId}`);
         
         // Use properties/list endpoint
         const propertiesUrl = `${API_CONFIG.baseUrl}/properties/list`;
         const searchUrl = new URL(propertiesUrl);
         
-        // Set required parameters - just use the name as search term
-        searchUrl.searchParams.append('location_id', searchLocation);
+        // Set required parameters
+        searchUrl.searchParams.append('location_id', locationId);
         searchUrl.searchParams.append('checkin_date', checkInDate);
         searchUrl.searchParams.append('checkout_date', checkOutDate);
         searchUrl.searchParams.append('adults_number', '2');
@@ -456,6 +484,62 @@ const createMockHotelData = (location) => {
         data: hotels,
         is_mock: true
     };
+};
+
+// Update tryCoordinateSearch to try using the API's location ID first
+const tryCoordinateSearch = async (location, checkInDate, checkOutDate) => {
+    try {
+        // Try to get location ID from API first
+        const locationId = await getLocationIdFromAPI(location);
+        
+        if (locationId) {
+            console.log(`Found location ID for ${location}: ${locationId}`);
+            
+            // Use the location ID directly
+            const propertiesUrl = `${API_CONFIG.baseUrl}/properties/list`;
+            const searchUrl = new URL(propertiesUrl);
+            
+            searchUrl.searchParams.append('location_id', locationId);
+            searchUrl.searchParams.append('checkin_date', checkInDate);
+            searchUrl.searchParams.append('checkout_date', checkOutDate);
+            searchUrl.searchParams.append('adults_number', '2');
+            searchUrl.searchParams.append('room_number', '1');
+            searchUrl.searchParams.append('page_number', '1');
+            searchUrl.searchParams.append('locale', 'en-us');
+            searchUrl.searchParams.append('currency', 'USD');
+            
+            const response = await fetchWithRetry(searchUrl, {
+                method: 'GET',
+                headers: API_HEADERS
+            });
+
+            if (response.ok) {
+                const propertyData = await response.json();
+                if (propertyData?.data?.length > 0) {
+                    return {
+                        data: propertyData.data,
+                        count: propertyData.data.length
+                    };
+                }
+            }
+        }
+        
+        // Fall back to coordinate search if we have coordinates
+        const coordinates = getLocationIdForCity(location);
+        if (coordinates && coordinates.includes(',')) {
+            // Looks like we have coordinates
+            const [longitude, latitude] = coordinates.split(',');
+            
+            console.log(`Trying coordinate search for ${location}: ${latitude}, ${longitude}`);
+            return await searchHotelsByCoordinates(latitude, longitude, checkInDate, checkOutDate);
+        }
+    } catch (error) {
+        console.error('Coordinate search failed:', error);
+    }
+    
+    // Fall back to mock data
+    console.log(`No properties found for ${location}, falling back to mock data`);
+    return createMockHotelData(location);
 };
 
 // Update personalizeContent function to handle errors better
