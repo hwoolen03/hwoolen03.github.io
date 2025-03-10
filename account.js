@@ -1,11 +1,11 @@
 // API Headers and Configuration
 const API_HEADERS = {
     'x-rapidapi-key': '223e1d4481mshc763834ea442154p1feb5cjsnf57de44ce22c',
-    'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
+    'x-rapidapi-host': 'booking-com.p.rapidapi.com'
 };
 
 const API_CONFIG = {
-    baseUrl: 'https://booking-com15.p.rapidapi.com',
+    baseUrl: 'https://booking-com.p.rapidapi.com',
     delay: 1000,
     defaultParams: {
         currency_code: 'USD',
@@ -48,7 +48,7 @@ const getLocationIdFromAPI = async (cityName) => {
         }
         
         console.log(`Fetching location ID for ${cityName} from API`);
-        const url = `${API_CONFIG.baseUrl}/locations/search`;
+        const url = `${API_CONFIG.baseUrl}/v1/hotels/locations`;
         const searchUrl = new URL(url);
         
         searchUrl.searchParams.append('name', cityName);
@@ -287,16 +287,16 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         console.log(`Using location ID for ${cityName}: ${locationId}`);
         
         // Use search endpoint with the correct parameters
-        const propertiesUrl = `${API_CONFIG.baseUrl}/search`;
+        const propertiesUrl = `${API_CONFIG.baseUrl}/v1/hotels/search`;
         const searchUrl = new URL(propertiesUrl);
         
         // Set required parameters for search endpoint
         searchUrl.searchParams.append('dest_id', locationId);
-        searchUrl.searchParams.append('search_type', 'CITY');
-        searchUrl.searchParams.append('arrival_date', checkInDate);
-        searchUrl.searchParams.append('departure_date', checkOutDate);
-        searchUrl.searchParams.append('adults', '2');
-        searchUrl.searchParams.append('room_qty', '1');
+        searchUrl.searchParams.append('dest_type', 'city');
+        searchUrl.searchParams.append('checkin_date', checkInDate);
+        searchUrl.searchParams.append('checkout_date', checkOutDate);
+        searchUrl.searchParams.append('adults_number', '2');
+        searchUrl.searchParams.append('room_number', '1');
         searchUrl.searchParams.append('page_number', '1');
         searchUrl.searchParams.append('locale', 'en-us');
         searchUrl.searchParams.append('currency', 'USD');
@@ -315,13 +315,13 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         const propertyData = await response.json();
         console.log('Property API Response:', propertyData); // Debug log
         
-        if (!propertyData || !propertyData.results || propertyData.results.length === 0) {
+        if (!propertyData || !propertyData.result || propertyData.result.length === 0) {
             throw new Error(`No properties found for ${cityName}`);
         }
         
         return {
-            data: propertyData.results,
-            count: propertyData.results.length
+            data: propertyData.result,
+            count: propertyData.result.length
         };
 
     } catch (error) {
@@ -340,15 +340,16 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         const locationId = await getLocationIdFromAPI(location);
         
         // Use search endpoint with correct parameters
-        const propertiesUrl = `${API_CONFIG.baseUrl}/search`;
+        const propertiesUrl = `${API_CONFIG.baseUrl}/v1/hotels/search`;
         const searchUrl = new URL(propertiesUrl);
         
         // Set required parameters
         searchUrl.searchParams.append('dest_id', locationId);
-        searchUrl.searchParams.append('arrival_date', checkInDate);
-        searchUrl.searchParams.append('departure_date', checkOutDate);
-        searchUrl.searchParams.append('adults', '2');
-        searchUrl.searchParams.append('room_qty', '1');
+        searchUrl.searchParams.append('dest_type', 'city');
+        searchUrl.searchParams.append('checkin_date', checkInDate);
+        searchUrl.searchParams.append('checkout_date', checkOutDate);
+        searchUrl.searchParams.append('adults_number', '2');
+        searchUrl.searchParams.append('room_number', '1');
         searchUrl.searchParams.append('page_number', '1');
         searchUrl.searchParams.append('locale', 'en-us');
         searchUrl.searchParams.append('currency', 'USD');
@@ -368,14 +369,14 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         const propertyData = await response.json();
         console.log('Property API Response:', propertyData); // Debug log
         
-        if (!propertyData || !propertyData.results || propertyData.results.length === 0) {
+        if (!propertyData || !propertyData.result || propertyData.result.length === 0) {
             // Fall back to coordinate search if available, or mock data
             return await tryCoordinateSearch(location, checkInDate, checkOutDate);
         }
         
         return {
-            data: propertyData.results,
-            count: propertyData.results.length
+            data: propertyData.result,
+            count: propertyData.result.length
         };
         
     } catch (error) {
@@ -393,15 +394,16 @@ const searchDestinationByCountry = async (location, checkInDate, checkOutDate) =
         console.log(`Using location ID for alternate search: ${locationId}`);
         
         // Use search endpoint with correct parameters
-        const propertiesUrl = `${API_CONFIG.baseUrl}/search`;
+        const propertiesUrl = `${API_CONFIG.baseUrl}/v1/hotels/search`;
         const searchUrl = new URL(propertiesUrl);
         
         // Set required parameters
         searchUrl.searchParams.append('dest_id', locationId);
-        searchUrl.searchParams.append('arrival_date', checkInDate);
-        searchUrl.searchParams.append('departure_date', checkOutDate);
-        searchUrl.searchParams.append('adults', '2');
-        searchUrl.searchParams.append('room_qty', '1');
+        searchUrl.searchParams.append('dest_type', 'city');
+        searchUrl.searchParams.append('checkin_date', checkInDate);
+        searchUrl.searchParams.append('checkout_date', checkOutDate);
+        searchUrl.searchParams.append('adults_number', '2');
+        searchUrl.searchParams.append('room_number', '1');
         searchUrl.searchParams.append('page_number', '1');
         searchUrl.searchParams.append('locale', 'en-us');
         searchUrl.searchParams.append('currency', 'USD');
@@ -419,15 +421,15 @@ const searchDestinationByCountry = async (location, checkInDate, checkOutDate) =
 
         const propertyData = await response.json();
         
-        if (!propertyData || !propertyData.results || propertyData.results.length === 0) {
+        if (!propertyData || !propertyData.result || propertyData.result.length === 0) {
             // Try to create mock data as final fallback
             return createMockHotelData(location);
         }
         
         // Return in standard format
         return {
-            data: propertyData.results,
-            count: propertyData.results.length
+            data: propertyData.result,
+            count: propertyData.result.length
         };
     } catch (error) {
         console.error('Alternative search error:', error);
@@ -496,14 +498,15 @@ const tryCoordinateSearch = async (location, checkInDate, checkOutDate) => {
             console.log(`Found location ID for ${location}: ${locationId}`);
             
             // Use the location ID directly with search endpoint
-            const propertiesUrl = `${API_CONFIG.baseUrl}/search`;
+            const propertiesUrl = `${API_CONFIG.baseUrl}/v1/hotels/search`;
             const searchUrl = new URL(propertiesUrl);
             
             searchUrl.searchParams.append('dest_id', locationId);
-            searchUrl.searchParams.append('arrival_date', checkInDate);
-            searchUrl.searchParams.append('departure_date', checkOutDate);
-            searchUrl.searchParams.append('adults', '2');
-            searchUrl.searchParams.append('room_qty', '1');
+            searchUrl.searchParams.append('dest_type', 'city');
+            searchUrl.searchParams.append('checkin_date', checkInDate);
+            searchUrl.searchParams.append('checkout_date', checkOutDate);
+            searchUrl.searchParams.append('adults_number', '2');
+            searchUrl.searchParams.append('room_number', '1');
             searchUrl.searchParams.append('page_number', '1');
             searchUrl.searchParams.append('locale', 'en-us');
             searchUrl.searchParams.append('currency', 'USD');
@@ -515,10 +518,10 @@ const tryCoordinateSearch = async (location, checkInDate, checkOutDate) => {
 
             if (response.ok) {
                 const propertyData = await response.json();
-                if (propertyData?.results?.length > 0) {
+                if (propertyData?.result?.length > 0) {
                     return {
-                        data: propertyData.results,
-                        count: propertyData.results.length
+                        data: propertyData.result,
+                        count: propertyData.result.length
                     };
                 }
             }
@@ -966,7 +969,7 @@ const showLoading = (isLoading = true) => {
 const fetchHotelPhotos = async (hotelId) => {
     try {
         // Use hotel details endpoint for photos
-        const url = `${API_CONFIG.baseUrl}/hotel`;
+        const url = `${API_CONFIG.baseUrl}/v1/hotels/data`;
         const detailsUrl = new URL(url);
         detailsUrl.searchParams.append('hotel_id', hotelId);
         detailsUrl.searchParams.append('locale', 'en-us');
@@ -983,8 +986,8 @@ const fetchHotelPhotos = async (hotelId) => {
         const data = await response.json();
         
         // Extract photo URL from the response data structure
-        const photoUrl = data?.hotel?.photos?.[0]?.url_max ||
-                        data?.hotel?.main_photo_url ||
+        const photoUrl = data?.photos?.[0]?.url_max ||
+                        data?.main_photo_url ||
                         null;
         
         return photoUrl;
@@ -997,13 +1000,13 @@ const fetchHotelPhotos = async (hotelId) => {
 const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
     try {
         // Use hotel search endpoint with specific hotel ID to get price
-        const url = `${API_CONFIG.baseUrl}/search`;
+        const url = `${API_CONFIG.baseUrl}/v1/hotels/search`;
         const detailsUrl = new URL(url);
         detailsUrl.searchParams.append('hotel_id', hotelId);
-        detailsUrl.searchParams.append('arrival_date', checkInDate);
-        detailsUrl.searchParams.append('departure_date', checkOutDate);
-        detailsUrl.searchParams.append('adults', '2');
-        detailsUrl.searchParams.append('room_qty', '1');
+        detailsUrl.searchParams.append('checkin_date', checkInDate);
+        detailsUrl.searchParams.append('checkout_date', checkOutDate);
+        detailsUrl.searchParams.append('adults_number', '2');
+        detailsUrl.searchParams.append('room_number', '1');
         detailsUrl.searchParams.append('locale', 'en-us');
         detailsUrl.searchParams.append('currency', 'USD');
         
@@ -1019,11 +1022,11 @@ const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
         const data = await response.json();
         
         // Extract price information from response
-        if (data?.results?.[0]) {
+        if (data?.result?.[0]) {
             return {
-                total_price: data.results[0].price_breakdown?.gross_price?.value || 
-                             data.results[0].min_total_price || 0,
-                currency: data.results[0].price_breakdown?.currency || 'USD'
+                total_price: data.result[0].price_breakdown?.gross_price || 
+                             data.result[0].min_total_price || 0,
+                currency: data.result[0].price_breakdown?.currency || 'USD'
             };
         }
         
@@ -1040,18 +1043,16 @@ const searchHotelsByCoordinates = async (latitude, longitude, checkInDate, check
         console.log(`Searching for hotels at coordinates: ${latitude}, ${longitude}`);
         
         // Use the search endpoint with coordinates
-        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/search`);
-        
-        // Format coordinates for the API (latitude,longitude)
-        const coordsString = `${latitude},${longitude}`;
+        const hotelUrl = new URL(`${API_CONFIG.baseUrl}/v1/hotels/search-by-coordinates`);
         
         const searchParams = {
             ...API_CONFIG.defaultParams,
-            coordinates: coordsString,
-            arrival_date: checkInDate,
-            departure_date: checkOutDate,
-            adults: '2',
-            room_qty: '1',
+            latitude: latitude,
+            longitude: longitude,
+            checkin_date: checkInDate,
+            checkout_date: checkOutDate,
+            adults_number: '2',
+            room_number: '1',
             page_number: '1',
             currency: 'USD'
         };
@@ -1073,13 +1074,13 @@ const searchHotelsByCoordinates = async (latitude, longitude, checkInDate, check
 
         const hotelData = await hotelResponse.json();
         
-        if (!hotelData?.results || hotelData.results.length === 0) {
+        if (!hotelData?.result || hotelData.result.length === 0) {
             throw new Error('No hotels found at these coordinates');
         }
 
         return {
-            data: hotelData.results,
-            count: hotelData.results.length
+            data: hotelData.result,
+            count: hotelData.result.length
         };
     } catch (error) {
         console.error('Coordinate search error:', error);
