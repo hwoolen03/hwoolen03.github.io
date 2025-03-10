@@ -1,7 +1,7 @@
 // API Headers and Configuration
 const API_HEADERS = {
-    'x-rapidapi-key': '223e1d4481mshc763834ea442154p1feb5cjsnf57de44ce22c',
-    'x-rapidapi-host': 'booking-com.p.rapidapi.com'
+    'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3',
+    'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
 };
 
 const API_CONFIG = {
