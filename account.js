@@ -15,30 +15,113 @@ const API_CONFIG = {
     }
 };
 
+// Enhanced API rate limiting configuration
+const API_RATE_LIMIT = {
+    requestsPerMinute: 25,     // Maximum requests per minute (adjust based on API limits)
+    timeWindow: 60000,         // Time window in milliseconds (1 minute)
+    requestCount: 0,           // Current request count
+    windowStartTime: Date.now() // Time when the current window started
+};
+
 // Add this at the top with other constants
-const API_DELAY = 1000; // Delay between API calls in milliseconds
+const API_DELAY = 1000; // Base delay between API calls in milliseconds
 
-// Add this utility function for rate limiting
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+// Add this utility function for rate limiting with enhanced logging
+const delay = async (ms) => {
+    console.log(`Waiting for ${ms}ms before next API call`);
+    return new Promise(resolve => setTimeout(resolve, ms));
+};
 
-// Add this utility function for API retry mechanism
+// Enhanced utility function for API retry mechanism with exponential backoff
 const fetchWithRetry = async (url, options, retries = 3) => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const response = await fetch(url, options);
-      return response;
-    } catch (err) {
-      console.log(`Retry ${i+1}/${retries} failed for ${url}`);
-      if (i === retries - 1) throw err;
-      await delay(2000); // Longer delay for retries
+    // Reset rate limit window if needed
+    if (Date.now() - API_RATE_LIMIT.windowStartTime > API_RATE_LIMIT.timeWindow) {
+        console.log('Resetting rate limit window');
+        API_RATE_LIMIT.requestCount = 0;
+        API_RATE_LIMIT.windowStartTime = Date.now();
     }
-  }
+    
+    // Check if we're about to exceed rate limit
+    if (API_RATE_LIMIT.requestCount >= API_RATE_LIMIT.requestsPerMinute) {
+        const waitTime = API_RATE_LIMIT.timeWindow - (Date.now() - API_RATE_LIMIT.windowStartTime) + 1000;
+        console.warn(`Rate limit approached (${API_RATE_LIMIT.requestCount} requests). Waiting ${waitTime}ms before continuing.`);
+        await delay(waitTime > 0 ? waitTime : 2000);
+        
+        // Reset after waiting
+        API_RATE_LIMIT.requestCount = 0;
+        API_RATE_LIMIT.windowStartTime = Date.now();
+    }
+    
+    // Track this request
+    API_RATE_LIMIT.requestCount++;
+    
+    let lastError;
+    let backoffDelay = 1000; // Start with 1 second
+    
+    for (let i = 0; i < retries; i++) {
+        try {
+            console.log(`API request to: ${url.toString().substring(0, 100)}...`);
+            console.log(`Request attempt ${i+1}/${retries}`);
+            
+            const response = await fetch(url, options);
+            
+            // Handle different response status codes
+            if (response.status === 200) {
+                return response;
+            } else if (response.status === 403) {
+                console.error(`403 Forbidden: API key may be invalid or lacks permission. URL: ${url.toString().substring(0, 100)}...`);
+                validateApiKey();
+                throw new Error(`API access forbidden (403). Please check API key validity and permissions.`);
+            } else if (response.status === 429) {
+                // Too Many Requests - use exponential backoff
+                console.warn(`429 Too Many Requests received. Implementing exponential backoff.`);
+                await delay(backoffDelay);
+                backoffDelay *= 2; // Double the delay for next retry
+                continue; // Try again after waiting
+            } else if (response.status === 404) {
+                console.warn(`404 Not Found for URL: ${url.toString().substring(0, 100)}...`);
+                return response; // Return the 404 response for handling by the calling function
+            } else {
+                console.warn(`Unexpected status: ${response.status} for URL: ${url.toString().substring(0, 100)}...`);
+                // For other status codes, throw an error to trigger retry
+                throw new Error(`API returned status ${response.status}`);
+            }
+        } catch (err) {
+            lastError = err;
+            console.log(`Attempt ${i+1}/${retries} failed: ${err.message}`);
+            
+            if (i === retries - 1) {
+                console.error(`All ${retries} attempts failed for ${url.toString().substring(0, 100)}...`);
+                throw err;
+            }
+            
+            // Exponential backoff with jitter for network errors
+            const jitter = Math.random() * 500;
+            const waitTime = backoffDelay + jitter;
+            console.log(`Waiting ${waitTime}ms before retry ${i+2}`);
+            await delay(waitTime);
+            backoffDelay *= 2; // Double the delay for next retry
+        }
+    }
+    
+    throw lastError;
+};
+
+// Function to validate API key and log diagnostic information
+const validateApiKey = () => {
+    console.log(`Current API key: ${API_HEADERS['x-rapidapi-key'].substring(0, 8)}...`);
+    console.log(`API host: ${API_HEADERS['x-rapidapi-host']}`);
+    
+    // Check if key appears valid (basic format check)
+    if (!API_HEADERS['x-rapidapi-key'] || API_HEADERS['x-rapidapi-key'].length < 20) {
+        console.error('API key appears to be invalid or missing');
+    }
 };
 
 // Location ID cache to minimize API calls
 const locationIdCache = {};
 
-// New function to get location ID from Booking.com API
+// Enhanced function to get location ID from Booking.com API with better error handling
 const getLocationIdFromAPI = async (cityName) => {
     try {
         // Check cache first
@@ -60,6 +143,10 @@ const getLocationIdFromAPI = async (cityName) => {
         });
         
         if (!response.ok) {
+            if (response.status === 403) {
+                console.error('Access forbidden when fetching location ID. Check API permissions.');
+                throw new Error(`API access denied for location search (403)`);
+            }
             throw new Error(`Failed to get location ID: ${response.status}`);
         }
         
@@ -968,6 +1055,12 @@ const showLoading = (isLoading = true) => {
 // Add missing fetchHotelPhotos and fetchHotelPrice functions
 const fetchHotelPhotos = async (hotelId) => {
     try {
+        // Validate hotel ID first
+        if (!isValidHotelId(hotelId)) {
+            console.warn(`Invalid hotel ID skipped: ${hotelId}`);
+            return null;
+        }
+        
         // Use hotel details endpoint for photos
         const url = `${API_CONFIG.baseUrl}/v1/hotels/data`;
         const detailsUrl = new URL(url);
@@ -980,6 +1073,10 @@ const fetchHotelPhotos = async (hotelId) => {
         });
         
         if (!response.ok) {
+            if (response.status === 403) {
+                console.error(`403 Forbidden: No access to hotel data for ID: ${hotelId}`);
+                return null;
+            }
             throw new Error(`Failed to fetch property details: ${response.status}`);
         }
         
@@ -999,6 +1096,12 @@ const fetchHotelPhotos = async (hotelId) => {
 
 const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
     try {
+        // Validate hotel ID first
+        if (!isValidHotelId(hotelId)) {
+            console.warn(`Invalid hotel ID for price lookup: ${hotelId}`);
+            throw new Error('Invalid hotel ID');
+        }
+        
         // Use hotel search endpoint with specific hotel ID to get price
         const url = `${API_CONFIG.baseUrl}/v1/hotels/search`;
         const detailsUrl = new URL(url);
@@ -1016,6 +1119,10 @@ const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
         });
         
         if (!response.ok) {
+            if (response.status === 403) {
+                console.error(`403 Forbidden: No access to pricing data for hotel ID: ${hotelId}`);
+                throw new Error('API access denied for pricing data');
+            }
             throw new Error(`Failed to fetch property price: ${response.status}`);
         }
         
