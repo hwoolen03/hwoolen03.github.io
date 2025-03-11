@@ -1021,33 +1021,38 @@ const setupEventListeners = () => {
             }
             
             // Display results using template literals properly
-            document.getElementById('results').innerHTML = results.map(result => `
-                <div class="destination-card">
-                    <h3>${result.city}</h3>
-                    <p>Estimated Total: $${result.cost.total}</p>
-                    <div class="price-breakdown">
-                        <span>✈️ $${result.cost.flight}</span>
-                        <span>🏨 $${result.cost.hotel}${result.cost.is_real_price ? ' (actual)' : ' (est)'}</span>
+            const resultsElement = document.getElementById('results');
+            if (resultsElement) {
+                resultsElement.innerHTML = results.map(result => `
+                    <div class="destination-card">
+                        <h3>${result.city}</h3>
+                        <p>Estimated Total: $${result.cost.total}</p>
+                        <div class="price-breakdown">
+                            <span>✈️ $${result.cost.flight}</span>
+                            <span>🏨 $${result.cost.hotel}${result.cost.is_real_price ? ' (actual)' : ' (est)'}</span>
+                        </div>
+                        
+                        ${result.firstHotel ? `
+                        <div class="hotel-result">
+                            <h4>${result.firstHotel.hotel_name || 'Hotel'}</h4>
+                            <p>${result.firstHotel.address || ''}</p>
+                            ${result.firstHotel.review_score ? 
+                                `<p>Rating: ${result.firstHotel.review_score}/10</p>` : 
+                                ''}
+                            ${result.cost.is_real_price ? 
+                                `<p class="hotel-price">$${result.cost.hotel} (verified price)</p>` : 
+                                `<p class="hotel-price">$${result.cost.hotel} (estimated)</p>`}
+                            ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo" class="hotel-photo"/>` : ''}
+                        </div>
+                        ` : ''}
+                        
+                        ${result.error ? `<p class="error">${result.error}</p>` : ''}
+                        ${result.hotels?.is_mock ? `<p class="note">Note: Using estimated hotel data</p>` : ''}
                     </div>
-                    
-                    ${result.firstHotel ? `
-                    <div class="hotel-result">
-                        <h4>${result.firstHotel.hotel_name || 'Hotel'}</h4>
-                        <p>${result.firstHotel.address || ''}</p>
-                        ${result.firstHotel.review_score ? 
-                            `<p>Rating: ${result.firstHotel.review_score}/10</p>` : 
-                            ''}
-                        ${result.cost.is_real_price ? 
-                            `<p class="hotel-price">$${result.cost.hotel} (verified price)</p>` : 
-                            `<p class="hotel-price">$${result.cost.hotel} (estimated)</p>`}
-                        ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo" class="hotel-photo"/>` : ''}
-                    </div>
-                    ` : ''}
-                    
-                    ${result.error ? `<p class="error">${result.error}</p>` : ''}
-                    ${result.hotels?.is_mock ? `<p class="note">Note: Using estimated hotel data</p>` : ''}
-                </div>
-            `).join('');
+                `).join('');
+            } else {
+                console.error('Results element not found in the DOM');
+            }
             
         } catch (error) {
             showError(error.message || "An unknown error occurred");
@@ -1058,6 +1063,37 @@ const setupEventListeners = () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    if (!document.getElementById('errorMessage')) {
+        const errorDiv = document.createElement('div');
+        errorDiv.id = 'errorMessage';
+        errorDiv.style.display = 'none';
+        errorDiv.style.color = 'red';
+        errorDiv.style.padding = '10px';
+        errorDiv.style.margin = '10px 0';
+        errorDiv.style.backgroundColor = '#ffeeee';
+        errorDiv.style.border = '1px solid red';
+        errorDiv.style.borderRadius = '5px';
+        document.body.insertBefore(errorDiv, document.body.firstChild);
+    }
+    
+    if (!document.getElementById('loader')) {
+        const loaderDiv = document.createElement('div');
+        loaderDiv.id = 'loader';
+        loaderDiv.style.display = 'none';
+        loaderDiv.innerHTML = 'Loading...';
+        loaderDiv.style.textAlign = 'center';
+        loaderDiv.style.padding = '20px';
+        document.body.appendChild(loaderDiv);
+    }
+    
+    if (!document.getElementById('results')) {
+        const resultsDiv = document.createElement('div');
+        resultsDiv.id = 'results';
+        resultsDiv.style.display = 'none';
+        document.body.appendChild(resultsDiv);
+    }
+    
+    // Initialize the application
     initializeApp().then(() => {
         if (window.performance?.navigation?.type === 2) {
             sessionStorage.removeItem('auth_state');
