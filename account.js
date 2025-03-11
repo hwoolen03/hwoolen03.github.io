@@ -770,8 +770,8 @@ const personalizeContent = async (user) => {
                         photoUrl = await fetchHotelPhotos(firstHotel.hotel_id);
                     }
                     
-                    // Add to results with hotel info
-                    results.push({
+                    // Create result with initial cost estimate
+                    const resultWithHotel = {
                         ...rec,
                         hotels: hotels,
                         firstHotel: {
@@ -781,7 +781,17 @@ const personalizeContent = async (user) => {
                             review_score: reviewScore
                         },
                         photos: photoUrl
-                    });
+                    };
+                    
+                    // Try to get real hotel price and update the cost
+                    resultWithHotel.cost = await integrateRealHotelPrices(
+                        resultWithHotel, 
+                        inputs.checkInDate, 
+                        inputs.checkOutDate
+                    );
+                    
+                    // Add to results with hotel info
+                    results.push(resultWithHotel);
                     
                     successCount++;
                 } else {
@@ -1011,7 +1021,7 @@ const setupEventListeners = () => {
                     <p>Estimated Total: $${result.cost.total}</p>
                     <div class="price-breakdown">
                         <span>✈️ $${result.cost.flight}</span>
-                        <span>🏨 $${result.cost.hotel}</span>
+                        <span>🏨 $${result.cost.hotel}${result.cost.is_real_price ? ' (actual)' : ' (est)'}</span>
                     </div>
                     
                     ${result.firstHotel ? `
@@ -1021,9 +1031,9 @@ const setupEventListeners = () => {
                         ${result.firstHotel.review_score ? 
                             `<p>Rating: ${result.firstHotel.review_score}/10</p>` : 
                             ''}
-                        ${result.price?.total_price ? 
-                            `<p class="hotel-price">$${result.price.total_price} ${result.price.is_estimate || result.price.is_mock ? '(estimated)' : ''}</p>` : 
-                            ''}
+                        ${result.cost.is_real_price ? 
+                            `<p class="hotel-price">$${result.cost.hotel} (verified price)</p>` : 
+                            `<p class="hotel-price">$${result.cost.hotel} (estimated)</p>`}
                         ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo" class="hotel-photo"/>` : ''}
                     </div>
                     ` : ''}
@@ -1259,6 +1269,239 @@ const isValidHotelId = (hotelId) => {
     // Basic validation - ensure the ID isn't empty and has reasonable length
     return idStr.length > 0 && idStr.length < 100;
 };
+
+/**
+ * Process hotel search response to standardize format
+ * @param {Object} apiResponse - The raw API response
+ * @param {string} cityName - The city name for this search
+ * @param {boolean} isMock - Whether this is mock data
+ * @returns {Object} Standardized hotel data response
+ */
+const processHotelSearchResponse = (apiResponse, cityName, isMock = false) => {
+    try {
+        console.log(`Processing hotel data for ${cityName}`);
+        
+        // Handle different response formats
+        let hotelData = [];
+        
+        if (apiResponse?.data?.hotels && Array.isArray(apiResponse.data.hotels)) {
+            console.log(`Found ${apiResponse.data.hotels.length} hotels in main response format`);
+            hotelData = apiResponse.data.hotels;
+        } else if (apiResponse?.data && Array.isArray(apiResponse.data)) {
+            console.log(`Found ${apiResponse.data.length} hotels in alternate response format`);
+            hotelData = apiResponse.data;
+        } else {
+            console.warn(`Unexpected hotel data format for ${cityName}, response structure:`, 
+                         Object.keys(apiResponse || {}).join(', '));
+            return { data: [], count: 0, is_mock: true, error: 'Invalid data format' };
+        }
+        
+        // Standardize and clean hotel objects
+        const processedHotels = hotelData.map(hotel => {
+            return {
+                hotel_id: hotel.hotel_id || `mock-${cityName}-${Math.random().toString(36).substring(2, 7)}`,
+                hotel_name: hotel.name || hotel.hotel_name || `${cityName} Hotel`,
+                address: hotel.address?.address_line1 || hotel.address || `${cityName}, Unknown Address`,
+                review_score: hotel.review_score || hotel.rating || (Math.random() * 2 + 7).toFixed(1),
+                price: hotel.price?.rate || hotel.price || Math.floor(Math.random() * 100) + 100,
+                photo_url: hotel.photo?.main?.url_max || hotel.main_photo_url || null
+            };
+        });
+        
+        return {
+            data: processedHotels,
+            count: processedHotels.length,
+            is_mock: isMock
+        };
+    } catch (error) {
+        console.error(`Error processing hotel data for ${cityName}:`, error);
+        return { data: [], count: 0, is_mock: true, error: error.message };
+    }
+};
+
+// Add this function to fetch and integrate real hotel prices
+const integrateRealHotelPrices = async (result, checkInDate, checkOutDate) => {
+    try {
+        if (result.firstHotel && result.firstHotel.hotel_id) {
+            // Try to get actual price from API
+            const priceData = await fetchHotelPrice(result.firstHotel.hotel_id, checkInDate, checkOutDate);
+            
+            if (priceData && priceData.total_price) {
+                console.log(`Got real price for ${result.city}: $${priceData.total_price}`);
+                
+                // Update the cost breakdown with real hotel price
+                const realHotelPrice = Math.round(priceData.total_price);
+                const updatedTotal = result.cost.flight + realHotelPrice;
+                
+                // Return updated cost object
+                return {
+                    flight: result.cost.flight,
+                    hotel: realHotelPrice,
+                    total: updatedTotal,
+                    is_real_price: true
+                };
+            }
+        }
+        return result.cost; // Return original cost if we couldn't get real price
+    } catch (error) {
+        console.warn(`Couldn't get real hotel price for ${result.city}:`, error);
+        return result.cost;
+    }
+};
+
+// Then modify the personalizeContent function to use real prices
+const personalizeContent = async (user) => {
+    try {
+        // Get input values from the form
+        const inputs = {
+            checkInDate: document.getElementById('holidayDate').value,
+            checkOutDate: document.getElementById('returnDate').value,
+            departureLocation: document.getElementById('departureLocation').value.toUpperCase(),
+            budget: parseInt(document.getElementById('budget').value) || 1500
+        };
+        
+        // Validate inputs
+        validateDates(inputs.checkInDate, inputs.checkOutDate);
+        
+        // Find destinations based on budget and dates
+        const recommendations = TravelPlanner.findDestinations(
+            inputs.budget,
+            inputs.checkInDate,
+            inputs.checkOutDate,
+            inputs.departureLocation
+        );
+        
+        // Process each recommendation to add hotel data
+        const results = [];
+        let successCount = 0;
+        
+        for (const rec of recommendations) {
+            try {
+                console.log(`Processing recommendation for ${rec.city}`);
+                
+                // Fetch hotels for this destination
+                const hotels = await fetchHotelData(
+                    rec.city,
+                    inputs.budget * 0.6, // Allocate 60% of budget for hotel
+                    inputs.checkInDate,
+                    inputs.checkOutDate
+                );
+                
+                if (hotels && hotels.data && hotels.data.length > 0) {
+                    const firstHotel = hotels.data[0];
+                    
+                    // Extract hotel details
+                    const hotelName = firstHotel.hotel_name || 'Hotel';
+                    const hotelAddress = firstHotel.address || 'Address unavailable';
+                    const reviewScore = firstHotel.review_score || 'N/A';
+                    
+                    // Try to get hotel photo
+                    let photoUrl = null;
+                    if (firstHotel.hotel_id) {
+                        photoUrl = await fetchHotelPhotos(firstHotel.hotel_id);
+                    }
+                    
+                    // Create result with initial cost estimate
+                    const resultWithHotel = {
+                        ...rec,
+                        hotels: hotels,
+                        firstHotel: {
+                            ...firstHotel,
+                            hotel_name: hotelName,
+                            address: hotelAddress,
+                            review_score: reviewScore
+                        },
+                        photos: photoUrl
+                    };
+                    
+                    // Try to get real hotel price and update the cost
+                    resultWithHotel.cost = await integrateRealHotelPrices(
+                        resultWithHotel, 
+                        inputs.checkInDate, 
+                        inputs.checkOutDate
+                    );
+                    
+                    // Add to results with hotel info
+                    results.push(resultWithHotel);
+                    
+                    successCount++;
+                } else {
+                    // Should not reach here with our improved code
+                    results.push({
+                        ...rec,
+                        hotels: null,
+                        error: 'No hotels found'
+                    });
+                }
+                
+            } catch (error) {
+                console.error(`Error processing ${rec.city}:`, error);
+                // Add city to results with error info
+                results.push({
+                    ...rec,
+                    error: error.message,
+                    hotels: {
+                        data: [],
+                        is_mock: true
+                    }
+                });
+            }
+            
+            // If we have 3 successful results, that's enough
+            if (successCount >= 3) break;
+        }
+
+        return results;
+    } catch (error) {
+        console.error("Personalization error:", error);
+        showError(error.message);
+        return [];
+    }
+};
+
+// Update the event listener for the button to show if price is real or estimated
+document.getElementById('findMyHolidayButton')?.addEventListener('click', async () => {
+    try {
+        showLoading(true);
+        triggerFireworks(); // Trigger fireworks animation
+        
+        const results = await personalizeContent(user);
+        
+        // Display results using template literals properly
+        document.getElementById('results').innerHTML = results.map(result => `
+            <div class="destination-card">
+                <h3>${result.city}</h3>
+                <p>Estimated Total: $${result.cost.total}</p>
+                <div class="price-breakdown">
+                    <span>✈️ $${result.cost.flight}</span>
+                    <span>🏨 $${result.cost.hotel}${result.cost.is_real_price ? ' (actual)' : ' (est)'}</span>
+                </div>
+                
+                ${result.firstHotel ? `
+                <div class="hotel-result">
+                    <h4>${result.firstHotel.hotel_name || 'Hotel'}</h4>
+                    <p>${result.firstHotel.address || ''}</p>
+                    ${result.firstHotel.review_score ? 
+                        `<p>Rating: ${result.firstHotel.review_score}/10</p>` : 
+                        ''}
+                    ${result.cost.is_real_price ? 
+                        `<p class="hotel-price">$${result.cost.hotel} (verified price)</p>` : 
+                        `<p class="hotel-price">$${result.cost.hotel} (estimated)</p>`}
+                    ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo" class="hotel-photo"/>` : ''}
+                </div>
+                ` : ''}
+                
+                ${result.error ? `<p class="error">${result.error}</p>` : ''}
+                ${result.hotels?.is_mock ? `<p class="note">Note: Using estimated hotel data</p>` : ''}
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        showError(error.message);
+    } finally {
+        showLoading(false);
+    }
+});
 
 
 
