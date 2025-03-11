@@ -1012,7 +1012,13 @@ const setupEventListeners = () => {
             showLoading(true);
             triggerFireworks(); // Trigger fireworks animation
             
-            const results = await personalizeContent(user);
+            // Make sure user is defined, use empty object as fallback
+            const userData = user || {};
+            const results = await personalizeContent(userData);
+            
+            if (!results || results.length === 0) {
+                throw new Error("No suitable destinations found for your criteria");
+            }
             
             // Display results using template literals properly
             document.getElementById('results').innerHTML = results.map(result => `
@@ -1044,7 +1050,7 @@ const setupEventListeners = () => {
             `).join('');
             
         } catch (error) {
-            showError(error.message);
+            showError(error.message || "An unknown error occurred");
         } finally {
             showLoading(false);
         }
