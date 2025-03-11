@@ -720,46 +720,102 @@ const tryCoordinateSearch = async (location, checkInDate, checkOutDate) => {
 
 // Update personalizeContent function to handle errors better
 const personalizeContent = async (user) => {
-    const inputs = {
-        checkInDate: document.getElementById('holidayDate').value,
-        checkOutDate: document.getElementById('returnDate').value,
-        departureLocation: document.getElementById('departureLocation').value.toUpperCase(),
-                    firstHotel: {
-                        ...firstHotel,
-                        hotel_name: hotelName,
-                        address: hotelAddress,
-                        review_score: reviewScore
-                    }
-                });
+    try {
+        // Get input values from the form
+        const inputs = {
+            checkInDate: document.getElementById('holidayDate').value,
+            checkOutDate: document.getElementById('returnDate').value,
+            departureLocation: document.getElementById('departureLocation').value.toUpperCase(),
+            budget: parseInt(document.getElementById('budget').value) || 1500
+        };
+        
+        // Validate inputs
+        validateDates(inputs.checkInDate, inputs.checkOutDate);
+        
+        // Find destinations based on budget and dates
+        const recommendations = TravelPlanner.findDestinations(
+            inputs.budget,
+            inputs.checkInDate,
+            inputs.checkOutDate,
+            inputs.departureLocation
+        );
+        
+        // Process each recommendation to add hotel data
+        const results = [];
+        let successCount = 0;
+        
+        for (const rec of recommendations) {
+            try {
+                console.log(`Processing recommendation for ${rec.city}`);
                 
-                successCount++;
-            } else {
-                // Should not reach here with our improved code
+                // Fetch hotels for this destination
+                const hotels = await fetchHotelData(
+                    rec.city,
+                    inputs.budget * 0.6, // Allocate 60% of budget for hotel
+                    inputs.checkInDate,
+                    inputs.checkOutDate
+                );
+                
+                if (hotels && hotels.data && hotels.data.length > 0) {
+                    const firstHotel = hotels.data[0];
+                    
+                    // Extract hotel details
+                    const hotelName = firstHotel.hotel_name || 'Hotel';
+                    const hotelAddress = firstHotel.address || 'Address unavailable';
+                    const reviewScore = firstHotel.review_score || 'N/A';
+                    
+                    // Try to get hotel photo
+                    let photoUrl = null;
+                    if (firstHotel.hotel_id) {
+                        photoUrl = await fetchHotelPhotos(firstHotel.hotel_id);
+                    }
+                    
+                    // Add to results with hotel info
+                    results.push({
+                        ...rec,
+                        hotels: hotels,
+                        firstHotel: {
+                            ...firstHotel,
+                            hotel_name: hotelName,
+                            address: hotelAddress,
+                            review_score: reviewScore
+                        },
+                        photos: photoUrl
+                    });
+                    
+                    successCount++;
+                } else {
+                    // Should not reach here with our improved code
+                    results.push({
+                        ...rec,
+                        hotels: null,
+                        error: 'No hotels found'
+                    });
+                }
+                
+            } catch (error) {
+                console.error(`Error processing ${rec.city}:`, error);
+                // Add city to results with error info
                 results.push({
                     ...rec,
-                    hotels: null,
-                    error: 'No hotels found'
+                    error: error.message,
+                    hotels: {
+                        data: [],
+                        is_mock: true
+                    }
                 });
             }
             
-        } catch (error) {
-            console.error(`Error processing ${rec.city}:`, error);
-            // Add city to results with error info
-            results.push({
-                ...rec,
-                error: error.message,
-                hotels: {
-                    data: [],
-                    is_mock: true
-                }
-            });
+            // If we have 3 successful results, that's enough
+            if (successCount >= 3) break;
         }
-        
-        // If we have 3 successful results, that's enough
-        if (successCount >= 3) break;
-    }
 
-    return results;
+        return results;
+    } catch (error) {
+        console.error("Personalization error:", error);
+        showError(error.message);
+        return [];
+    }
 };
 
 // Auth State Management
