@@ -706,7 +706,7 @@ const tryCoordinateSearch = async (location, checkInDate, checkOutDate) => {
             // Looks like we have coordinates
             const [longitude, latitude] = coordinates.split(',');
             
-            console.log(`Trying nearby airports search for ${location}: ${latitude}, ${longitude}`);
+            console.log(`Trying nearby search for ${location}: ${latitude}, ${longitude}`);
             return await searchHotelsByCoordinates(latitude, longitude, checkInDate, checkOutDate);
         }
     } catch (error) {
@@ -716,6 +716,55 @@ const tryCoordinateSearch = async (location, checkInDate, checkOutDate) => {
     // Fall back to mock data
     console.log(`No properties found for ${location}, falling back to mock data`);
     return createMockHotelData(location);
+};
+
+// Add missing searchHotelsByCoordinates function
+const searchHotelsByCoordinates = async (latitude, longitude, checkInDate, checkOutDate) => {
+    try {
+        console.log(`Searching for hotels by coordinates: lat=${latitude}, lon=${longitude}`);
+        
+        // Use search API with coordinates
+        const url = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotelsByCoordinates`);
+        
+        url.searchParams.append('latitude', latitude);
+        url.searchParams.append('longitude', longitude);
+        url.searchParams.append('checkin', checkInDate);
+        url.searchParams.append('checkout', checkOutDate);
+        url.searchParams.append('adults', '2');
+        url.searchParams.append('rooms', '1');
+        url.searchParams.append('limit', '30');
+        url.searchParams.append('currency', API_CONFIG.defaultParams.currency);
+        url.searchParams.append('market', API_CONFIG.defaultParams.market);
+        url.searchParams.append('countryCode', API_CONFIG.defaultParams.countryCode);
+        url.searchParams.append('radius', '30');  // 30 km radius
+        
+        console.log('Hotel search by coordinates URL:', url.toString());
+        
+        const response = await fetchWithRetry(url.toString(), {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+
+        if (!response.ok) {
+            throw new Error(`Coordinate search failed: ${response.status}`);
+        }
+
+        const propertyData = await response.json();
+        
+        if (!propertyData || !propertyData.data || propertyData.data.hotels.length === 0) {
+            throw new Error(`No hotels found near coordinates (${latitude},${longitude})`);
+        }
+        
+        return {
+            data: propertyData.data.hotels,
+            count: propertyData.data.hotels.length
+        };
+        
+    } catch (error) {
+        console.error('Hotel search by coordinates failed:', error);
+        // Return mock data for the area as fallback
+        return createMockHotelData(`Location (${latitude},${longitude})`);
+    }
 };
 
 // Update personalizeContent function to handle errors better
@@ -1312,13 +1361,13 @@ const isValidHotelId = (hotelId) => {
     return idStr.length > 0 && idStr.length < 100;
 };
 
-/**
+//** 
  * Process hotel search response to standardize format
  * @param {Object} apiResponse - The raw API response
  * @param {string} cityName - The city name for this search
  * @param {boolean} isMock - Whether this is mock data
  * @returns {Object} Standardized hotel data response
- */
+ //r
 const processHotelSearchResponse = (apiResponse, cityName, isMock = false) => {
     try {
         console.log(`Processing hotel data for ${cityName}`);
