@@ -1249,5 +1249,57 @@ const searchHotelsByCoordinates = async (latitude, longitude, checkInDate, check
     }
 };
 
+// Add this function to validate hotel IDs
+const isValidHotelId = (hotelId) => {
+    if (!hotelId) return false;
+    
+    // Check if it's a string or can be converted to a string
+    const idStr = String(hotelId).trim();
+    
+    // Basic validation - ensure the ID isn't empty and has reasonable length
+    return idStr.length > 0 && idStr.length < 100;
+};
+
+const fetchHotelPhotos = async (hotelId) => {
+    try {
+        // Validate hotel ID first
+        if (!isValidHotelId(hotelId)) {
+            console.warn(`Invalid hotel ID skipped: ${hotelId}`);
+            return null;
+        }
+        
+        // Use hotel details endpoint for photos
+        const url = `${API_CONFIG.baseUrl}/api/v1/hotels/data`;
+        const detailsUrl = new URL(url);
+        detailsUrl.searchParams.append('hotel_id', hotelId);
+        detailsUrl.searchParams.append('locale', 'en-us');
+        
+        const response = await fetchWithRetry(detailsUrl.toString(), {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+        
+        if (!response.ok) {
+            if (response.status === 403) {
+                console.error(`403 Forbidden: No access to hotel data for ID: ${hotelId}`);
+                return null;
+            }
+            throw new Error(`Failed to fetch property details: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Extract photo URL from the response data structure
+        const photoUrl = data?.data?.photos?.[0]?.url_max ||
+                        data?.data?.main_photo_url ||
+                        null;
+        
+        return photoUrl;
+    } catch (error) {
+        console.error('Error fetching property photos:', error);
+        return null;
+    }
+};
+
 
 
