@@ -21,7 +21,7 @@ const API_RATE_LIMIT = {
     requestCount: 0,           // Current request count
     windowStartTime: Date.now() // Time when the current window started
 };
-
+//dobie
 // Add this at the top with other constants
 const API_DELAY = 1000; // Base delay between API calls in milliseconds
 
