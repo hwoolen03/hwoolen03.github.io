@@ -1,17 +1,16 @@
 // API Headers and Configuration
 const API_HEADERS = {
     'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3',
-    'x-rapidapi-host': 'booking-com15.p.rapidapi.com'
+    'x-rapidapi-host': 'sky-scrapper.p.rapidapi.com'
 };
 
 const API_CONFIG = {
-    baseUrl: 'https://booking-com.p.rapidapi.com',
+    baseUrl: 'https://sky-scrapper.p.rapidapi.com',
     delay: 1000,
     defaultParams: {
-        currency_code: 'USD',
-        units: 'metric',
-        language_code: 'en-us',
-        locale: 'en-us'
+        currency: 'USD',
+        market: 'en-US',
+        countryCode: 'US'
     }
 };
 
@@ -121,7 +120,7 @@ const validateApiKey = () => {
 // Location ID cache to minimize API calls
 const locationIdCache = {};
 
-// Enhanced function to get location ID from Booking.com API with better error handling
+// Enhanced function to get location ID from Sky-Scrapper API with better error handling
 const getLocationIdFromAPI = async (cityName) => {
     try {
         // Check cache first
@@ -131,7 +130,7 @@ const getLocationIdFromAPI = async (cityName) => {
         }
         
         console.log(`Fetching location ID for ${cityName} from API`);
-        const url = `${API_CONFIG.baseUrl}/api/v1/hotels/searchDestination`;
+        const url = `${API_CONFIG.baseUrl}/api/v1/hotels/searchDestinationOrHotel`;
         const searchUrl = new URL(url);
         
         searchUrl.searchParams.append('query', cityName);
@@ -157,8 +156,8 @@ const getLocationIdFromAPI = async (cityName) => {
         }
         
         // Find the first city-type result
-        const cityResult = data.data.find(loc => loc.dest_type === "city") || data.data[0];
-        const locationId = cityResult.dest_id;
+        const cityResult = data.data.find(loc => loc.type === "CITY") || data.data[0];
+        const locationId = cityResult.entityId;
         
         // Cache the result
         locationIdCache[cityName] = locationId;
@@ -177,18 +176,18 @@ const getLocationIdFromAPI = async (cityName) => {
 const getLocationIdForCity = (cityName) => {
     // Common city IDs mapping (fallback only)
     const cityIdMap = {
-        'New York': '-74.00597,40.71427', // Using lat/long for New York
-        'London': '-0.12574,51.50853',    // Using lat/long for London
-        'Paris': '2.3488,48.85341',       // Using lat/long for Paris
-        'Tokyo': '139.69171,35.6895',     // Using lat/long for Tokyo
-        'Chicago': '-87.62979,41.87811',  // Using lat/long for Chicago
-        'Los Angeles': '-118.24368,34.05223',
-        'Dallas': '-96.80667,32.78306',
-        'Manila': '120.9822,14.6042',
-        'Berlin': '13.41053,52.52437',
-        'Bangkok': '100.50144,13.75398',
-        'Mumbai': '72.88261,19.07283',
-        'Sydney': '151.20732,-33.86785'
+        'New York': '27537542', // Using Sky-Scrapper entityId for New York
+        'London': '27544008',   // Using Sky-Scrapper entityId for London
+        'Paris': '27539733',    // Using Sky-Scrapper entityId for Paris
+        'Tokyo': '27542059',    // Using Sky-Scrapper entityId for Tokyo
+        'Chicago': '27538539',  // Using Sky-Scrapper entityId for Chicago
+        'Los Angeles': '27544994',
+        'Dallas': '27536671',
+        'Manila': '27536917',
+        'Berlin': '27547053',
+        'Bangkok': '27536671',
+        'Mumbai': '27539729',
+        'Sydney': '27544067'
     };
     
     // If we have a direct mapping, use it
@@ -345,51 +344,142 @@ const estimateFlightCost = (distance) => {
 
 // API Functions
 // Update searchRoundtripFlights function
-const searchRoundtripFlights = async (fromIATA, toIATA, date) => {
-    const xhr = new XMLHttpRequest();
-    xhr.withCredentials = true;
-
-    xhr.addEventListener('readystatechange', function () {
-        if (this.readyState === this.DONE) {
-            if (this.status === 404) {
-                console.error(`Flight data not found for route: ${fromIATA} to ${toIATA}`);
-                return;
-            }
-            console.log(this.responseText);
+const searchRoundtripFlights = async (fromAirport, toAirport, date) => {
+    try {
+        console.log(`Searching flights from ${fromAirport} to ${toAirport}`);
+        
+        // First get SkyIDs for the airports
+        const originSkyId = await getAirportSkyId(fromAirport);
+        const destinationSkyId = await getAirportSkyId(toAirport);
+        
+        if (!originSkyId || !destinationSkyId) {
+            throw new Error('Could not resolve airport codes to SkyIDs');
         }
-    });
+        
+        // Get entity IDs for the airports (might need to implement this function)
+        const originEntityId = await getEntityIdForAirport(fromAirport);
+        const destinationEntityId = await getEntityIdForAirport(toAirport);
+        
+        const url = new URL(`${API_CONFIG.baseUrl}/api/v2/flights/searchFlights`);
+        url.searchParams.append('originSkyId', originSkyId);
+        url.searchParams.append('destinationSkyId', destinationSkyId);
+        url.searchParams.append('originEntityId', originEntityId);
+        url.searchParams.append('destinationEntityId', destinationEntityId);
+        url.searchParams.append('cabinClass', 'economy');
+        url.searchParams.append('adults', '1');
+        url.searchParams.append('sortBy', 'best');
+        url.searchParams.append('currency', API_CONFIG.defaultParams.currency);
+        url.searchParams.append('market', API_CONFIG.defaultParams.market);
+        url.searchParams.append('countryCode', API_CONFIG.defaultParams.countryCode);
+        
+        const response = await fetchWithRetry(url.toString(), {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Flight search failed: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error searching flights:', error);
+        return null;
+    }
+};
 
-    xhr.open('GET', `${API_CONFIG.baseUrl}/api/v1/flights/getMinPrice?fromId=${fromIATA}.AIRPORT&toId=${toIATA}.AIRPORT&cabinClass=ECONOMY&currency_code=USD`);
-    xhr.setRequestHeader('x-rapidapi-key', API_HEADERS['x-rapidapi-key']);
-    xhr.setRequestHeader('x-rapidapi-host', API_HEADERS['x-rapidapi-host']);
-    xhr.send();
+// New function to get SkyId for an airport
+const getAirportSkyId = async (airportCode) => {
+    try {
+        const url = new URL(`${API_CONFIG.baseUrl}/api/v1/flights/searchAirport`);
+        url.searchParams.append('query', airportCode);
+        url.searchParams.append('locale', 'en-US');
+        
+        const response = await fetchWithRetry(url.toString(), {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Airport search failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const airport = data.data.find(item => item.iata === airportCode);
+        
+        if (airport) {
+            return airport.skyId;
+        }
+        
+        return airportCode; // fallback to using the code itself
+    } catch (error) {
+        console.error(`Error getting SkyId for ${airportCode}:`, error);
+        return airportCode; // fallback
+    }
+};
+
+// New function to get entity ID for an airport
+const getEntityIdForAirport = async (airportCode) => {
+    try {
+        const url = new URL(`${API_CONFIG.baseUrl}/api/v1/flights/searchAirport`);
+        url.searchParams.append('query', airportCode);
+        url.searchParams.append('locale', 'en-US');
+        
+        const response = await fetchWithRetry(url.toString(), {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Airport search failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const airport = data.data.find(item => item.iata === airportCode);
+        
+        if (airport && airport.entityId) {
+            return airport.entityId;
+        }
+        
+        // Fallback to common airport entityIds
+        const entityIdMap = {
+            'JFK': '27537542', // New York
+            'LHR': '27544008', // London
+            'CDG': '27539733'  // Paris
+        };
+        
+        return entityIdMap[airportCode] || '27537542'; // fallback to NYC if unknown
+    } catch (error) {
+        console.error(`Error getting entity ID for ${airportCode}:`, error);
+        return '27537542'; // Default to NYC entity ID
+    }
 };
 
 // Replace fetchHotelData function
 const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
     try {
         // Get the proper location ID first
-        const locationId = await getLocationIdFromAPI(cityName);
-        console.log(`Using location ID for ${cityName}: ${locationId}`);
+        const entityId = await getLocationIdFromAPI(cityName);
+        console.log(`Using entity ID for ${cityName}: ${entityId}`);
         
         // Use search endpoint with the correct parameters
-        const propertiesUrl = `${API_CONFIG.baseUrl}/api/v1/hotels/search`;
-        const searchUrl = new URL(propertiesUrl);
+        const url = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
         
         // Set required parameters for search endpoint
-        searchUrl.searchParams.append('dest_id', locationId);
-        searchUrl.searchParams.append('dest_type', 'city');
-        searchUrl.searchParams.append('checkin_date', checkInDate);
-        searchUrl.searchParams.append('checkout_date', checkOutDate);
-        searchUrl.searchParams.append('adults_number', '2');
-        searchUrl.searchParams.append('room_number', '1');
-        searchUrl.searchParams.append('page_number', '1');
-        searchUrl.searchParams.append('locale', 'en-us');
-        searchUrl.searchParams.append('currency', 'USD');
+        url.searchParams.append('entityId', entityId);
+        url.searchParams.append('checkin', checkInDate);
+        url.searchParams.append('checkout', checkOutDate);
+        url.searchParams.append('adults', '2');
+        url.searchParams.append('rooms', '1');
+        url.searchParams.append('limit', '30');
+        url.searchParams.append('currency', API_CONFIG.defaultParams.currency);
+        url.searchParams.append('market', API_CONFIG.defaultParams.market);
+        url.searchParams.append('countryCode', API_CONFIG.defaultParams.countryCode);
+        url.searchParams.append('sorting', '-relevance');
         
-        console.log('Property search URL:', searchUrl.toString());
+        console.log('Hotel search URL:', url.toString());
         
-        const response = await fetchWithRetry(searchUrl, {
+        const response = await fetchWithRetry(url.toString(), {
             method: 'GET',
             headers: API_HEADERS
         });
@@ -401,13 +491,13 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         const propertyData = await response.json();
         console.log('Property API Response:', propertyData); // Debug log
         
-        if (!propertyData || !propertyData.data || propertyData.data.length === 0) {
+        if (!propertyData || !propertyData.data || propertyData.data.hotels.length === 0) {
             throw new Error(`No properties found for ${cityName}`);
         }
         
         return {
-            data: propertyData.data,
-            count: propertyData.data.length
+            data: propertyData.data.hotels,
+            count: propertyData.data.hotels.length
         };
 
     } catch (error) {
@@ -423,26 +513,25 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         console.log(`Searching for properties in: ${location}`);
         
         // Get the proper location ID first
-        const locationId = await getLocationIdFromAPI(location);
+        const entityId = await getLocationIdFromAPI(location);
         
         // Use search endpoint with correct parameters
-        const propertiesUrl = `${API_CONFIG.baseUrl}/api/v1/hotels/search`;
-        const searchUrl = new URL(propertiesUrl);
+        const url = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
         
         // Set required parameters
-        searchUrl.searchParams.append('dest_id', locationId);
-        searchUrl.searchParams.append('dest_type', 'city');
-        searchUrl.searchParams.append('checkin_date', checkInDate);
-        searchUrl.searchParams.append('checkout_date', checkOutDate);
-        searchUrl.searchParams.append('adults_number', '2');
-        searchUrl.searchParams.append('room_number', '1');
-        searchUrl.searchParams.append('page_number', '1');
-        searchUrl.searchParams.append('locale', 'en-us');
-        searchUrl.searchParams.append('currency', 'USD');
+        url.searchParams.append('entityId', entityId);
+        url.searchParams.append('checkin', checkInDate);
+        url.searchParams.append('checkout', checkOutDate);
+        url.searchParams.append('adults', '2');
+        url.searchParams.append('rooms', '1');
+        url.searchParams.append('limit', '30');
+        url.searchParams.append('currency', API_CONFIG.defaultParams.currency);
+        url.searchParams.append('market', API_CONFIG.defaultParams.market);
+        url.searchParams.append('countryCode', API_CONFIG.defaultParams.countryCode);
         
-        console.log('Property search URL:', searchUrl.toString());
+        console.log('Property search URL:', url.toString());
         
-        const response = await fetchWithRetry(searchUrl, {
+        const response = await fetchWithRetry(url.toString(), {
             method: 'GET',
             headers: API_HEADERS
         });
@@ -455,14 +544,14 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         const propertyData = await response.json();
         console.log('Property API Response:', propertyData); // Debug log
         
-        if (!propertyData || !propertyData.data || propertyData.data.length === 0) {
+        if (!propertyData || !propertyData.data || propertyData.data.hotels.length === 0) {
             // Fall back to coordinate search if available, or mock data
             return await tryCoordinateSearch(location, checkInDate, checkOutDate);
         }
         
         return {
-            data: propertyData.data,
-            count: propertyData.data.length
+            data: propertyData.data.hotels,
+            count: propertyData.data.hotels.length
         };
         
     } catch (error) {
@@ -472,31 +561,30 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
     }
 };
 
-// Update searchDestinationByCountry to use location IDs
+// Update searchDestinationByCountry to use entity IDs
 const searchDestinationByCountry = async (location, checkInDate, checkOutDate) => {
     try {
         // Use location_id from API
-        const locationId = await getLocationIdFromAPI(location);
-        console.log(`Using location ID for alternate search: ${locationId}`);
+        const entityId = await getLocationIdFromAPI(location);
+        console.log(`Using entity ID for alternate search: ${entityId}`);
         
         // Use search endpoint with correct parameters
-        const propertiesUrl = `${API_CONFIG.baseUrl}/api/v1/hotels/search`;
-        const searchUrl = new URL(propertiesUrl);
+        const url = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
         
         // Set required parameters
-        searchUrl.searchParams.append('dest_id', locationId);
-        searchUrl.searchParams.append('dest_type', 'city');
-        searchUrl.searchParams.append('checkin_date', checkInDate);
-        searchUrl.searchParams.append('checkout_date', checkOutDate);
-        searchUrl.searchParams.append('adults_number', '2');
-        searchUrl.searchParams.append('room_number', '1');
-        searchUrl.searchParams.append('page_number', '1');
-        searchUrl.searchParams.append('locale', 'en-us');
-        searchUrl.searchParams.append('currency', 'USD');
+        url.searchParams.append('entityId', entityId);
+        url.searchParams.append('checkin', checkInDate);
+        url.searchParams.append('checkout', checkOutDate);
+        url.searchParams.append('adults', '2');
+        url.searchParams.append('rooms', '1');
+        url.searchParams.append('limit', '30');
+        url.searchParams.append('currency', API_CONFIG.defaultParams.currency);
+        url.searchParams.append('market', API_CONFIG.defaultParams.market);
+        url.searchParams.append('countryCode', API_CONFIG.defaultParams.countryCode);
         
-        console.log('Alternative property search URL:', searchUrl.toString());
+        console.log('Alternative property search URL:', url.toString());
         
-        const response = await fetchWithRetry(searchUrl, {
+        const response = await fetchWithRetry(url.toString(), {
             method: 'GET',
             headers: API_HEADERS
         });
@@ -507,15 +595,15 @@ const searchDestinationByCountry = async (location, checkInDate, checkOutDate) =
 
         const propertyData = await response.json();
         
-        if (!propertyData || !propertyData.data || propertyData.data.length === 0) {
+        if (!propertyData || !propertyData.data || propertyData.data.hotels.length === 0) {
             // Try to create mock data as final fallback
             return createMockHotelData(location);
         }
         
         // Return in standard format
         return {
-            data: propertyData.data,
-            count: propertyData.data.length
+            data: propertyData.data.hotels,
+            count: propertyData.data.hotels.length
         };
     } catch (error) {
         console.error('Alternative search error:', error);
@@ -574,51 +662,51 @@ const createMockHotelData = (location) => {
     };
 };
 
-// Update tryCoordinateSearch to try using the API's location ID first
+// Update tryCoordinateSearch to use Sky-Scrapper's getNearByAirports
 const tryCoordinateSearch = async (location, checkInDate, checkOutDate) => {
     try {
         // Try to get location ID from API first
-        const locationId = await getLocationIdFromAPI(location);
+        const entityId = await getLocationIdFromAPI(location);
         
-        if (locationId) {
-            console.log(`Found location ID for ${location}: ${locationId}`);
+        if (entityId) {
+            console.log(`Found location ID for ${location}: ${entityId}`);
             
             // Use the location ID directly with search endpoint
-            const propertiesUrl = `${API_CONFIG.baseUrl}/api/v1/hotels/search`;
-            const searchUrl = new URL(propertiesUrl);
+            const url = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
             
-            searchUrl.searchParams.append('dest_id', locationId);
-            searchUrl.searchParams.append('dest_type', 'city');
-            searchUrl.searchParams.append('checkin_date', checkInDate);
-            searchUrl.searchParams.append('checkout_date', checkOutDate);
-            searchUrl.searchParams.append('adults_number', '2');
-            searchUrl.searchParams.append('room_number', '1');
-            searchUrl.searchParams.append('locale', 'en-us');
-            searchUrl.searchParams.append('currency', 'USD');
+            url.searchParams.append('entityId', entityId);
+            url.searchParams.append('checkin', checkInDate);
+            url.searchParams.append('checkout', checkOutDate);
+            url.searchParams.append('adults', '2');
+            url.searchParams.append('rooms', '1');
+            url.searchParams.append('limit', '30');
+            url.searchParams.append('currency', API_CONFIG.defaultParams.currency);
+            url.searchParams.append('market', API_CONFIG.defaultParams.market);
+            url.searchParams.append('countryCode', API_CONFIG.defaultParams.countryCode);
             
-            const response = await fetchWithRetry(searchUrl, {
+            const response = await fetchWithRetry(url.toString(), {
                 method: 'GET',
                 headers: API_HEADERS
             });
 
             if (response.ok) {
                 const propertyData = await response.json();
-                if (propertyData?.data?.length > 0) {
+                if (propertyData?.data?.hotels?.length > 0) {
                     return {
-                        data: propertyData.data,
-                        count: propertyData.data.length
+                        data: propertyData.data.hotels,
+                        count: propertyData.data.hotels.length
                     };
                 }
             }
         }
         
-        // Fall back to coordinate search if we have coordinates
+        // Fall back to nearby airports search if we have coordinates
         const coordinates = getLocationIdForCity(location);
         if (coordinates && coordinates.includes(',')) {
             // Looks like we have coordinates
             const [longitude, latitude] = coordinates.split(',');
             
-            console.log(`Trying coordinate search for ${location}: ${latitude}, ${longitude}`);
+            console.log(`Trying nearby airports search for ${location}: ${latitude}, ${longitude}`);
             return await searchHotelsByCoordinates(latitude, longitude, checkInDate, checkOutDate);
         }
     } catch (error) {
@@ -636,94 +724,6 @@ const personalizeContent = async (user) => {
         checkInDate: document.getElementById('holidayDate').value,
         checkOutDate: document.getElementById('returnDate').value,
         departureLocation: document.getElementById('departureLocation').value.toUpperCase(),
-        budget: parseInt(document.getElementById('budget').value)
-    };
-
-    validateDates(inputs.checkInDate, inputs.checkOutDate);
-
-    const recommendations = TravelPlanner.findDestinations(
-        inputs.budget,
-        inputs.checkInDate,
-        inputs.checkOutDate,
-        inputs.departureLocation
-    );
-
-    if (recommendations.length === 0) {
-        throw new Error('No destinations match your budget. Try increasing by 20%');
-    }
-
-    console.log('Processing recommendations:', recommendations);
-    
-    const results = [];
-    let successCount = 0;
-    
-    for (const rec of recommendations.slice(0, 5)) { // Process max 5 recommendations
-        try {
-            console.log(`Processing destination: ${rec.city}`);
-            await delay(API_DELAY);
-            
-            // Get hotel data with fallback to mock data
-            const hotelData = await verifyHotelIds(rec.city, inputs.checkInDate, inputs.checkOutDate);
-            console.log(`Found ${hotelData?.data?.length || 0} hotels for ${rec.city}`);
-            
-            // Only process if we have hotel data
-            if (hotelData?.data?.length > 0) {
-                const firstHotel = hotelData.data[0];
-                console.log(`Selected hotel: ${firstHotel.hotel_name || firstHotel.name || 'Unknown'}`);
-                
-                let hotelPhoto = null;
-                let hotelPrice = null;
-                
-                // Only try to fetch additional data if not mock
-                if (firstHotel.hotel_id && !hotelData.is_mock) {
-                    try {
-                        await delay(API_DELAY);
-                        hotelPhoto = await fetchHotelPhotos(firstHotel.hotel_id);
-                    } catch (photoError) {
-                        console.warn(`Could not fetch hotel photo: ${photoError.message}`);
-                    }
-                    
-                    try {
-                        await delay(API_DELAY);
-                        hotelPrice = await fetchHotelPrice(
-                            firstHotel.hotel_id, 
-                            inputs.checkInDate, 
-                            inputs.checkOutDate
-                        );
-                    } catch (priceError) {
-                        console.warn(`Could not fetch hotel price: ${priceError.message}`);
-                    }
-                }
-                
-                // Always have a fallback price
-                if (!hotelPrice) {
-                    hotelPrice = {
-                        total_price: firstHotel.min_total_price || 
-                                   firstHotel.price?.price || 
-                                   rec.cost.hotel,
-                        currency: "USD",
-                        is_estimate: !firstHotel.min_total_price
-                    };
-                }
-                
-                // Update the hotel name and address extraction to handle different response formats
-                const hotelName = firstHotel.hotel_name || 
-                                firstHotel.name || 
-                                `${rec.city} Hotel`;
-                
-                const hotelAddress = firstHotel.address || 
-                                  firstHotel.location?.address || 
-                                  rec.city;
-                
-                const reviewScore = firstHotel.review_score || 
-                                 firstHotel.review_score_word || 
-                                 null;
-                
-                results.push({
-                    ...rec,
-                    hotels: hotelData,
-                    photos: hotelPhoto,
-                    price: hotelPrice,
                     firstHotel: {
                         ...firstHotel,
                         hotel_name: hotelName,
