@@ -1300,7 +1300,7 @@ const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
 };
 
 // Add new function for searching hotels by coordinates
-const searchHotelsByCoordinates = async (latitude, longitude, checkInDate, checkOutDate) => {
+const searchHotelsByCoordinatesAlternative = async (latitude, longitude, checkInDate, checkOutDate) => {
     try {
         console.log(`Searching for hotels at coordinates: ${latitude}, ${longitude}`);
         
@@ -1361,13 +1361,13 @@ const isValidHotelId = (hotelId) => {
     return idStr.length > 0 && idStr.length < 100;
 };
 
-//** 
+/*
  * Process hotel search response to standardize format
  * @param {Object} apiResponse - The raw API response
  * @param {string} cityName - The city name for this search
  * @param {boolean} isMock - Whether this is mock data
  * @returns {Object} Standardized hotel data response
- //r
+ /*/
 const processHotelSearchResponse = (apiResponse, cityName, isMock = false) => {
     try {
         console.log(`Processing hotel data for ${cityName}`);
