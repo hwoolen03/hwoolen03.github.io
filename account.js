@@ -808,9 +808,12 @@ const personalizeContent = async (user) => {
                 if (hotels && hotels.data && hotels.data.length > 0) {
                     const firstHotel = hotels.data[0];
                     
-                    // Extract hotel details
-                    const hotelName = firstHotel.hotel_name || 'Hotel';
-                    const hotelAddress = firstHotel.address || 'Address unavailable';
+                    // Extract hotel details - ensure proper address extraction
+                    const hotelName = firstHotel.hotel_name || firstHotel.name || 'Hotel';
+                    const hotelAddress = firstHotel.address || 
+                                        (firstHotel.address_data ? 
+                                        `${firstHotel.address_data.address_line1 || ''}, ${firstHotel.address_data.city || rec.city}` : 
+                                        `${rec.city}, Unknown Address`);
                     const reviewScore = firstHotel.review_score || 'N/A';
                     
                     // Try to get hotel photo
@@ -819,17 +822,25 @@ const personalizeContent = async (user) => {
                         photoUrl = await fetchHotelPhotos(firstHotel.hotel_id);
                     }
                     
-                    // Create result with initial cost estimate
+                    // Create result with initial cost estimate and departure location
                     const resultWithHotel = {
                         ...rec,
                         hotels: hotels,
+                        departureLocation: inputs.departureLocation,
                         firstHotel: {
                             ...firstHotel,
                             hotel_name: hotelName,
                             address: hotelAddress,
                             review_score: reviewScore
                         },
-                        photos: photoUrl
+                        photos: photoUrl,
+                        flightDetails: {
+                            departure: inputs.departureLocation,
+                            arrival: rec.city,
+                            departureDate: inputs.checkInDate,
+                            returnDate: inputs.checkOutDate,
+                            duration: `${TravelPlanner.calculateNights(inputs.checkInDate, inputs.checkOutDate)} nights`
+                        }
                     };
                     
                     // Try to get real hotel price and update the cost
@@ -847,8 +858,16 @@ const personalizeContent = async (user) => {
                     // Should not reach here with our improved code
                     results.push({
                         ...rec,
+                        departureLocation: inputs.departureLocation,
                         hotels: null,
-                        error: 'No hotels found'
+                        error: 'No hotels found',
+                        flightDetails: {
+                            departure: inputs.departureLocation,
+                            arrival: rec.city,
+                            departureDate: inputs.checkInDate,
+                            returnDate: inputs.checkOutDate,
+                            duration: `${TravelPlanner.calculateNights(inputs.checkInDate, inputs.checkOutDate)} nights`
+                        }
                     });
                 }
                 
@@ -857,10 +876,18 @@ const personalizeContent = async (user) => {
                 // Add city to results with error info
                 results.push({
                     ...rec,
+                    departureLocation: inputs.departureLocation,
                     error: error.message,
                     hotels: {
                         data: [],
                         is_mock: true
+                    },
+                    flightDetails: {
+                        departure: inputs.departureLocation,
+                        arrival: rec.city,
+                        departureDate: inputs.checkInDate,
+                        returnDate: inputs.checkOutDate,
+                        duration: `${TravelPlanner.calculateNights(inputs.checkInDate, inputs.checkOutDate)} nights`
                     }
                 });
             }
@@ -1084,7 +1111,17 @@ const setupEventListeners = () => {
                         ${result.firstHotel ? `
                         <div class="hotel-result">
                             <h4>${result.firstHotel.hotel_name || 'Hotel'}</h4>
-                            <p>${result.firstHotel.address || ''}</p>
+                            <p class="hotel-address">${result.firstHotel.address || `${result.city}, Address unavailable`}</p>
+                            
+                            <!-- Flight details section -->
+                            <div class="flight-details">
+                                <p><strong>✈️ Flight Details:</strong></p>
+                                <p>From: ${result.departureLocation || 'Unknown'} to ${result.city}</p>
+                                <p>Outbound: ${new Date(result.flightDetails?.departureDate).toLocaleDateString()}</p>
+                                <p>Return: ${new Date(result.flightDetails?.returnDate).toLocaleDateString()}</p>
+                                <p>Duration: ${result.flightDetails?.duration || 'Not specified'}</p>
+                            </div>
+                            
                             ${result.firstHotel.review_score ? 
                                 `<p>Rating: ${result.firstHotel.review_score}/10</p>` : 
                                 ''}
@@ -1461,7 +1498,17 @@ document.getElementById('findMyHolidayButton')?.addEventListener('click', async 
                 ${result.firstHotel ? `
                 <div class="hotel-result">
                     <h4>${result.firstHotel.hotel_name || 'Hotel'}</h4>
-                    <p>${result.firstHotel.address || ''}</p>
+                    <p class="hotel-address">${result.firstHotel.address || `${result.city}, Address unavailable`}</p>
+                    
+                    <!-- Flight details section -->
+                    <div class="flight-details">
+                        <p><strong>✈️ Flight Details:</strong></p>
+                        <p>From: ${result.departureLocation || 'Unknown'} to ${result.city}</p>
+                        <p>Outbound: ${new Date(result.flightDetails?.departureDate).toLocaleDateString()}</p>
+                        <p>Return: ${new Date(result.flightDetails?.returnDate).toLocaleDateString()}</p>
+                        <p>Duration: ${result.flightDetails?.duration || 'Not specified'}</p>
+                    </div>
+                    
                     ${result.firstHotel.review_score ? 
                         `<p>Rating: ${result.firstHotel.review_score}/10</p>` : 
                         ''}
