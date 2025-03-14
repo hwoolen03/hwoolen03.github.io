@@ -1186,7 +1186,7 @@ const setupEventListeners = () => {
                     .flight-result, .hotel-result {
                         margin-top: 20px;
                         padding: 15px;
-                        background-color: #f9f9f9;
+                        background-color: transparent;
                         border-radius: 5px;
                     }
                     .hotel-result {
@@ -1877,7 +1877,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .flight-result, .hotel-result {
                         margin-top: 20px;
                         padding: 15px;
-                        background-color: #f9f9f9;
+                        background-color: transparent;
                         border-radius: 5px;
                     }
                     .hotel-result {
