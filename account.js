@@ -1103,7 +1103,7 @@ const setupEventListeners = () => {
                         
                         ${result.realFlightData ? `
                         <div class="flight-result">
-                            <h4>Flight Details</h4>
+                            <h4>✈️ Flight Details</h4>
                             <div class="airline-info">
                                 <p><strong>${result.realFlightData.legs[0]?.segments[0]?.airlineName || 'Airline'}</strong> 
                                    Flight ${result.realFlightData.legs[0]?.segments[0]?.flightNumber || ''}</p>
@@ -1122,23 +1122,16 @@ const setupEventListeners = () => {
                                 <p><strong>Stops:</strong> ${result.realFlightData.legs[0]?.stopCount || 0}</p>
                             </div>
                             ${result.realFlightData.deepLink ? 
-                               `<p><a href="${result.realFlightData.deepLink}" target="_blank">Book this flight</a></p>` : ''}
+                               `<p><a href="${result.realFlightData.deepLink}" target="_blank" class="book-button">Book this flight</a></p>` : ''}
                         </div>
                         ` : ''}
                         
+                        <!-- Hotel section is now clearly separated -->
                         ${result.firstHotel ? `
                         <div class="hotel-result">
-                            <h4>${result.firstHotel.hotel_name || 'Hotel'}</h4>
+                            <h4>🏨 Hotel Details</h4>
+                            <h5>${result.firstHotel.hotel_name || 'Hotel'}</h5>
                             <p class="hotel-address">${result.firstHotel.address || `${result.city}, Address unavailable`}</p>
-                            
-                            <!-- Flight details section -->
-                            <div class="flight-details">
-                                <p><strong>✈️ Flight Details:</strong></p>
-                                <p>From: ${result.departureLocation || 'Unknown'} to ${result.city}</p>
-                                <p>Outbound: ${new Date(result.flightDetails?.departureDate).toLocaleDateString()}</p>
-                                <p>Return: ${new Date(result.flightDetails?.returnDate).toLocaleDateString()}</p>
-                                <p>Duration: ${result.flightDetails?.duration || 'Not specified'}</p>
-                            </div>
                             
                             ${result.firstHotel.review_score ? 
                                 `<p>Rating: ${result.firstHotel.review_score}/10</p>` : 
@@ -1180,6 +1173,43 @@ const setupEventListeners = () => {
                         ${result.hotels?.is_mock ? `<p class="note">Note: Using estimated hotel data</p>` : ''}
                     </div>
                 `).join('');
+                
+                // Add some CSS for better section separation
+                const style = document.createElement('style');
+                style.textContent = `
+                    .destination-card {
+                        margin-bottom: 30px;
+                        padding: 15px;
+                        border: 1px solid #ddd;
+                        border-radius: 8px;
+                    }
+                    .flight-result, .hotel-result {
+                        margin-top: 20px;
+                        padding: 15px;
+                        background-color: #f9f9f9;
+                        border-radius: 5px;
+                    }
+                    .hotel-result {
+                        margin-top: 25px;
+                        border-top: 2px dashed #ddd;
+                        padding-top: 20px;
+                    }
+                    .hotel-photo {
+                        max-width: 100%;
+                        border-radius: 5px;
+                        margin: 10px 0;
+                    }
+                    .book-button {
+                        display: inline-block;
+                        padding: 8px 15px;
+                        background-color: #4CAF50;
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 4px;
+                        margin-top: 10px;
+                    }
+                `;
+                document.head.appendChild(style);
             } else {
                 console.error('Results element not found in the DOM');
             }
@@ -1764,7 +1794,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         ${result.realFlightData ? `
                         <div class="flight-result">
-                            <h4>Flight Details</h4>
+                            <h4>✈️ Flight Details</h4>
                             <div class="airline-info">
                                 <p><strong>${result.realFlightData.legs[0]?.segments[0]?.airlineName || 'Airline'}</strong> 
                                    Flight ${result.realFlightData.legs[0]?.segments[0]?.flightNumber || ''}</p>
@@ -1783,14 +1813,50 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <p><strong>Stops:</strong> ${result.realFlightData.legs[0]?.stopCount || 0}</p>
                             </div>
                             ${result.realFlightData.deepLink ? 
-                               `<p><a href="${result.realFlightData.deepLink}" target="_blank">Book this flight</a></p>` : ''}
+                               `<p><a href="${result.realFlightData.deepLink}" target="_blank" class="book-button">Book this flight</a></p>` : ''}
                         </div>
                         ` : ''}
                         
-                        <!-- Rest of the hotel display code remains unchanged -->
+                        <!-- Hotel section is now clearly separated -->
                         ${result.firstHotel ? `
                         <div class="hotel-result">
-                            <!-- ...existing hotel display code... -->
+                            <h4>🏨 Hotel Details</h4>
+                            <h5>${result.firstHotel.hotel_name || 'Hotel'}</h5>
+                            <p class="hotel-address">${result.firstHotel.address || `${result.city}, Address unavailable`}</p>
+                            
+                            ${result.firstHotel.review_score ? 
+                                `<p>Rating: ${result.firstHotel.review_score}/10</p>` : 
+                                ''}
+                            ${result.cost.is_real_price ? 
+                                `<p class="hotel-price">$${result.cost.hotel} (verified price)</p>` : 
+                                `<p class="hotel-price">$${result.cost.hotel} (estimated)</p>`}
+                            ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo" class="hotel-photo"/>` : ''}
+                            
+                            <!-- Display detailed hotel ratings and reviews -->
+                            ${result.ratings ? `
+                            <div class="hotel-ratings">
+                                <h5>Hotel Ratings:</h5>
+                                <p>Overall Score: ${result.ratings.overall_score}/10</p>
+                                <p>Total Reviews: ${result.ratings.total_reviews}</p>
+                                <ul>
+                                    ${result.ratings.categories.map(cat => `
+                                        <li>${cat.name}: ${cat.score}/10</li>
+                                    `).join('')}
+                                </ul>
+                                <h5>Recent Reviews:</h5>
+                                <ul>
+                                    ${result.ratings.reviews.map(review => `
+                                        <li>
+                                            <strong>${review.title}</strong>
+                                            <p>Pros: ${review.pros}</p>
+                                            <p>Cons: ${review.cons}</p>
+                                            <p>Score: ${review.average_score}/10</p>
+                                            <p>Date: ${review.date}</p>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                            ` : ''}
                         </div>
                         ` : ''}
                         
@@ -1798,6 +1864,43 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${result.hotels?.is_mock ? `<p class="note">Note: Using estimated hotel data</p>` : ''}
                     </div>
                 `).join('');
+                
+                // Add some CSS for better section separation
+                const style = document.createElement('style');
+                style.textContent = `
+                    .destination-card {
+                        margin-bottom: 30px;
+                        padding: 15px;
+                        border: 1px solid #ddd;
+                        border-radius: 8px;
+                    }
+                    .flight-result, .hotel-result {
+                        margin-top: 20px;
+                        padding: 15px;
+                        background-color: #f9f9f9;
+                        border-radius: 5px;
+                    }
+                    .hotel-result {
+                        margin-top: 25px;
+                        border-top: 2px dashed #ddd;
+                        padding-top: 20px;
+                    }
+                    .hotel-photo {
+                        max-width: 100%;
+                        border-radius: 5px;
+                        margin: 10px 0;
+                    }
+                    .book-button {
+                        display: inline-block;
+                        padding: 8px 15px;
+                        background-color: #4CAF50;
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 4px;
+                        margin-top: 10px;
+                    }
+                `;
+                document.head.appendChild(style);
             } else {
                 console.error('Results element not found in the DOM');
             }
