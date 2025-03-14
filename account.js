@@ -1243,7 +1243,7 @@ const setupEventListeners = () => {
             showLoading(false);
         }
     });
-});
+}; // Properly close the setupEventListeners function
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!document.getElementById('errorMessage')) {
