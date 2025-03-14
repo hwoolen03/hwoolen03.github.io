@@ -1703,5 +1703,639 @@ document.getElementById('findMyHolidayButton')?.addEventListener('click', async 
     }
 });
 
+// Updated searchRoundtripFlights function to use the more comprehensive endpoint
+const searchRoundtripFlights = async (fromAirport, toAirport, date) => {
+    try {
+        console.log(`Searching flights from ${fromAirport} to ${toAirport} for ${date}`);
+        
+        // First get SkyIDs for the airports
+        const originSkyId = await getAirportSkyId(fromAirport);
+        const destinationSkyId = await getAirportSkyId(toAirport);
+        
+        if (!originSkyId || !destinationSkyId) {
+            throw new Error('Could not resolve airport codes to SkyIDs');
+        }
+        
+        // Get entity IDs for the airports
+        const originEntityId = await getEntityIdForAirport(fromAirport);
+        const destinationEntityId = await getEntityIdForAirport(toAirport);
+        
+        // Use the more comprehensive searchFlightsWebComplete endpoint
+        const url = new URL(`${API_CONFIG.baseUrl}/api/v2/flights/searchFlightsWebComplete`);
+        url.searchParams.append('originSkyId', originSkyId);
+        url.searchParams.append('destinationSkyId', destinationSkyId);
+        url.searchParams.append('originEntityId', originEntityId);
+        url.searchParams.append('destinationEntityId', destinationEntityId);
+        url.searchParams.append('cabinClass', 'economy');
+        url.searchParams.append('adults', '1');
+        url.searchParams.append('sortBy', 'best');
+        url.searchParams.append('currency', API_CONFIG.defaultParams.currency);
+        url.searchParams.append('market', API_CONFIG.defaultParams.market);
+        url.searchParams.append('countryCode', API_CONFIG.defaultParams.countryCode);
+        
+        console.log('Flight search URL:', url.toString());
+        
+        const response = await fetchWithRetry(url.toString(), {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Flight search failed: ${response.status}`);
+        }
+        
+        const flightData = await response.json();
+        
+        if (!flightData || !flightData.data || !flightData.data.itineraries) {
+            console.warn('No flight data returned from API');
+            return null;
+        }
+        
+        console.log(`Found ${flightData.data.itineraries.length} flight options`);
+        
+        // Process and return flight data
+        return {
+            flights: processFlightData(flightData),
+            rawData: flightData,
+            is_mock: false
+        };
+    } catch (error) {
+        console.error('Error searching flights:', error);
+        // Fall back to mock flight data
+        return createMockFlightData(fromAirport, toAirport, date);
+    }
+};
+
+// New function to get detailed flight information
+const getDetailedFlightInfo = async (legs) => {
+    try {
+        console.log('Fetching detailed flight information');
+        
+        // Prepare legs parameter - needs to be properly formatted JSON string
+        const legsParam = encodeURIComponent(JSON.stringify(legs));
+        
+        const url = new URL(`${API_CONFIG.baseUrl}/api/v1/flights/getFlightDetails`);
+        url.searchParams.append('legs', legsParam);
+        url.searchParams.append('adults', '1');
+        url.searchParams.append('currency', API_CONFIG.defaultParams.currency);
+        url.searchParams.append('locale', API_CONFIG.defaultParams.market);
+        url.searchParams.append('market', API_CONFIG.defaultParams.market);
+        url.searchParams.append('cabinClass', 'economy');
+        url.searchParams.append('countryCode', API_CONFIG.defaultParams.countryCode);
+        
+        console.log('Flight details URL:', url.toString());
+        
+        const response = await fetchWithRetry(url.toString(), {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Flight details failed: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error getting flight details:', error);
+        return null;
+    }
+};
+
+// New function to search flights to anywhere (everywhere search)
+const searchFlightsEverywhere = async (fromAirport, budget, currency = 'USD') => {
+    try {
+        console.log(`Searching flights from ${fromAirport} to everywhere with budget ${budget}`);
+        
+        const url = new URL(`${API_CONFIG.baseUrl}/api/v1/flights/searchFlightEverywhereDetails`);
+        url.searchParams.append('oneWay', 'false');
+        url.searchParams.append('currency', currency);
+        
+        const response = await fetchWithRetry(url.toString(), {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Flight everywhere search failed: ${response.status}`);
+        }
+        
+        const flightData = await response.json();
+        
+        // Filter results by budget if provided
+        if (budget && flightData?.data?.quotes) {
+            flightData.data.quotes = flightData.data.quotes.filter(
+                quote => quote.price.amount <= budget
+            );
+        }
+        
+        return flightData;
+    } catch (error) {
+        console.error('Error searching flights everywhere:', error);
+        return null;
+    }
+};
+
+// Helper function to process flight data
+const processFlightData = (flightData) => {
+    try {
+        if (!flightData?.data?.itineraries || flightData.data.itineraries.length === 0) {
+            return [];
+        }
+        
+        return flightData.data.itineraries.map(itinerary => {
+            // Find the cheapest price option
+            const priceOptions = itinerary.pricingOptions || [];
+            const cheapestOption = priceOptions.reduce(
+                (min, option) => (option.price.amount < min.price.amount) ? option : min,
+                priceOptions[0] || { price: { amount: 0, currency: 'USD' } }
+            );
+            
+            // Extract airline information
+            const legIds = itinerary.legIds || [];
+            const legs = legIds.map(legId => {
+                const leg = flightData.data.legs.find(l => l.id === legId) || {};
+                const segmentIds = leg.segmentIds || [];
+                const segments = segmentIds.map(segId => {
+                    const segment = flightData.data.segments.find(s => s.id === segId) || {};
+                    const marketingCarrierId = segment.marketingCarrierId;
+                    const carrier = flightData.data.carriers.find(c => c.id === marketingCarrierId) || {};
+                    
+                    return {
+                        departureTime: segment.departureDateTime || '',
+                        arrivalTime: segment.arrivalDateTime || '',
+                        duration: segment.durationInMinutes || 0,
+                        flightNumber: segment.flightNumber || '',
+                        airlineCode: carrier.code || '',
+                        airlineName: carrier.name || 'Unknown Airline',
+                        airlineLogo: carrier.logoUrl || '',
+                        aircraft: segment.aircraft?.code || '',
+                        origin: segment.origin?.name || '',
+                        destination: segment.destination?.name || ''
+                    };
+                });
+                
+                return {
+                    departureTime: leg.departureDateTime || '',
+                    arrivalTime: leg.arrivalDateTime || '',
+                    duration: leg.durationInMinutes || 0,
+                    stopCount: leg.stopCount || 0,
+                    segments: segments
+                };
+            });
+            
+            return {
+                id: itinerary.id || '',
+                price: cheapestOption.price.amount || 0,
+                currency: cheapestOption.price.currency || 'USD',
+                legs: legs,
+                totalDuration: legs.reduce((total, leg) => total + leg.duration, 0),
+                agentNames: cheapestOption.agentIds?.map(agentId => {
+                    const agent = flightData.data.agents?.find(a => a.id === agentId) || {};
+                    return agent.name || 'Unknown';
+                }) || ['Unknown'],
+                deepLink: cheapestOption.items?.[0]?.deepLink || ''
+            };
+        }).sort((a, b) => a.price - b.price);
+    } catch (error) {
+        console.error('Error processing flight data:', error);
+        return [];
+    }
+};
+
+// Create mock flight data as fallback
+const createMockFlightData = (fromAirport, toAirport, date) => {
+    console.log(`Creating mock flight data from ${fromAirport} to ${toAirport}`);
+    
+    // Generate realistic mock prices based on distance
+    const distance = calculateMockDistance(fromAirport, toAirport);
+    const basePrice = 100 + (distance * 0.1);
+    
+    const airlines = ['Delta', 'United', 'American', 'Southwest', 'JetBlue', 'British Airways', 'Air France'];
+    const flightNumbers = ['DL123', 'UA456', 'AA789', 'WN234', 'B6567', 'BA890', 'AF345'];
+    
+    // Create 3-5 mock flight options
+    const flightCount = Math.floor(Math.random() * 3) + 3;
+    const flights = [];
+    
+    for (let i = 0; i < flightCount; i++) {
+        const airlineIndex = Math.floor(Math.random() * airlines.length);
+        const durationHours = Math.floor(distance / 500) + 1;
+        const durationMinutes = durationHours * 60;
+        
+        // Random departure time
+        const departureDate = new Date(date);
+        departureDate.setHours(Math.floor(Math.random() * 14) + 6); // Between 6 AM and 8 PM
+        
+        // Calculate arrival time
+        const arrivalDate = new Date(departureDate);
+        arrivalDate.setMinutes(arrivalDate.getMinutes() + durationMinutes);
+        
+        const price = Math.round(basePrice * (0.85 + (Math.random() * 0.3))); // +/- 15% variation
+        
+        flights.push({
+            id: `mock-flight-${i}`,
+            price: price,
+            currency: 'USD',
+            legs: [{
+                departureTime: departureDate.toISOString(),
+                arrivalTime: arrivalDate.toISOString(),
+                duration: durationMinutes,
+                stopCount: i === 0 ? 0 : Math.floor(Math.random() * 2), // First flight direct, others may have stops
+                segments: [{
+                    departureTime: departureDate.toISOString(),
+                    arrivalTime: arrivalDate.toISOString(),
+                    duration: durationMinutes,
+                    flightNumber: flightNumbers[airlineIndex],
+                    airlineCode: flightNumbers[airlineIndex].substring(0, 2),
+                    airlineName: airlines[airlineIndex],
+                    airlineLogo: '',
+                    aircraft: 'B737',
+                    origin: fromAirport,
+                    destination: toAirport
+                }]
+            }],
+            totalDuration: durationMinutes,
+            agentNames: ['Mock Travel Agency'],
+            deepLink: ''
+        });
+    }
+    
+    return {
+        flights: flights.sort((a, b) => a.price - b.price),
+        is_mock: true
+    };
+};
+
+// Helper function to calculate mock distance between airports
+const calculateMockDistance = (fromAirport, toAirport) => {
+    const airportDistances = {
+        'JFK': { 'LAX': 2500, 'LHR': 3500, 'CDG': 3600, 'MIA': 1100 },
+        'LAX': { 'JFK': 2500, 'LHR': 5400, 'CDG': 5600, 'MIA': 2300 },
+        'LHR': { 'JFK': 3500, 'LAX': 5400, 'CDG': 200, 'MIA': 4400 },
+        'CDG': { 'JFK': 3600, 'LAX': 5600, 'LHR': 200, 'MIA': 4600 },
+        'MIA': { 'JFK': 1100, 'LAX': 2300, 'LHR': 4400, 'CDG': 4600 }
+    };
+    
+    if (airportDistances[fromAirport]?.[toAirport]) {
+        return airportDistances[fromAirport][toAirport];
+    }
+    
+    // Default distance if not found
+    return 1500;
+};
+
+// ...existing code...
+
+// Update the integrateRealHotelPrices function to also fetch flight data
+const integrateRealHotelPrices = async (result, checkInDate, checkOutDate) => {
+    try {
+        // Create promise array for parallel processing
+        const promises = [];
+        
+        // Hotel price promise
+        if (result.firstHotel && result.firstHotel.hotel_id) {
+            promises.push(fetchHotelPrice(result.firstHotel.hotel_id, checkInDate, checkOutDate)
+                .then(priceData => ({ hotelData: priceData }))
+                .catch(error => {
+                    console.warn(`Couldn't get hotel price for ${result.city}:`, error);
+                    return { hotelData: null };
+                }));
+        }
+        
+        // Flight data promise - assume standard airport codes
+        // This is a simplification - in a real app you'd map cities to airport codes
+        const departureAirport = result.departureLocation;
+        const destinationAirport = getCityAirportCode(result.city);
+        
+        promises.push(searchRoundtripFlights(departureAirport, destinationAirport, checkInDate)
+            .then(flightData => ({ flightData }))
+            .catch(error => {
+                console.warn(`Couldn't get flight data for ${result.city}:`, error);
+                return { flightData: null };
+            }));
+        
+        // Wait for both promises to complete
+        const [hotelResult, flightResult] = await Promise.all(promises);
+        
+        // Start with original cost
+        const updatedCost = { ...result.cost, is_real_price: false };
+        
+        // Update hotel price if available
+        if (hotelResult?.hotelData?.total_price) {
+            updatedCost.hotel = Math.round(hotelResult.hotelData.total_price);
+            updatedCost.is_real_price = true;
+        }
+        
+        // Update flight price if available
+        if (flightResult?.flightData?.flights?.length > 0) {
+            updatedCost.flight = Math.round(flightResult.flightData.flights[0].price);
+            updatedCost.is_flight_real_price = true;
+            
+            // Store detailed flight info on the result object
+            result.realFlightData = flightResult.flightData.flights[0];
+        }
+        
+        // Recalculate total
+        updatedCost.total = updatedCost.hotel + updatedCost.flight;
+        
+        return updatedCost;
+    } catch (error) {
+        console.warn(`Couldn't get real prices for ${result.city}:`, error);
+        return result.cost;
+    }
+};
+
+// Simple helper to map city names to airport codes
+const getCityAirportCode = (cityName) => {
+    const cityToAirport = {
+        'New York': 'JFK',
+        'London': 'LHR',
+        'Paris': 'CDG',
+        'Tokyo': 'HND',
+        'Chicago': 'ORD',
+        'Los Angeles': 'LAX',
+        'Dallas': 'DFW',
+        'Manila': 'MNL',
+        'Berlin': 'BER',
+        'Bangkok': 'BKK',
+        'Mumbai': 'BOM',
+        'Sydney': 'SYD',
+        'Miami': 'MIA'
+    };
+    
+    return cityToAirport[cityName] || cityName;
+};
+
+// Update the personalizeContent function to display flight details
+const personalizeContent = async (user) => {
+    try {
+        // Get input values from the form
+        const inputs = {
+            checkInDate: document.getElementById('holidayDate').value,
+            checkOutDate: document.getElementById('returnDate').value,
+            departureLocation: document.getElementById('departureLocation').value.toUpperCase(),
+            budget: parseInt(document.getElementById('budget').value) || 1500
+        };
+        
+        // Validate inputs
+        validateDates(inputs.checkInDate, inputs.checkOutDate);
+        
+        // Find destinations based on budget and dates
+        const recommendations = TravelPlanner.findDestinations(
+            inputs.budget,
+            inputs.checkInDate,
+            inputs.checkOutDate,
+            inputs.departureLocation
+        );
+        
+        // Process each recommendation to add hotel data
+        const results = [];
+        let successCount = 0;
+        
+        for (const rec of recommendations) {
+            try {
+                console.log(`Processing recommendation for ${rec.city}`);
+                
+                // Fetch hotels for this destination
+                const hotels = await fetchHotelData(
+                    rec.city,
+                    inputs.budget * 0.6, // Allocate 60% of budget for hotel
+                    inputs.checkInDate,
+                    inputs.checkOutDate
+                );
+                
+                if (hotels && hotels.data && hotels.data.length > 0) {
+                    const firstHotel = hotels.data[0];
+                    
+                    // Extract hotel details - ensure proper address extraction
+                    const hotelName = firstHotel.hotel_name || 'Hotel';
+                    const hotelAddress = firstHotel.address || `${rec.city}, Unknown Address`;
+                    const reviewScore = firstHotel.review_score || 'N/A';
+                    
+                    // Try to get hotel photo - only if we have a valid hotel ID
+                    let photoUrl = null;
+                    let ratings = null;
+                    
+                    // Enhanced validation for hotel ID
+                    if (firstHotel.hotel_id && isValidHotelId(String(firstHotel.hotel_id))) {
+                        try {
+                            photoUrl = await fetchHotelPhotos(firstHotel.hotel_id);
+                        } catch (photoError) {
+                            console.warn(`Could not fetch photos for ${hotelName}:`, photoError);
+                        }
+                        
+                        try {
+                            ratings = await fetchHotelRatings(firstHotel.hotel_id);
+                        } catch (ratingError) {
+                            console.warn(`Could not fetch ratings for ${hotelName}:`, ratingError);
+                            // Provide fallback ratings
+                            ratings = createMockRatingData(firstHotel.hotel_id);
+                        }
+                    } else {
+                        // Generate mock ratings if hotel_id is missing or invalid
+                        ratings = createMockRatingData('missing-id');
+                        console.warn(`Missing or invalid hotel ID for ${rec.city}`, firstHotel);
+                    }
+                    
+                    // Create result with initial cost estimate and departure location
+                    const resultWithHotel = {
+                        ...rec,
+                        hotels: hotels,
+                        departureLocation: inputs.departureLocation,
+                        firstHotel: {
+                            ...firstHotel,
+                            hotel_name: hotelName,
+                            address: hotelAddress,
+                            review_score: reviewScore
+                        },
+                        photos: photoUrl,
+                        ratings: ratings,
+                        flightDetails: {
+                            departure: inputs.departureLocation,
+                            arrival: rec.city,
+                            departureDate: inputs.checkInDate,
+                            returnDate: inputs.checkOutDate,
+                            duration: `${TravelPlanner.calculateNights(inputs.checkInDate, inputs.checkOutDate)} nights`
+                        }
+                    };
+                    
+                    // Try to get real hotel price and update the cost
+                    resultWithHotel.cost = await integrateRealHotelPrices(
+                        resultWithHotel, 
+                        inputs.checkInDate, 
+                        inputs.checkOutDate
+                    );
+                    
+                    // Add to results with hotel info
+                    results.push(resultWithHotel);
+                    
+                    successCount++;
+                } else {
+                    // Should not reach here with our improved code
+                    results.push({
+                        ...rec,
+                        departureLocation: inputs.departureLocation,
+                        hotels: null,
+                        error: 'No hotels found',
+                        flightDetails: {
+                            departure: inputs.departureLocation,
+                            arrival: rec.city,
+                            departureDate: inputs.checkInDate,
+                            returnDate: inputs.checkOutDate,
+                            duration: `${TravelPlanner.calculateNights(inputs.checkInDate, inputs.checkOutDate)} nights`
+                        }
+                    });
+                }
+                
+            } catch (error) {
+                console.error(`Error processing ${rec.city}:`, error);
+                // Add city to results with error info
+                results.push({
+                    ...rec,
+                    departureLocation: inputs.departureLocation,
+                    error: error.message,
+                    hotels: {
+                        data: [],
+                        is_mock: true
+                    },
+                    flightDetails: {
+                        departure: inputs.departureLocation,
+                        arrival: rec.city,
+                        departureDate: inputs.checkInDate,
+                        returnDate: inputs.checkOutDate,
+                        duration: `${TravelPlanner.calculateNights(inputs.checkInDate, inputs.checkOutDate)} nights`
+                    }
+                });
+            }
+            
+            // If we have 3 successful results, that's enough
+            if (successCount >= 3) break;
+        }
+
+        return results;
+    } catch (error) {
+        console.error("Personalization error:", error);
+        showError(error.message);
+        return [];
+    }
+};
+
+// ...existing code...
+
+document.getElementById('findMyHolidayButton')?.addEventListener('click', async () => {
+    try {
+        showLoading(true);
+        triggerFireworks(); // Trigger fireworks animation
+        
+        // Make sure user is defined, use empty object as fallback
+        const userData = user || {};
+        const results = await personalizeContent(userData);
+        
+        if (!results || results.length === 0) {
+            throw new Error("No suitable destinations found for your criteria");
+        }
+        
+        // Display results using template literals properly
+        const resultsElement = document.getElementById('results');
+        if (resultsElement) {
+            resultsElement.innerHTML = results.map(result => `
+                <div class="destination-card">
+                    <h3>${result.city}</h3>
+                    <p>Estimated Total: $${result.cost.total}</p>
+                    <div class="price-breakdown">
+                        <span>✈️ $${result.cost.flight}${result.cost.is_flight_real_price ? ' (actual)' : ' (est)'}</span>
+                        <span>🏨 $${result.cost.hotel}${result.cost.is_real_price ? ' (actual)' : ' (est)'}</span>
+                    </div>
+                    
+                    ${result.realFlightData ? `
+                    <div class="flight-result">
+                        <h4>Flight Details</h4>
+                        <div class="airline-info">
+                            <p><strong>${result.realFlightData.legs[0]?.segments[0]?.airlineName || 'Airline'}</strong> 
+                               Flight ${result.realFlightData.legs[0]?.segments[0]?.flightNumber || ''}</p>
+                            ${result.realFlightData.legs[0]?.segments[0]?.airlineLogo ? 
+                               `<img src="${result.realFlightData.legs[0].segments[0].airlineLogo}" 
+                                     alt="Airline Logo" class="airline-logo"/>` : ''}
+                        </div>
+                        <div class="flight-times">
+                            <p><strong>Departure:</strong> 
+                               ${new Date(result.realFlightData.legs[0]?.departureTime).toLocaleString()}</p>
+                            <p><strong>Arrival:</strong> 
+                               ${new Date(result.realFlightData.legs[0]?.arrivalTime).toLocaleString()}</p>
+                            <p><strong>Duration:</strong> 
+                               ${Math.floor(result.realFlightData.legs[0]?.duration / 60)}h 
+                               ${result.realFlightData.legs[0]?.duration % 60}m</p>
+                            <p><strong>Stops:</strong> ${result.realFlightData.legs[0]?.stopCount || 0}</p>
+                        </div>
+                        ${result.realFlightData.deepLink ? 
+                           `<p><a href="${result.realFlightData.deepLink}" target="_blank">Book this flight</a></p>` : ''}
+                    </div>
+                    ` : ''}
+                    
+                    ${result.firstHotel ? `
+                    <div class="hotel-result">
+                        <h4>${result.firstHotel.hotel_name || 'Hotel'}</h4>
+                        <p class="hotel-address">${result.firstHotel.address || `${result.city}, Address unavailable`}</p>
+                        
+                        <!-- Flight details section -->
+                        <div class="flight-details">
+                            <p><strong>✈️ Flight Details:</strong></p>
+                            <p>From: ${result.departureLocation || 'Unknown'} to ${result.city}</p>
+                            <p>Outbound: ${new Date(result.flightDetails?.departureDate).toLocaleDateString()}</p>
+                            <p>Return: ${new Date(result.flightDetails?.returnDate).toLocaleDateString()}</p>
+                            <p>Duration: ${result.flightDetails?.duration || 'Not specified'}</p>
+                        </div>
+                        
+                        ${result.firstHotel.review_score ? 
+                            `<p>Rating: ${result.firstHotel.review_score}/10</p>` : 
+                            ''}
+                        ${result.cost.is_real_price ? 
+                            `<p class="hotel-price">$${result.cost.hotel} (verified price)</p>` : 
+                            `<p class="hotel-price">$${result.cost.hotel} (estimated)</p>`}
+                        ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo" class="hotel-photo"/>` : ''}
+                        
+                        <!-- Display detailed hotel ratings and reviews -->
+                        ${result.ratings ? `
+                        <div class="hotel-ratings">
+                            <h5>Hotel Ratings:</h5>
+                            <p>Overall Score: ${result.ratings.overall_score}/10</p>
+                            <p>Total Reviews: ${result.ratings.total_reviews}</p>
+                            <ul>
+                                ${result.ratings.categories.map(cat => `
+                                    <li>${cat.name}: ${cat.score}/10</li>
+                                `).join('')}
+                            </ul>
+                            <h5>Recent Reviews:</h5>
+                            <ul>
+                                ${result.ratings.reviews.map(review => `
+                                    <li>
+                                        <strong>${review.title}</strong>
+                                        <p>Pros: ${review.pros}</p>
+                                        <p>Cons: ${review.cons}</p>
+                                        <p>Score: ${review.average_score}/10</p>
+                                        <p>Date: ${review.date}</p>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : ''}
+                    
+                    ${result.error ? `<p class="error">${result.error}</p>` : ''}
+                    ${result.hotels?.is_mock ? `<p class="note">Note: Using estimated hotel data</p>` : ''}
+                </div>
+            `).join('');
+        } else {
+            console.error('Results element not found in the DOM');
+        }
+        
+    } catch (error) {
+        showError(error.message || "An unknown error occurred");
+    } finally {
+        showLoading(false);
+    }
+});
+
 
 
