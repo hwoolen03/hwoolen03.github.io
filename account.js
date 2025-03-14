@@ -497,13 +497,13 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         
         // Process hotel data to ensure IDs are properly extracted
         const processedHotels = propertyData.data.hotels.map(hotel => {
-            // Extract the hotel ID, ensuring it exists
-            const hotelId = hotel.id || hotel.hotelId || hotel.hotel_id || 
-                          (hotel.hotel && hotel.hotel.id) || 
-                          `mock-${cityName}-${Math.random().toString(36).substring(2, 7)}`;
+            // Enhanced ID extraction with fallbacks
+            const hotelId = [hotel?.id, hotel?.hotelId, hotel?.hotel_id, hotel?.hotel?.id]
+                .find(id => id && isValidHotelId(String(id))) 
+                || `mock-${cityName}-${Math.random().toString(36).substring(2, 7)}`;
             
             return {
-                hotel_id: hotelId, // Ensure hotel_id is always defined
+                hotel_id: hotelId,
                 hotel_name: hotel.name || hotel.hotel_name || (hotel.hotel && hotel.hotel.name) || `Hotel in ${cityName}`,
                 address: hotel.address || 
                          (hotel.location && hotel.location.address) || 
@@ -837,7 +837,8 @@ const personalizeContent = async (user) => {
                     let photoUrl = null;
                     let ratings = null;
                     
-                    if (firstHotel.hotel_id) {
+                    // Enhanced validation for hotel ID
+                    if (firstHotel.hotel_id && isValidHotelId(String(firstHotel.hotel_id))) {
                         try {
                             photoUrl = await fetchHotelPhotos(firstHotel.hotel_id);
                         } catch (photoError) {
@@ -852,8 +853,9 @@ const personalizeContent = async (user) => {
                             ratings = createMockRatingData(firstHotel.hotel_id);
                         }
                     } else {
-                        // Generate mock ratings if hotel_id is missing
+                        // Generate mock ratings if hotel_id is missing or invalid
                         ratings = createMockRatingData('missing-id');
+                        console.warn(`Missing or invalid hotel ID for ${rec.city}`, firstHotel);
                     }
                     
                     // Create result with initial cost estimate and departure location
@@ -1401,9 +1403,9 @@ const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
 const fetchHotelRatings = async (hotelId) => {
     try {
         // Validate hotel ID first with improved check
-        if (!hotelId || hotelId.includes('mock-') || hotelId === 'missing-id') {
-            console.warn(`Missing or mock hotel ID for ratings lookup: ${hotelId}`);
-            return createMockRatingData(hotelId || 'missing');
+        if (!hotelId || !isValidHotelId(hotelId)) {
+            console.warn(`Invalid hotel ID for ratings lookup: ${hotelId || 'undefined'}`);
+            return createMockRatingData(hotelId || 'invalid');
         }
         
         // Use hotel details endpoint to get review data
