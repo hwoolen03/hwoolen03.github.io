@@ -343,50 +343,6 @@ const estimateFlightCost = (distance) => {
 };
 
 // API Functions
-// Update searchRoundtripFlights function
-const searchRoundtripFlights = async (fromAirport, toAirport, date) => {
-    try {
-        console.log(`Searching flights from ${fromAirport} to ${toAirport}`);
-        
-        // First get SkyIDs for the airports
-        const originSkyId = await getAirportSkyId(fromAirport);
-        const destinationSkyId = await getAirportSkyId(toAirport);
-        
-        if (!originSkyId || !destinationSkyId) {
-            throw new Error('Could not resolve airport codes to SkyIDs');
-        }
-        
-        // Get entity IDs for the airports (might need to implement this function)
-        const originEntityId = await getEntityIdForAirport(fromAirport);
-        const destinationEntityId = await getEntityIdForAirport(toAirport);
-        
-        const url = new URL(`${API_CONFIG.baseUrl}/api/v2/flights/searchFlights`);
-        url.searchParams.append('originSkyId', originSkyId);
-        url.searchParams.append('destinationSkyId', destinationSkyId);
-        url.searchParams.append('originEntityId', originEntityId);
-        url.searchParams.append('destinationEntityId', destinationEntityId);
-        url.searchParams.append('cabinClass', 'economy');
-        url.searchParams.append('adults', '1');
-        url.searchParams.append('sortBy', 'best');
-        url.searchParams.append('currency', API_CONFIG.defaultParams.currency);
-        url.searchParams.append('market', API_CONFIG.defaultParams.market);
-        url.searchParams.append('countryCode', API_CONFIG.defaultParams.countryCode);
-        
-        const response = await fetchWithRetry(url.toString(), {
-            method: 'GET',
-            headers: API_HEADERS
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Flight search failed: ${response.status}`);
-        }
-        
-        return await response.json();
-    } catch (error) {
-        console.error('Error searching flights:', error);
-        return null;
-    }
-};
 
 // New function to get SkyId for an airport
 const getAirportSkyId = async (airportCode) => {
