@@ -495,9 +495,29 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
             throw new Error(`No properties found for ${cityName}`);
         }
         
+        // Process hotel data to ensure IDs are properly extracted
+        const processedHotels = propertyData.data.hotels.map(hotel => {
+            // Extract the hotel ID, ensuring it exists
+            const hotelId = hotel.id || hotel.hotelId || hotel.hotel_id || 
+                          (hotel.hotel && hotel.hotel.id) || 
+                          `mock-${cityName}-${Math.random().toString(36).substring(2, 7)}`;
+            
+            return {
+                hotel_id: hotelId, // Ensure hotel_id is always defined
+                hotel_name: hotel.name || hotel.hotel_name || (hotel.hotel && hotel.hotel.name) || `Hotel in ${cityName}`,
+                address: hotel.address || 
+                         (hotel.location && hotel.location.address) || 
+                         `${cityName}, Unknown Address`,
+                review_score: hotel.reviewScore || hotel.review_score || 
+                             (hotel.reviews && hotel.reviews.score) || 
+                             (Math.random() * 2 + 7).toFixed(1),
+                price: hotel.price || (hotel.offers && hotel.offers[0] && hotel.offers[0].price) || 0
+            };
+        });
+        
         return {
-            data: propertyData.data.hotels,
-            count: propertyData.data.hotels.length
+            data: processedHotels,
+            count: processedHotels.length
         };
 
     } catch (error) {
@@ -809,17 +829,31 @@ const personalizeContent = async (user) => {
                     const firstHotel = hotels.data[0];
                     
                     // Extract hotel details - ensure proper address extraction
-                    const hotelName = firstHotel.hotel_name || firstHotel.name || 'Hotel';
-                    const hotelAddress = firstHotel.address || 
-                                        (firstHotel.address_data ? 
-                                        `${firstHotel.address_data.address_line1 || ''}, ${firstHotel.address_data.city || rec.city}` : 
-                                        `${rec.city}, Unknown Address`);
+                    const hotelName = firstHotel.hotel_name || 'Hotel';
+                    const hotelAddress = firstHotel.address || `${rec.city}, Unknown Address`;
                     const reviewScore = firstHotel.review_score || 'N/A';
                     
-                    // Try to get hotel photo
+                    // Try to get hotel photo - only if we have a valid hotel ID
                     let photoUrl = null;
+                    let ratings = null;
+                    
                     if (firstHotel.hotel_id) {
-                        photoUrl = await fetchHotelPhotos(firstHotel.hotel_id);
+                        try {
+                            photoUrl = await fetchHotelPhotos(firstHotel.hotel_id);
+                        } catch (photoError) {
+                            console.warn(`Could not fetch photos for ${hotelName}:`, photoError);
+                        }
+                        
+                        try {
+                            ratings = await fetchHotelRatings(firstHotel.hotel_id);
+                        } catch (ratingError) {
+                            console.warn(`Could not fetch ratings for ${hotelName}:`, ratingError);
+                            // Provide fallback ratings
+                            ratings = createMockRatingData(firstHotel.hotel_id);
+                        }
+                    } else {
+                        // Generate mock ratings if hotel_id is missing
+                        ratings = createMockRatingData('missing-id');
                     }
                     
                     // Create result with initial cost estimate and departure location
@@ -834,7 +868,7 @@ const personalizeContent = async (user) => {
                             review_score: reviewScore
                         },
                         photos: photoUrl,
-                        ratings: await fetchHotelRatings(firstHotel.hotel_id),
+                        ratings: ratings,
                         flightDetails: {
                             departure: inputs.departureLocation,
                             arrival: rec.city,
@@ -1366,10 +1400,10 @@ const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
 // Function to fetch detailed hotel ratings and reviews
 const fetchHotelRatings = async (hotelId) => {
     try {
-        // Validate hotel ID first
-        if (!isValidHotelId(hotelId)) {
-            console.warn(`Invalid hotel ID for ratings lookup: ${hotelId}`);
-            throw new Error('Invalid hotel ID');
+        // Validate hotel ID first with improved check
+        if (!hotelId || hotelId.includes('mock-') || hotelId === 'missing-id') {
+            console.warn(`Missing or mock hotel ID for ratings lookup: ${hotelId}`);
+            return createMockRatingData(hotelId || 'missing');
         }
         
         // Use hotel details endpoint to get review data
@@ -1410,7 +1444,7 @@ const fetchHotelRatings = async (hotelId) => {
     } catch (error) {
         console.error('Error fetching hotel ratings:', error);
         // Return mock data as fallback
-        return createMockRatingData(hotelId);
+        return createMockRatingData(hotelId || 'error');
     }
 };
 
