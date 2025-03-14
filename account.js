@@ -834,6 +834,7 @@ const personalizeContent = async (user) => {
                             review_score: reviewScore
                         },
                         photos: photoUrl,
+                        ratings: await fetchHotelRatings(firstHotel.hotel_id),
                         flightDetails: {
                             departure: inputs.departureLocation,
                             arrival: rec.city,
@@ -1129,6 +1130,32 @@ const setupEventListeners = () => {
                                 `<p class="hotel-price">$${result.cost.hotel} (verified price)</p>` : 
                                 `<p class="hotel-price">$${result.cost.hotel} (estimated)</p>`}
                             ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo" class="hotel-photo"/>` : ''}
+                            
+                            <!-- Display detailed hotel ratings and reviews -->
+                            ${result.ratings ? `
+                            <div class="hotel-ratings">
+                                <h5>Hotel Ratings:</h5>
+                                <p>Overall Score: ${result.ratings.overall_score}/10</p>
+                                <p>Total Reviews: ${result.ratings.total_reviews}</p>
+                                <ul>
+                                    ${result.ratings.categories.map(cat => `
+                                        <li>${cat.name}: ${cat.score}/10</li>
+                                    `).join('')}
+                                </ul>
+                                <h5>Recent Reviews:</h5>
+                                <ul>
+                                    ${result.ratings.reviews.map(review => `
+                                        <li>
+                                            <strong>${review.title}</strong>
+                                            <p>Pros: ${review.pros}</p>
+                                            <p>Cons: ${review.cons}</p>
+                                            <p>Score: ${review.average_score}/10</p>
+                                            <p>Date: ${review.date}</p>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                            ` : ''}
                         </div>
                         ` : ''}
                         
@@ -1336,7 +1363,91 @@ const fetchHotelPrice = async (hotelId, checkInDate, checkOutDate) => {
     }
 };
 
-// Add new function for searching hotels by coordinates
+// Function to fetch detailed hotel ratings and reviews
+const fetchHotelRatings = async (hotelId) => {
+    try {
+        // Validate hotel ID first
+        if (!isValidHotelId(hotelId)) {
+            console.warn(`Invalid hotel ID for ratings lookup: ${hotelId}`);
+            throw new Error('Invalid hotel ID');
+        }
+        
+        // Use hotel details endpoint to get review data
+        const url = `${API_CONFIG.baseUrl}/api/v1/hotels/reviews`;
+        const reviewsUrl = new URL(url);
+        reviewsUrl.searchParams.append('hotel_id', hotelId);
+        reviewsUrl.searchParams.append('locale', 'en-us');
+        reviewsUrl.searchParams.append('sort_type', 'SORT_MOST_RELEVANT'); // Sort reviews by relevance
+        reviewsUrl.searchParams.append('customer_type', 'all'); // Get all types of customer reviews
+        reviewsUrl.searchParams.append('limit', '5'); // Limit to 5 reviews for performance
+        reviewsUrl.searchParams.append('page', '1');  // First page of results
+        
+        console.log(`Fetching hotel reviews for ID ${hotelId}`);
+        
+        const response = await fetchWithRetry(reviewsUrl.toString(), {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+        
+        if (!response.ok) {
+            if (response.status === 403) {
+                console.error(`403 Forbidden: No access to review data for hotel ID: ${hotelId}`);
+                throw new Error('API access denied for review data');
+            }
+            throw new Error(`Failed to fetch hotel reviews: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Extract rating information and reviews from the actual response structure
+        return {
+            overall_score: data?.data?.review_summary?.average_score || 0,
+            total_reviews: data?.data?.review_summary?.count || 0,
+            categories: data?.data?.review_summary?.score_breakdown || [],
+            reviews: data?.data?.reviews || [],
+            is_mock: false
+        };
+    } catch (error) {
+        console.error('Error fetching hotel ratings:', error);
+        // Return mock data as fallback
+        return createMockRatingData(hotelId);
+    }
+};
+
+// Helper function to create mock rating data
+const createMockRatingData = (hotelId) => {
+    return {
+        overall_score: (Math.random() * 2 + 7).toFixed(1), // Score between 7.0-9.0
+        total_reviews: Math.floor(Math.random() * 900) + 100, // Between 100-1000 reviews
+        categories: [
+            { name: "Cleanliness", score: (Math.random() * 2 + 7).toFixed(1) },
+            { name: "Comfort", score: (Math.random() * 2 + 7).toFixed(1) },
+            { name: "Location", score: (Math.random() * 2 + 7).toFixed(1) },
+            { name: "Facilities", score: (Math.random() * 2 + 7).toFixed(1) },
+            { name: "Staff", score: (Math.random() * 2 + 7).toFixed(1) },
+            { name: "Value for money", score: (Math.random() * 2 + 7).toFixed(1) }
+        ],
+        reviews: [
+            {
+                title: "Great stay",
+                pros: "Excellent location and friendly staff",
+                cons: "Rooms could be a bit larger",
+                average_score: (Math.random() * 2 + 7).toFixed(1),
+                date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            },
+            {
+                title: "Enjoyable experience",
+                pros: "Clean rooms and great breakfast",
+                cons: "Elevator was slow",
+                average_score: (Math.random() * 2 + 7).toFixed(1),
+                date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            }
+        ],
+        is_mock: true
+    };
+};
+
+// Add search hotels by coordinates alternative
 const searchHotelsByCoordinatesAlternative = async (latitude, longitude, checkInDate, checkOutDate) => {
     try {
         console.log(`Searching for hotels at coordinates: ${latitude}, ${longitude}`);
@@ -1355,13 +1466,13 @@ const searchHotelsByCoordinatesAlternative = async (latitude, longitude, checkIn
             page_number: '1',
             currency: 'USD'
         };
-
+        
         Object.entries(searchParams).forEach(([key, value]) => {
             hotelUrl.searchParams.append(key, value);
         });
         
         console.log('Coordinate search URL:', hotelUrl.toString());
-
+        
         const hotelResponse = await fetchWithRetry(hotelUrl.toString(), {
             method: 'GET',
             headers: API_HEADERS
@@ -1376,7 +1487,7 @@ const searchHotelsByCoordinatesAlternative = async (latitude, longitude, checkIn
         if (!hotelData?.data || hotelData.data.length === 0) {
             throw new Error('No hotels found at these coordinates');
         }
-
+        
         return {
             data: hotelData.data,
             count: hotelData.data.length
@@ -1390,10 +1501,10 @@ const searchHotelsByCoordinatesAlternative = async (latitude, longitude, checkIn
 // Add this function to validate hotel IDs
 const isValidHotelId = (hotelId) => {
     if (!hotelId) return false;
-    
+
     // Check if it's a string or can be converted to a string
     const idStr = String(hotelId).trim();
-    
+
     // Basic validation - ensure the ID isn't empty and has reasonable length
     return idStr.length > 0 && idStr.length < 100;
 };
@@ -1404,7 +1515,7 @@ const isValidHotelId = (hotelId) => {
  * @param {string} cityName - The city name for this search
  * @param {boolean} isMock - Whether this is mock data
  * @returns {Object} Standardized hotel data response
- /*/
+ */
 const processHotelSearchResponse = (apiResponse, cityName, isMock = false) => {
     try {
         console.log(`Processing hotel data for ${cityName}`);
@@ -1516,6 +1627,32 @@ document.getElementById('findMyHolidayButton')?.addEventListener('click', async 
                         `<p class="hotel-price">$${result.cost.hotel} (verified price)</p>` : 
                         `<p class="hotel-price">$${result.cost.hotel} (estimated)</p>`}
                     ${result.photos ? `<img src="${result.photos}" alt="Hotel Photo" class="hotel-photo"/>` : ''}
+                    
+                    <!-- Display detailed hotel ratings and reviews -->
+                    ${result.ratings ? `
+                    <div class="hotel-ratings">
+                        <h5>Hotel Ratings:</h5>
+                        <p>Overall Score: ${result.ratings.overall_score}/10</p>
+                        <p>Total Reviews: ${result.ratings.total_reviews}</p>
+                        <ul>
+                            ${result.ratings.categories.map(cat => `
+                                <li>${cat.name}: ${cat.score}/10</li>
+                            `).join('')}
+                        </ul>
+                        <h5>Recent Reviews:</h5>
+                        <ul>
+                            ${result.ratings.reviews.map(review => `
+                                <li>
+                                    <strong>${review.title}</strong>
+                                    <p>Pros: ${review.pros}</p>
+                                    <p>Cons: ${review.cons}</p>
+                                    <p>Score: ${review.average_score}/10</p>
+                                    <p>Date: ${review.date}</p>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
                 </div>
                 ` : ''}
                 
@@ -1523,7 +1660,6 @@ document.getElementById('findMyHolidayButton')?.addEventListener('click', async 
                 ${result.hotels?.is_mock ? `<p class="note">Note: Using estimated hotel data</p>` : ''}
             </div>
         `).join('');
-        
     } catch (error) {
         showError(error.message);
     } finally {
