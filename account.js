@@ -1597,282 +1597,54 @@ const integrateRealHotelPrices = async (result, checkInDate, checkOutDate) => {
         const destinationAirport = getCityAirportCode(result.city);
         
         // Add the missing searchRoundtripFlights function
-        const searchRoundtripFlights = async (departure, destination, date) => {
+        const searchRoundtripFlights = async (departure, destination, date, returnDate) => {
             try {
                 console.log(`Searching flights from ${departure} to ${destination}`);
-                // In a real implementation, you would call the flight search API
-                // For now, we'll return mock data
-                return {
-                    flights: [
-                        {
-                            price: Math.floor(Math.random() * 300) + 200,
-                            legs: [
-                                {
-                                    departureTime: new Date(date).toISOString(),
-                                    arrivalTime: new Date(new Date(date).getTime() + 5 * 60 * 60 * 1000).toISOString(),
-                                    duration: 300, // 5 hours in minutes
-                                    stopCount: Math.floor(Math.random() * 2),
-                                    segments: [
-                                        {
-                                            airlineName: "SkyAir",
-                                            flightNumber: `SA${Math.floor(Math.random() * 1000)}`,
-                                            airlineLogo: null
-                                        }
-                                    ]
-                                }
-                            ],
-                            deepLink: null
-                        }
-                    ]
-                };
-            } catch (error) {
-                console.error(`Flight search error: ${error.message}`);
-                throw error;
-            }
-        };
-        
-        promises.push(searchRoundtripFlights(departureAirport, destinationAirport, checkInDate)
-            .then(flightData => ({ flightData }))
-            .catch(error => {
-                console.warn(`Couldn't get flight data for ${result.city}:`, error);
-                return { flightData: null };
-            }));
-        
-        // Wait for both promises to complete
-        const [hotelResult, flightResult] = await Promise.all(promises);
-        
-        // Start with original cost
-        const updatedCost = { ...result.cost, is_real_price: false };
-        
-        // Update hotel price if available
-        if (hotelResult?.hotelData?.total_price) {
-            updatedCost.hotel = Math.round(hotelResult.hotelData.total_price);
-            updatedCost.is_real_price = true;
-        }
-        
-        // Update flight price if available
-        if (flightResult?.flightData?.flights?.length > 0) {
-            updatedCost.flight = Math.round(flightResult.flightData.flights[0].price);
-            updatedCost.is_flight_real_price = true;
-            
-            // Store detailed flight info on the result object
-            result.realFlightData = flightResult.flightData.flights[0];
-        }
-        
-        // Recalculate total
-        updatedCost.total = updatedCost.hotel + updatedCost.flight;
-        
-        return updatedCost;
-    } catch (error) {
-        console.warn(`Couldn't get real prices for ${result.city}:`, error);
-        return result.cost;
-    }
-};
-
-// Simple helper to map city names to airport codes
-const getCityAirportCode = (cityName) => {
-    const cityToAirport = {
-        'New York': 'JFK',
-        'London': 'LHR',
-        'Paris': 'CDG',
-        'Tokyo': 'HND',
-        'Chicago': 'ORD',
-        'Los Angeles': 'LAX',
-        'Dallas': 'DFW',
-        'Manila': 'MNL',
-        'Berlin': 'BER',
-        'Bangkok': 'BKK',
-        'Mumbai': 'BOM',
-        'Sydney': 'SYD',
-        'Miami': 'MIA'
-    };
-    
-    return cityToAirport[cityName] || cityName;
-};
-
-// Update the personalizeContent function to display flight details
-const personalizeContent = async (user) => {
-    try {
-        // Get input values from the form
-        const inputs = {
-            checkInDate: document.getElementById('holidayDate').value,
-            checkOutDate: document.getElementById('returnDate').value,
-            departureLocation: document.getElementById('departureLocation').value.toUpperCase(),
-            budget: parseInt(document.getElementById('budget').value) || 1500
-        };
-        
-        // Validate inputs
-        validateDates(inputs.checkInDate, inputs.checkOutDate);
-        
-        // Find destinations based on budget and dates
-        const recommendations = TravelPlanner.findDestinations(
-            inputs.budget,
-            inputs.checkInDate,
-            inputs.checkOutDate,
-            inputs.departureLocation
-        );
-        
-        // Process each recommendation to add hotel data
-        const results = [];
-        let successCount = 0;
-        
-        for (const rec of recommendations) {
-            try {
-                console.log(`Processing recommendation for ${rec.city}`);
                 
-                // Fetch hotels for this destination
-                const hotels = await fetchHotelData(
-                    rec.city,
-                    inputs.budget * 0.6, // Allocate 60% of budget for hotel
-                    inputs.checkInDate,
-                    inputs.checkOutDate
-                );
+                // Try to use the Sky-Scrapper API for real flight data
+                const url = new URL(`${API_CONFIG.baseUrl}/api/v1/flights/searchFlights`);
                 
-                if (hotels && hotels.data && hotels.data.length > 0) {
-                    const firstHotel = hotels.data[0];
-                    
-                    // Extract hotel details - ensure proper address extraction
-                    const hotelName = firstHotel.hotel_name || 'Hotel';
-                    const hotelAddress = firstHotel.address || `${rec.city}, Unknown Address`;
-                    const reviewScore = firstHotel.review_score || 'N/A';
-                    
-                    // Try to get hotel photo - only if we have a valid hotel ID
-                    let photoUrl = null;
-                    let ratings = null;
-                    
-                    // Enhanced validation for hotel ID
-                    if (firstHotel.hotel_id && isValidHotelId(String(firstHotel.hotel_id))) {
-                        try {
-                            photoUrl = await fetchHotelPhotos(firstHotel.hotel_id);
-                        } catch (photoError) {
-                            console.warn(`Could not fetch photos for ${hotelName}:`, photoError);
-                        }
-                        
-                        try {
-                            ratings = await fetchHotelRatings(firstHotel.hotel_id);
-                        } catch (ratingError) {
-                            console.warn(`Could not fetch ratings for ${hotelName}:`, ratingError);
-                            // Provide fallback ratings
-                            ratings = createMockRatingData(firstHotel.hotel_id);
-                        }
-                    } else {
-                        // Generate mock ratings if hotel_id is missing or invalid
-                        ratings = createMockRatingData('missing-id');
-                        console.warn(`Missing or invalid hotel ID for ${rec.city}`, firstHotel);
-                    }
-                    
-                    // Create result with initial cost estimate and departure location
-                    const resultWithHotel = {
-                        ...rec,
-                        hotels: hotels,
-                        departureLocation: inputs.departureLocation,
-                        firstHotel: {
-                            ...firstHotel,
-                            hotel_name: hotelName,
-                            address: hotelAddress,
-                            review_score: reviewScore
-                        },
-                        photos: photoUrl,
-                        ratings: ratings,
-                        flightDetails: {
-                            departure: inputs.departureLocation,
-                            arrival: rec.city,
-                            departureDate: inputs.checkInDate,
-                            returnDate: inputs.checkOutDate,
-                            duration: `${TravelPlanner.calculateNights(inputs.checkInDate, inputs.checkOutDate)} nights`
-                        }
-                    };
-                    
-                    // Try to get real hotel price and update the cost
-                    resultWithHotel.cost = await integrateRealHotelPrices(
-                        resultWithHotel, 
-                        inputs.checkInDate, 
-                        inputs.checkOutDate
-                    );
-                    
-                    // Add to results with hotel info
-                    results.push(resultWithHotel);
-                    
-                    successCount++;
-                } else {
-                    // Should not reach here with our improved code
-                    results.push({
-                        ...rec,
-                        departureLocation: inputs.departureLocation,
-                        hotels: null,
-                        error: 'No hotels found',
-                        flightDetails: {
-                            departure: inputs.departureLocation,
-                            arrival: rec.city,
-                            departureDate: inputs.checkInDate,
-                            returnDate: inputs.checkOutDate,
-                            duration: `${TravelPlanner.calculateNights(inputs.checkInDate, inputs.checkOutDate)} nights`
-                        }
+                url.searchParams.append('departure', departure);
+                url.searchParams.append('arrival', destination);
+                url.searchParams.append('date', date);
+                url.searchParams.append('returnDate', returnDate);
+                url.searchParams.append('adults', '2');
+                url.searchParams.append('currency', 'USD');
+                
+                try {
+                    const response = await fetchWithRetry(url.toString(), {
+                        method: 'GET',
+                        headers: API_HEADERS
                     });
+                    
+                    if (response.ok) {
+                        const flightData = await response.json();
+                        if (flightData?.data?.length > 0) {
+                            // Format API response to match our expected structure
+                            return {
+                                flights: flightData.data.map(flight => ({
+                                    price: flight.price || Math.floor(Math.random() * 300) + 200,
+                                    legs: flight.legs || [{
+                                        departureTime: flight.departureTime || new Date(date).toISOString(),
+                                        arrivalTime: flight.arrivalTime || new Date(new Date(date).getTime() + 5 * 60 * 60 * 1000).toISOString(),
+                                        duration: flight.duration || 300,
+                                        stopCount: flight.stopCount || Math.floor(Math.random() * 2),
+                                        segments: flight.segments || [{
+                                            airlineName: flight.airline || "SkyAir",
+                                            flightNumber: flight.flightNumber || `SA${Math.floor(Math.random() * 1000)}`,
+                                            airlineLogo: flight.airlineLogo || null
+                                        }]
+                                    }],
+                                    deepLink: flight.deepLink || null
+                                }))
+                            };
+                        }
+                    }
+                } catch (apiError) {
+                    console.warn('API flight search failed, falling back to mock data:', apiError);
                 }
                 
-            } catch (error) {
-                console.error(`Error processing ${rec.city}:`, error);
-                // Add city to results with error info
-                results.push({
-                    ...rec,
-                    departureLocation: inputs.departureLocation,
-                    error: error.message,
-                    hotels: {
-                        data: [],
-                        is_mock: true
-                    },
-                    flightDetails: {
-                        departure: inputs.departureLocation,
-                        arrival: rec.city,
-                        departureDate: inputs.checkInDate,
-                        returnDate: inputs.checkOutDate,
-                        duration: `${TravelPlanner.calculateNights(inputs.checkInDate, inputs.checkOutDate)} nights`
-                    }
-                });
-            }
-            
-            // If we have 3 successful results, that's enough
-            if (successCount >= 3) break;
-        }
-
-        return results;
-    } catch (error) {
-        console.error("Personalization error:", error);
-        showError(error.message);
-        return [];
-    }
-};
-
-// ...existing code...
-
-// Add this function to fetch and integrate real hotel prices
-const integrateRealHotelPrices = async (result, checkInDate, checkOutDate) => {
-    try {
-        // Create promise array for parallel processing
-        const promises = [];
-        
-        // Hotel price promise
-        if (result.firstHotel && result.firstHotel.hotel_id) {
-            promises.push(fetchHotelPrice(result.firstHotel.hotel_id, checkInDate, checkOutDate)
-                .then(priceData => ({ hotelData: priceData }))
-                .catch(error => {
-                    console.warn(`Couldn't get hotel price for ${result.city}:`, error);
-                    return { hotelData: null };
-                }));
-        }
-        
-        // Flight data promise - assume standard airport codes
-        // This is a simplification - in a real app you'd map cities to airport codes
-        const departureAirport = result.departureLocation;
-        const destinationAirport = getCityAirportCode(result.city);
-        
-        // Add the missing searchRoundtripFlights function
-        const searchRoundtripFlights = async (departure, destination, date) => {
-            try {
-                console.log(`Searching flights from ${departure} to ${destination}`);
-                // In a real implementation, you would call the flight search API
-                // For now, we'll return mock data
+                // Fall back to mock data if API call fails
                 return {
                     flights: [
                         {
@@ -1902,7 +1674,7 @@ const integrateRealHotelPrices = async (result, checkInDate, checkOutDate) => {
             }
         };
         
-        promises.push(searchRoundtripFlights(departureAirport, destinationAirport, checkInDate)
+        promises.push(searchRoundtripFlights(departureAirport, destinationAirport, checkInDate, checkOutDate)
             .then(flightData => ({ flightData }))
             .catch(error => {
                 console.warn(`Couldn't get flight data for ${result.city}:`, error);
@@ -1960,10 +1732,6 @@ const getCityAirportCode = (cityName) => {
     
     return cityToAirport[cityName] || cityName;
 };
-
-// Remove the second declaration of personalizeContent
-
-// ...existing code...
 
 // Update the findMyHolidayButton event listener to include flight details in display
 document.addEventListener('DOMContentLoaded', () => {
