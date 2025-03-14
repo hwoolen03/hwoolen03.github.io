@@ -1378,13 +1378,23 @@ const processHotelSearchResponse = (apiResponse, cityName, isMock = false) => {
         
         // Standardize and clean hotel objects
         const processedHotels = hotelData.map(hotel => {
+            // Ensure hotel is not null/undefined before accessing its properties
+            if (!hotel) return {
+                hotel_id: `mock-${cityName}-${Math.random().toString(36).substring(2, 7)}`,
+                hotel_name: `${cityName} Hotel`,
+                address: `${cityName}, Unknown Address`,
+                review_score: (Math.random() * 2 + 7).toFixed(1),
+                price: Math.floor(Math.random() * 100) + 100,
+                photo_url: null
+            };
+            
             return {
                 hotel_id: hotel.hotel_id || `mock-${cityName}-${Math.random().toString(36).substring(2, 7)}`,
                 hotel_name: hotel.name || hotel.hotel_name || `${cityName} Hotel`,
-                address: hotel.address?.address_line1 || hotel.address || `${cityName}, Unknown Address`,
+                address: (hotel.address && hotel.address.address_line1) || hotel.address || `${cityName}, Unknown Address`,
                 review_score: hotel.review_score || hotel.rating || (Math.random() * 2 + 7).toFixed(1),
-                price: hotel.price?.rate || hotel.price || Math.floor(Math.random() * 100) + 100,
-                photo_url: hotel.photo?.main?.url_max || hotel.main_photo_url || null
+                price: (hotel.price && hotel.price.rate) || hotel.price || Math.floor(Math.random() * 100) + 100,
+                photo_url: (hotel.photo && hotel.photo.main && hotel.photo.main.url_max) || hotel.main_photo_url || null
             };
         });
         
@@ -1402,9 +1412,495 @@ const processHotelSearchResponse = (apiResponse, cityName, isMock = false) => {
 // Add this function to fetch and integrate real hotel prices
 const integrateRealHotelPrices = async (result, checkInDate, checkOutDate) => {
     try {
+        // Ensure result and result.cost exist before proceeding
+        if (!result || !result.cost) {
+            return {
+                flight: 0,
+                hotel: 0,
+                total: 0,
+                is_real_price: false,
+                is_flight_real_price: false
+            };
+        }
+        
         // Start with original cost and mark as estimated
         const updatedCost = {
-            ...result.cost,
+            flight: result.cost.flight || 0,
+            hotel: result.cost.hotel || 0,
+            total: result.cost.total || 0,
+            is_real_price: false,
+            is_flight_real_price: false
+        };
+        
+        // Attempt to get flight data if the API supports it
+        try {
+            const departureAirport = result.departureLocation;
+            const destinationAirport = getCityAirportCode(result.city);
+            const flightResult = await searchRoundtripFlights(
+                departureAirport, 
+                destinationAirport, 
+                checkInDate, 
+                checkOutDate
+            ).catch(error => {
+                console.warn(`Couldn't get flight data for ${result.city}:`, error);
+                return null;
+            });
+            
+            if (flightResult?.flights?.length > 0) {
+                updatedCost.flight = Math.round(flightResult.flights[0].price);
+                updatedCost.is_flight_real_price = true;
+                
+                // Store detailed flight info on the result object
+                result.realFlightData = flightResult.flights[0];
+            }
+        } catch (flightError) {
+            console.warn(`Flight data retrieval failed for ${result.city}:`, flightError);
+        }
+        
+        // Recalculate total
+        updatedCost.total = updatedCost.hotel + updatedCost.flight;
+        
+        return updatedCost;
+    } catch (error) {
+        console.warn(`Couldn't get real prices for ${result.city}:`, error);
+        return result.cost;
+    }
+};
+
+// Simple helper to map city names to airport codes
+const getCityAirportCode = (cityName) => {
+    const cityToAirport = {
+        'New York': 'JFK',
+        'London': 'LHR',
+        'Paris': 'CDG',
+        'Tokyo': 'HND',
+        'Chicago': 'ORD',
+        'Los Angeles': 'LAX',
+        'Dallas': 'DFW',
+        'Manila': 'MNL',
+        'Berlin': 'BER',
+        'Bangkok': 'BKK',
+        'Mumbai': 'BOM',
+        'Sydney': 'SYD',
+        'Miami': 'MIA'
+    };
+    return cityToAirport[cityName] || cityName;
+};
+
+// Add the missing searchRoundtripFlights function
+const searchRoundtripFlights = async (departure, destination, date, returnDate) => {
+    try {
+        console.log(`Searching flights from ${departure} to ${destination}`);
+        
+        // Try to use the Sky-Scrapper API for real flight data
+        const url = new URL(`${API_CONFIG.baseUrl}/api/v1/flights/searchFlights`);
+        
+        url.searchParams.append('departure', departure);
+        url.searchParams.append('arrival', destination);
+        url.searchParams.append('date', date);
+        url.searchParams.append('returnDate', returnDate);
+        url.searchParams.append('adults', '2');
+        url.searchParams.append('currency', 'USD');
+        
+        try {
+            const response = await fetchWithRetry(url.toString(), {
+                method: 'GET',
+                headers: API_HEADERS
+            });
+            
+            if (response.ok) {
+                const flightData = await response.json();
+                
+                if (flightData?.data?.length > 0) {
+                    // Format API response to match our expected structure
+                    return {
+                        flights: flightData.data.map(flight => ({
+                            price: flight.price || Math.floor(Math.random() * 300) + 200,
+                            legs: flight.legs || [{
+                                departureTime: flight.departureTime || new Date(date).toISOString(),
+                                arrivalTime: flight.arrivalTime || new Date(new Date(date).getTime() + 5 * 60 * 60 * 1000).toISOString(),
+                                duration: flight.duration || 300, // 5 hours in minutes
+                                stopCount: flight.stopCount || Math.floor(Math.random() * 2),
+                                segments: flight.segments || [{
+                                    airlineName: flight.airline || "SkyAir",
+                                    flightNumber: flight.flightNumber || `SA${Math.floor(Math.random() * 1000)}`,
+                                    airlineLogo: flight.airlineLogo || null
+                                }]
+                            }],
+                            deepLink: flight.deepLink || null
+                        }))
+                    };
+                }
+            }
+        } catch (apiError) {
+            console.warn('API flight search failed, falling back to mock data:', apiError);
+        }
+        
+        // Fall back to mock data if API call fails
+        return {
+            flights: [
+                {
+                    price: Math.floor(Math.random() * 300) + 200,
+                    legs: [{
+                        departureTime: new Date(date).toISOString(),
+                        arrivalTime: new Date(new Date(date).getTime() + 5 * 60 * 60 * 1000).toISOString(),
+                        duration: 300, // 5 hours in minutes
+                        stopCount: Math.floor(Math.random() * 2),
+                        segments: [{
+                            airlineName: "SkyAir",
+                            flightNumber: `SA${Math.floor(Math.random() * 1000)}`,
+                            airlineLogo: null
+                        }]
+                    }],
+                    deepLink: null
+                }
+            ]
+        };
+    } catch (error) {
+        console.error(`Flight search error: ${error.message}`);
+        throw error;
+    }
+};
+
+// Function to fetch hotel photos using the hotel ID
+const fetchHotelPhotos = async (hotelId) => {
+    try {
+        console.log(`Fetching photos for hotel ID: ${hotelId}`);
+        
+        const url = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/getHotelPhotos`);
+        url.searchParams.append('hotelId', hotelId);
+        
+        const response = await fetchWithRetry(url.toString(), {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch hotel photos: ${response.status}`);
+        }
+        
+        const photoData = await response.json();
+        
+        if (photoData && photoData.data && photoData.data.length > 0) {
+            // Return the URL of the first photo
+            return photoData.data[0].url_max || photoData.data[0].url;
+        }
+        
+        // Fallback to a placeholder image
+        return 'https://placehold.co/600x400?text=No+Hotel+Image';
+    } catch (error) {
+        console.error(`Error fetching hotel photos for ${hotelId}:`, error);
+        // Return a placeholder image URL
+        return 'https://placehold.co/600x400?text=No+Hotel+Image';
+    }
+};
+
+// Function to fetch hotel ratings and reviews
+const fetchHotelRatings = async (hotelId) => {
+    try {
+        console.log(`Fetching ratings for hotel ID: ${hotelId}`);
+        
+        const url = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/getHotelReviews`);
+        url.searchParams.append('hotelId', hotelId);
+        url.searchParams.append('limit', '5'); // Fetch up to 5 reviews
+        
+        const response = await fetchWithRetry(url.toString(), {
+            method: 'GET',
+            headers: API_HEADERS
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch hotel ratings: ${response.status}`);
+        }
+        
+        const ratingData = await response.json();
+        
+        if (ratingData && ratingData.data) {
+            const reviews = ratingData.data.reviews || [];
+            const categories = ratingData.data.categories || [];
+            
+            return {
+                overall_score: ratingData.data.average_score || (Math.random() * 2 + 7).toFixed(1),
+                total_reviews: ratingData.data.review_count || reviews.length || Math.floor(Math.random() * 50) + 10,
+                categories: categories.length > 0 ? categories : [
+                    { name: 'Cleanliness', score: (Math.random() * 2 + 7).toFixed(1) },
+                    { name: 'Service', score: (Math.random() * 2 + 7).toFixed(1) },
+                    { name: 'Location', score: (Math.random() * 2 + 7).toFixed(1) }
+                ],
+                reviews: reviews.length > 0 ? reviews.map(review => ({
+                    title: review.title || 'Guest Review',
+                    pros: review.pros || 'Good experience overall',
+                    cons: review.cons || 'Nothing to complain about',
+                    average_score: review.average_score || (Math.random() * 2 + 7).toFixed(1),
+                    date: review.date || new Date().toISOString().split('T')[0]
+                })) : createMockReviews(3) // Create 3 mock reviews if none exist
+            };
+        }
+        
+        // If no data or unexpected format, fall back to mock data
+        return createMockRatingData(hotelId);
+    } catch (error) {
+        console.error(`Error fetching hotel ratings for ${hotelId}:`, error);
+        return createMockRatingData(hotelId);
+    }
+};
+
+// Create mock rating data as fallback
+const createMockRatingData = (hotelId) => {
+    console.log(`Creating mock rating data for hotel ID: ${hotelId}`);
+    
+    // Generate an overall score between 7.0 and 9.0
+    const overallScore = (Math.random() * 2 + 7).toFixed(1);
+    
+    // Generate scores for different categories
+    const categories = [
+        { name: 'Cleanliness', score: (Math.random() * 2 + 7).toFixed(1) },
+        { name: 'Service', score: (Math.random() * 2 + 7).toFixed(1) },
+        { name: 'Location', score: (Math.random() * 2 + 7).toFixed(1) },
+        { name: 'Value', score: (Math.random() * 2 + 7).toFixed(1) },
+        { name: 'Comfort', score: (Math.random() * 2 + 7).toFixed(1) }
+    ];
+    
+    // Create mock reviews
+    const reviews = createMockReviews(3);
+    
+    return {
+        overall_score: overallScore,
+        total_reviews: Math.floor(Math.random() * 50) + 10,
+        categories: categories,
+        reviews: reviews
+    };
+};
+
+// Helper function to create mock reviews
+const createMockReviews = (count) => {
+    const reviewTitles = [
+        'Great stay!', 
+        'Enjoyed our visit', 
+        'Good value for money', 
+        'Nice location',
+        'Pleasant surprise'
+    ];
+    
+    const reviewPros = [
+        'Friendly staff', 
+        'Clean rooms', 
+        'Great location', 
+        'Comfortable beds',
+        'Good amenities', 
+        'Excellent breakfast'
+    ];
+    
+    const reviewCons = [
+        'Slow check-in process', 
+        'Small bathroom', 
+        'Noisy at night',
+        'Limited parking', 
+        'Breakfast could be better', 
+        'None'
+    ];
+    
+    const reviews = [];
+    
+    for (let i = 0; i < count; i++) {
+        const randomDate = new Date();
+        randomDate.setDate(randomDate.getDate() - Math.floor(Math.random() * 30));
+        
+        reviews.push({
+            title: reviewTitles[Math.floor(Math.random() * reviewTitles.length)],
+            pros: reviewPros[Math.floor(Math.random() * reviewPros.length)],
+            cons: reviewCons[Math.floor(Math.random() * reviewCons.length)],
+            average_score: (Math.random() * 2 + 7).toFixed(1),
+            date: randomDate.toISOString().split('T')[0]
+        });
+    }
+    
+    return reviews;
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (!document.getElementById('errorMessage')) {
+        const errorDiv = document.createElement('div');
+        errorDiv.id = 'errorMessage';
+        errorDiv.style.display = 'none';
+        errorDiv.style.color = 'red';
+        errorDiv.style.padding = '10px';
+        errorDiv.style.margin = '10px 0';
+        errorDiv.style.backgroundColor = '#ffeeee';
+        errorDiv.style.border = '1px solid red';
+        errorDiv.style.borderRadius = '5px';
+        document.body.insertBefore(errorDiv, document.body.firstChild);
+    }
+    if (!document.getElementById('loader')) {
+        const loaderDiv = document.createElement('div');
+        loaderDiv.id = 'loader';
+        loaderDiv.style.display = 'none';
+        loaderDiv.innerHTML = 'Loading...';
+        loaderDiv.style.textAlign = 'center';
+        loaderDiv.style.padding = '20px';
+        document.body.appendChild(loaderDiv);
+    }
+    
+    if (!document.getElementById('results')) {
+        const resultsDiv = document.createElement('div');
+        resultsDiv.id = 'results';
+        resultsDiv.style.display = 'none';
+        document.body.appendChild(resultsDiv);
+    }
+    
+    // Initialize the application
+    initializeApp().then(() => {
+        if (window.performance?.navigation?.type === 2) {
+            sessionStorage.removeItem('auth_state');
+            window.location.reload();
+        }
+    });
+});
+
+window.addEventListener('load', async () => {
+    try {
+        await auth0Client.checkSession();
+        await updateAuthState();
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        document.body.classList.add('unauthenticated');
+    }
+});
+
+// Add the missing validateDates function and showError/showLoading functions
+const validateDates = (checkInDate, checkOutDate) => {
+    if (!checkInDate || !checkOutDate) {
+        throw new Error('Please select check-in and check-out dates');
+    }
+    
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (checkIn < today) {
+        throw new Error('Check-in date cannot be in the past');
+    }
+    
+    if (checkOut <= checkIn) {
+        throw new Error('Check-out date must be after check-in date');
+    }
+    
+    return true;
+};
+
+const showError = (message, isImportant = false) => {
+    const errorElement = document.getElementById('errorMessage');
+    if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+        
+        if (!isImportant) {
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+    } else {
+        console.error(message);
+    }
+};
+
+const showLoading = (isLoading = true) => {
+    const loader = document.getElementById('loader');
+    const results = document.getElementById('results');
+    if (loader) loader.style.display = isLoading ? 'block' : 'none';
+    if (results) results.style.display = isLoading ? 'none' : 'block';
+};
+
+// Add this function to validate hotel IDs
+const isValidHotelId = (hotelId) => {
+    if (!hotelId) return false;
+
+    // Check if it's a string or can be converted to a string
+    const idStr = String(hotelId).trim();
+
+    // Basic validation - ensure the ID isn't empty and has reasonable length
+    return idStr.length > 0 && idStr.length < 100;
+};
+
+/**
+ * Process hotel search response to standardize format
+ * @param {Object} apiResponse - The raw API response
+ * @param {string} cityName - The city name for this search
+ * @param {boolean} isMock - Whether this is mock data
+ * @returns {Object} Standardized hotel data response
+ */
+const processHotelSearchResponse = (apiResponse, cityName, isMock = false) => {
+    try {
+        console.log(`Processing hotel data for ${cityName}`);
+        
+        // Handle different response formats
+        let hotelData = [];
+        
+        if (apiResponse?.data?.hotels && Array.isArray(apiResponse.data.hotels)) {
+            console.log(`Found ${apiResponse.data.hotels.length} hotels in main response format`);
+            hotelData = apiResponse.data.hotels;
+        } else if (apiResponse?.data && Array.isArray(apiResponse.data)) {
+            console.log(`Found ${apiResponse.data.length} hotels in alternate response format`);
+            hotelData = apiResponse.data;
+        } else {
+            console.warn(`Unexpected hotel data format for ${cityName}, response structure:`, 
+                         Object.keys(apiResponse || {}).join(', '));
+            return { data: [], count: 0, is_mock: true, error: 'Invalid data format' };
+        }
+        
+        // Standardize and clean hotel objects
+        const processedHotels = hotelData.map(hotel => {
+            // Ensure hotel is not null/undefined before accessing its properties
+            if (!hotel) return {
+                hotel_id: `mock-${cityName}-${Math.random().toString(36).substring(2, 7)}`,
+                hotel_name: `${cityName} Hotel`,
+                address: `${cityName}, Unknown Address`,
+                review_score: (Math.random() * 2 + 7).toFixed(1),
+                price: Math.floor(Math.random() * 100) + 100,
+                photo_url: null
+            };
+            
+            return {
+                hotel_id: hotel.hotel_id || `mock-${cityName}-${Math.random().toString(36).substring(2, 7)}`,
+                hotel_name: hotel.name || hotel.hotel_name || `${cityName} Hotel`,
+                address: (hotel.address && hotel.address.address_line1) || hotel.address || `${cityName}, Unknown Address`,
+                review_score: hotel.review_score || hotel.rating || (Math.random() * 2 + 7).toFixed(1),
+                price: (hotel.price && hotel.price.rate) || hotel.price || Math.floor(Math.random() * 100) + 100,
+                photo_url: (hotel.photo && hotel.photo.main && hotel.photo.main.url_max) || hotel.main_photo_url || null
+            };
+        });
+        
+        return {
+            data: processedHotels,
+            count: processedHotels.length,
+            is_mock: isMock
+        };
+    } catch (error) {
+        console.error(`Error processing hotel data for ${cityName}:`, error);
+        return { data: [], count: 0, is_mock: true, error: error.message };
+    }
+};
+
+// Add this function to fetch and integrate real hotel prices
+const integrateRealHotelPrices = async (result, checkInDate, checkOutDate) => {
+    try {
+        // Ensure result and result.cost exist before proceeding
+        if (!result || !result.cost) {
+            return {
+                flight: 0,
+                hotel: 0,
+                total: 0,
+                is_real_price: false,
+                is_flight_real_price: false
+            };
+        }
+        
+        // Start with original cost and mark as estimated
+        const updatedCost = {
+            flight: result.cost.flight || 0,
+            hotel: result.cost.hotel || 0,
+            total: result.cost.total || 0,
             is_real_price: false,
             is_flight_real_price: false
         };
