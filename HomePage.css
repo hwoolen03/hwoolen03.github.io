@@ -2,8 +2,8 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: sans-serif;
-    background-image: url('ActionPage.jpg');
+    font-family: arial;
+    background-image: url('HomePage.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -16,25 +16,33 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(5px);
+    padding: 50px;
+    background: rgba(54, 88, 255, 0.1);
+    backdrop-filter: blur(20px);
 }
 
 .logo-heading {
     display: flex;
+    position: absolute;
     align-items: center;
     gap: 15px;
     height: 100%; /* Ensure it takes the full height of the header */
 }
 
 .logo {
+    display: flex;
+    position: absolute;
+    left: -40px;
     width: 80px; /* Adjusted logo size */
     height: auto;
 }
 
 h1 {
-    font-size: 40px;
+    display: flex;
+    position: absolute;
+    top: 28px;
+    left: 33px;
+    font-size: 21px;
     color: whitesmoke;
     margin: 0;
     font-family: Arial;
@@ -51,10 +59,15 @@ h1 {
 }
 
 .holiday-text {
-    color: white;
-    font-size: 24px;
-    margin-bottom: 20px; /* Margin below the text */
+    display: flex;
+    position: absolute;
+    top: 200px;
+    right: 420px;
+    color: whitesmoke;
+    font-size: 33px;
+    margin-bottom: 30px; /* Margin below the text */
     text-align: center;
+    font-family: arial;
 }
 
 h2 {
@@ -76,32 +89,36 @@ h2 {
 }
 
 .center-button {
+    display: flex;
+    position: absolute;
+    left: 550px;
+    top: 315px;
     background-color: transparent;
-    border: 2px solid white;
+    border: 2px solid whitesmoke;
     color: white;
-    padding: 15px 40px;
+    padding: 10px 50px;
     font-size: 18px;
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-top: 20px;
 }
 
 .center-button:hover {
-    background-color: white;
+    background-color: whitesmoke;
     color: black;
 }
 
 /* Auth Buttons Styling */
 .auth-buttons {
-    position: fixed;
-    right: 0;
-    top: 20px;
     display: flex;
+    position: absolute;
+    right: 0px;
+    left: 300px;
+    top: -340px;
     flex-direction: row; /* Ensure buttons are in a row */
     align-items: center; /* Align buttons horizontally */
     padding: 20px;
-    height: 60px; /* Adjust the height to match the header height */
+    height: 60px;/* Adjust the height to match the header height */
 }
 
 /* Update auth buttons to match "Find My Holiday" button */
@@ -109,11 +126,11 @@ h2 {
     background-color: transparent;
     border: 2px solid white;
     color: white;
-    padding: 15px 40px;
-    font-size: 18px;
-    border-radius: 25px;
+    padding: 10px 20px;
+    font-size: 10px;
+    border-radius: 30px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.5 ease;
     margin-top: 20px;
 }
 
@@ -161,3 +178,64 @@ h2 {
         font-size: 16px;
     }
 }
+
+#btn-login-github{
+    display: flex;
+    position: absolute;
+    left: 575px;
+    background-color: transparent;
+    border: 2px solid white;
+    margin-top: 55px;
+    color: white;
+    padding: 10px 20px;
+    font-size: 15px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: 0.5s ease;
+}
+
+#btn-login-github:hover{
+    background-color: white;
+    color: black;
+}
+
+
+#btn-login-google{
+    display: flex;
+    position: absolute;
+    left: 715px;
+    margin-top: 55px;
+    background-color: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 10px 20px;
+    font-size: 15px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: 0.8s ease;
+}   
+      #btn-login-google:hover{
+        background-color: white;
+        color: black;
+    }
+    
+
+    #btn-login-figma{
+        display: flex;
+        position: absolute;
+        left: 860px;
+        background-color: transparent;
+        border: 2px solid white;
+        color: white;
+        padding: 10px 20px;
+        margin-top: 55px;
+        font-size: 15px;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: 0.8s ease;
+    }
+          #btn-login-figma:hover{
+            background-color: white;
+            color: black;
+        }
+        
