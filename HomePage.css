@@ -3,12 +3,12 @@ body {
     margin: 0;
     padding: 0;
     font-family: arial;
-    background-image: url('HomePage.jpg');
+    background-image: url('cherry.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    overflow-x: hidden;
 }
 
 /* Header Styling */
@@ -16,36 +16,30 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 50px;
-    background: rgba(54, 88, 255, 0.1);
-    backdrop-filter: blur(20px);
+    padding: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(1px);
+    position: relative;
 }
 
 .logo-heading {
     display: flex;
-    position: absolute;
     align-items: center;
     gap: 15px;
-    height: 100%; /* Ensure it takes the full height of the header */
 }
 
 .logo {
-    display: flex;
-    position: absolute;
-    left: -40px;
     width: 80px; /* Adjusted logo size */
     height: auto;
 }
 
 h1 {
-    display: flex;
-    position: absolute;
-    top: 28px;
-    left: 33px;
     font-size: 21px;
     color: whitesmoke;
-    margin: 0;
-    font-family: Arial;
+    margin-top: 30px;
+    font-family: Georgia, 'Times New Roman', Times, serif;
 }
 
 /* Button Styling */
@@ -54,24 +48,22 @@ h1 {
     justify-content: center;
     align-items: center;
     flex-direction: column; /* Stack items vertically */
-    height: 90vh;
+    height: 80vh;
     text-align: center; /* Ensure text is centered */
+    padding: 0 1rem;
 }
 
 .holiday-text {
-    display: flex;
-    position: absolute;
-    top: 200px;
-    right: 420px;
     color: whitesmoke;
-    font-size: 33px;
-    margin-bottom: 30px; /* Margin below the text */
+    font-size: 2rem;
+    margin-bottom: 2rem;
     text-align: center;
-    font-family: arial;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    width: 100%;
 }
 
 h2 {
-    font-size: 150px;
+    font-size: 5rem;
 }
 
 #btn-logout {
@@ -89,36 +81,32 @@ h2 {
 }
 
 .center-button {
-    display: flex;
-    position: absolute;
-    left: 550px;
-    top: 315px;
     background-color: transparent;
     border: 2px solid whitesmoke;
     color: white;
     padding: 10px 50px;
     font-size: 18px;
     border-radius: 25px;
+    font-family: Georgia, 'Times New Roman', Times, serif;
     cursor: pointer;
     transition: all 0.3s ease;
+    margin-top: 1rem;
 }
 
 .center-button:hover {
-    background-color: whitesmoke;
-    color: black;
+    background-color: #0000005c;
+    color: whitesmoke;
 }
 
 /* Auth Buttons Styling */
 .auth-buttons {
     display: flex;
-    position: absolute;
-    right: 0px;
-    left: 300px;
-    top: -340px;
-    flex-direction: row; /* Ensure buttons are in a row */
-    align-items: center; /* Align buttons horizontally */
-    padding: 20px;
-    height: 60px;/* Adjust the height to match the header height */
+    justify-content: flex-end; /* Changed from center to flex-end */
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 2rem;
+    width: 100%;
+    padding-right: 2rem; /* Added padding to prevent sticking to the edge */
 }
 
 /* Update auth buttons to match "Find My Holiday" button */
@@ -126,11 +114,11 @@ h2 {
     background-color: transparent;
     border: 2px solid white;
     color: white;
-    padding: 10px 20px;
-    font-size: 10px;
+    padding: 10px 10px;
+    font-size: 15px;
     border-radius: 30px;
     cursor: pointer;
-    transition: all 0.5 ease;
+    transition: all 0.5s ease;
     margin-top: 20px;
 }
 
@@ -143,6 +131,7 @@ h2 {
 .auth-buttons {
   display: flex !important;
   gap: 10px;
+  justify-content: flex-end !important; /* Ensure right alignment */
 }
 
 #btn-login-github,
@@ -151,6 +140,7 @@ h2 {
   display: block !important; /* Override any hiding */
   opacity: 1 !important;
   visibility: visible !important;
+  margin: 0.5rem;
 }
 
 /* Only hide when authed */
@@ -160,82 +150,134 @@ h2 {
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+    h2 {
+        font-size: 4rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .holiday-text {
+        font-size: 1.75rem;
+    }
+    
+    h2 {
+        font-size: 3.5rem;
+    }
+}
+
 @media (max-width: 768px) {
+    header {
+        padding: 0.75rem 1rem;
+    }
+    
     h1 {
-        font-size: 30px;
+        font-size: 18px;
     }
 
     .logo {
-        width: 100px;
+        width: 60px;
     }
 
     .holiday-text {
-        margin-right: 10px;
+        font-size: 1.5rem;
+    }
+    
+    h2 {
+        font-size: 3rem;
     }
 
     .center-button {
-        padding: 10px 20px;
+        padding: 10px 30px;
         font-size: 16px;
+    }
+    
+    .auth-button {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 576px) {
+    h1 {
+        font-size: 16px;
+    }
+
+    .logo {
+        width: 50px;
+    }
+    
+    .holiday-text {
+        font-size: 1.25rem;
+    }
+    
+    h2 {
+        font-size: 2.5rem;
+    }
+    
+    .center-button {
+        padding: 8px 25px;
+        font-size: 14px;
+    }
+    
+    .auth-button {
+        padding: 6px 14px;
+        font-size: 12px;
+    }
+    
+    .auth-buttons {
+        flex-direction: column;
+        align-items: flex-end; /* Changed from center to flex-end */
+        padding-right: 1rem; /* Smaller padding for small screens */
+    }
+}
+
+@media (max-width: 480px) {
+    h2 {
+        font-size: 2rem;
+    }
+    
+    .center-button-container {
+        height: 70vh;
+    }
+}
+
+@media (max-height: 600px) {
+    .center-button-container {
+        height: auto;
+        padding-top: 100px;
+        padding-bottom: 50px;
     }
 }
 
 #btn-login-github{
-    display: flex;
-    position: absolute;
-    left: 575px;
-    background-color: transparent;
-    border: 2px solid white;
-    margin-top: 55px;
-    color: white;
-    padding: 10px 20px;
+    padding: 10px 18px;
+    font-family: Georgia, 'Times New Roman', Times, serif;
     font-size: 15px;
-    border-radius: 30px;
-    cursor: pointer;
-    transition: 0.5s ease;
+}
+#btn-login-google{
+    padding: 10px 18px;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: 15px;
+}
+#btn-login-figma{
+    display: flex;
+    padding: 10px 18px;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: 15px;
 }
 
 #btn-login-github:hover{
-    background-color: white;
-    color: black;
+    background-color: #0000005c;
+    color: white;
 }
 
-
-#btn-login-google{
-    display: flex;
-    position: absolute;
-    left: 715px;
-    margin-top: 55px;
-    background-color: transparent;
-    border: 2px solid white;
+#btn-login-google:hover{
+    background-color: #0000005c;
     color: white;
-    padding: 10px 20px;
-    font-size: 15px;
-    border-radius: 30px;
-    cursor: pointer;
-    transition: 0.8s ease;
-}   
-      #btn-login-google:hover{
-        background-color: white;
-        color: black;
-    }
-    
+}
 
-    #btn-login-figma{
-        display: flex;
-        position: absolute;
-        left: 860px;
-        background-color: transparent;
-        border: 2px solid white;
-        color: white;
-        padding: 10px 20px;
-        margin-top: 55px;
-        font-size: 15px;
-        border-radius: 30px;
-        cursor: pointer;
-        transition: 0.8s ease;
-    }
-          #btn-login-figma:hover{
-            background-color: white;
-            color: black;
-        }
-        
+#btn-login-figma:hover{
+    background-color: #0000005c;
+    color: white;
+}
