@@ -31,7 +31,7 @@ header {
     width: 100%;
     box-sizing: border-box;
     background: rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(1px);
+    backdrop-filter: blur(2px);
     position: relative;
 }
 
@@ -47,9 +47,9 @@ header {
 }
 
 h1 {
-    font-size: 21px;
+    font-size: 28px;
     color: whitesmoke;
-    margin: 0;
+    margin-top: 40px;
     font-family: Georgia, 'Times New Roman', Times, serif;
     white-space: nowrap; /* Prevent text wrapping */
 }
@@ -68,6 +68,7 @@ h1 {
 .holiday-text {
     color: whitesmoke;
     font-size: 2rem;
+    margin-top: -10rem;
     margin-bottom: 2rem;
     text-align: center;
     font-family: Georgia, 'Times New Roman', Times, serif;
