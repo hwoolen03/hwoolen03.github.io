@@ -1,25 +1,27 @@
 /* Updated CSS for multi-card layout */
-.logo { width: 80px; height: auto; }
+.logo{ 
+width: 80px; 
+height: auto; 
+}
 
 .logo-heading {
     display: flex;
     align-items: center;
     gap: 15px;
-    height: 100%;
 }
 
 h1 {
-    font-size: 40px;
+    font-size: 21px;
     color: whitesmoke;
-    margin: 0;
-    font-family: Arial;
+    margin-top: 30;
+    font-family: Georgia, 'Times New Roman', Times, serif;
 }
 
 body {
     margin: 0;
     padding: 0;
     font-family: 'Arial', sans-serif;
-    background-image: url('HomePage.jpg');
+    background-image: url('Catalina.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -31,20 +33,22 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(5px);
+    padding: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(1px);
+    position: relative;
 }
 
 .input-container {
-    max-width: 500px;
-    margin: 2rem auto;
+    max-width: 400px;
+    margin: 3rem auto;
     padding: 2rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.09);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    border-radius: 30px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
 }
 
 .input-container input,
@@ -64,7 +68,7 @@ header {
     max-width: 800px;
     margin: 2rem auto;
     padding: 2rem;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     backdrop-filter: blur(8px);
@@ -132,17 +136,17 @@ header {
 }
 
 .center-button {
-    background-color: transparent;
-    border: 2px solid white;
+    background-color: #f81d1d !important;
+    border: 2px solid transparent !important;
     color: white;
     padding: 15px 25px;
     border-radius: 30px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.5s ease;
 }
 
 .center-button:hover {
-    background-color: white;
+    background-color: white !important;
     color: black;
 }
 
