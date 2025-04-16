@@ -755,7 +755,7 @@ const personalizeContent = async (user) => {
         };
         
         // Validate inputs
-        checkDatesValidity(inputs.checkInDate, inputs.checkOutDate);
+        validateDates(inputs.checkInDate, inputs.checkOutDate);
         
         // Find destinations based on budget and dates
         const recommendations = TravelPlanner.findDestinations(
@@ -1295,7 +1295,7 @@ window.addEventListener('load', async () => {
 });
 
 // Add the missing validateDates function and showError/showLoading functions
-const checkDatesValidity = (checkInDate, checkOutDate) => {
+const validateDates = (checkInDate, checkOutDate) => {
     if (!checkInDate || !checkOutDate) {
         throw new Error('Please select check-in and check-out dates');
     }
@@ -1768,7 +1768,7 @@ window.addEventListener('load', async () => {
 });
 
 // Add the missing validateDates function and showError/showLoading functions
-const checkDatesValidity = (checkInDate, checkOutDate) => {
+const validateDates = (checkInDate, checkOutDate) => {
     if (!checkInDate || !checkOutDate) {
         throw new Error('Please select check-in and check-out dates');
     }
