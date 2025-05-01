@@ -1,4 +1,4 @@
-// API Headers and Configuration
+
 const API_HEADERS = {
     'x-rapidapi-key': '4fbc13fa91msh7eaf58f815807b2p1d89f0jsnec07b5b547c3',
     'x-rapidapi-host': 'sky-scrapper.p.rapidapi.com'
@@ -14,18 +14,16 @@ const API_CONFIG = {
     }
 };
 
-// Enhanced API rate limiting configuration
-const API_RATE_LIMIT = {
-    requestsPerMinute: 25,     // Maximum requests per minute (adjust based on API limits)
-    timeWindow: 60000,         // Time window in milliseconds (1 minute)
-    requestCount: 0,           // Current request count
-    windowStartTime: Date.now() // Time when the current window started
-};
-//dobie
-// Add this at the top with other constants
-const API_DELAY = 1000; // Base delay between API calls in milliseconds
 
-// Add this utility function for rate limiting with enhanced logging
+const API_RATE_LIMIT = {
+    requestsPerMinute: 25,     
+    timeWindow: 60000,         
+    requestCount: 0,           
+    windowStartTime: Date.now() 
+};
+
+const API_DELAY = 1000; 
+
 const delay = async (ms) => {
     console.log(`Waiting for ${ms}ms before next API call`);
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -174,7 +172,6 @@ const getLocationIdFromAPI = async (cityName) => {
 
 // Helper function to map city names to location IDs
 const getLocationIdForCity = (cityName) => {
-    // Common city IDs mapping (fallback only)
     const cityIdMap = {
         'New York': '27537542', // Using Sky-Scrapper entityId for New York
         'London': '27544008',   // Using Sky-Scrapper entityId for London
@@ -214,9 +211,9 @@ const configureClient = async () => {
                 defaultScope: 'openid profile email',
                 audience: 'https://travel-planner-api',
                 useRefreshTokens: true,
-            },
-            cacheLocation: 'localstorage',
-            leeway: 30
+                cacheLocation: 'localstorage',
+                leeway: 30
+            }
         });
     } catch (error) {
         console.error("Auth0 configuration error:", error);
@@ -907,24 +904,21 @@ const updateAuthState = async () => {
             const el = document.getElementById(id);
             if (el) {
                 el.style.display = visible ? 'block' : 'none';
+            } else {
+                console.warn(`Element with ID '${id}' not found. Please ensure the ID matches the HTML.`);
             }
         };
 
         toggleElement('btn-login-github', !isAuthed);
         toggleElement('btn-login-google', !isAuthed);
         toggleElement('btn-login-figma', !isAuthed);
-        toggleElement('signOutBtn', isAuthed);
 
-        if (isAuthed) {
-            const hideElement = document.getElementById('someElementToRemoveOrHide');
-            if (hideElement) {
-                hideElement.style.display = 'none';
-            }
+        const signOutButton = document.getElementById('signOutBtn');
+        if (signOutButton) {
+            console.log("Sign-out button found:", signOutButton); // Debug log
+            signOutButton.style.display = 'block'; // Always display the sign-out button
         } else {
-            const showElement = document.getElementById('someElementToRemoveOrHide');
-            if (showElement) {
-                showElement.style.display = 'block';
-            }
+            console.warn("Sign-out button with ID 'signOutBtn' not found. Please check the HTML.");
         }
     } catch (error) {
         console.error("Auth state update failed:", error);
@@ -1766,274 +1760,6 @@ window.addEventListener('load', async () => {
         document.body.classList.add('unauthenticated');
     }
 });
-
-// Add the missing validateDates function and showError/showLoading functions
-const validateDates = (checkInDate, checkOutDate) => {
-    if (!checkInDate || !checkOutDate) {
-        throw new Error('Please select check-in and check-out dates');
-    }
-    
-    const checkIn = new Date(checkInDate);
-    const checkOut = new Date(checkOutDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (checkIn < today) {
-        throw new Error('Check-in date cannot be in the past');
-    }
-    
-    if (checkOut <= checkIn) {
-        throw new Error('Check-out date must be after check-in date');
-    }
-    
-    return true;
-};
-
-const showError = (message, isImportant = false) => {
-    const errorElement = document.getElementById('errorMessage');
-    if (errorElement) {
-        errorElement.textContent = message;
-        errorElement.style.display = 'block';
-        
-        if (!isImportant) {
-            setTimeout(() => {
-                errorElement.style.display = 'none';
-            }, 5000);
-        }
-    } else {
-        console.error(message);
-    }
-};
-
-const showLoading = (isLoading = true) => {
-    const loader = document.getElementById('loader');
-    const results = document.getElementById('results');
-    if (loader) loader.style.display = isLoading ? 'block' : 'none';
-    if (results) results.style.display = isLoading ? 'none' : 'block';
-};
-
-// Add this function to validate hotel IDs
-const isValidHotelId = (hotelId) => {
-    if (!hotelId) return false;
-
-    // Check if it's a string or can be converted to a string
-    const idStr = String(hotelId).trim();
-
-    // Basic validation - ensure the ID isn't empty and has reasonable length
-    return idStr.length > 0 && idStr.length < 100;
-};
-
-/**
- * Process hotel search response to standardize format
- * @param {Object} apiResponse - The raw API response
- * @param {string} cityName - The city name for this search
- * @param {boolean} isMock - Whether this is mock data
- * @returns {Object} Standardized hotel data response
- */
-const processHotelSearchResponse = (apiResponse, cityName, isMock = false) => {
-    try {
-        console.log(`Processing hotel data for ${cityName}`);
-        
-        // Handle different response formats
-        let hotelData = [];
-        
-        if (apiResponse?.data?.hotels && Array.isArray(apiResponse.data.hotels)) {
-            console.log(`Found ${apiResponse.data.hotels.length} hotels in main response format`);
-            hotelData = apiResponse.data.hotels;
-        } else if (apiResponse?.data && Array.isArray(apiResponse.data)) {
-            console.log(`Found ${apiResponse.data.length} hotels in alternate response format`);
-            hotelData = apiResponse.data;
-        } else {
-            console.warn(`Unexpected hotel data format for ${cityName}, response structure:`, 
-                         Object.keys(apiResponse || {}).join(', '));
-            return { data: [], count: 0, is_mock: true, error: 'Invalid data format' };
-        }
-        
-        // Standardize and clean hotel objects
-        const processedHotels = hotelData.map(hotel => {
-            // Ensure hotel is not null/undefined before accessing its properties
-            if (!hotel) return {
-                hotel_id: `mock-${cityName}-${Math.random().toString(36).substring(2, 7)}`,
-                hotel_name: `${cityName} Hotel`,
-                address: `${cityName}, Unknown Address`,
-                review_score: (Math.random() * 2 + 7).toFixed(1),
-                price: Math.floor(Math.random() * 100) + 100,
-                photo_url: null
-            };
-            
-            return {
-                hotel_id: hotel.hotel_id || `mock-${cityName}-${Math.random().toString(36).substring(2, 7)}`,
-                hotel_name: hotel.name || hotel.hotel_name || `${cityName} Hotel`,
-                address: (hotel.address && hotel.address.address_line1) || hotel.address || `${cityName}, Unknown Address`,
-                review_score: hotel.review_score || hotel.rating || (Math.random() * 2 + 7).toFixed(1),
-                price: (hotel.price && hotel.price.rate) || hotel.price || Math.floor(Math.random() * 100) + 100,
-                photo_url: (hotel.photo && hotel.photo.main && hotel.photo.main.url_max) || hotel.main_photo_url || null
-            };
-        });
-        
-        return {
-            data: processedHotels,
-            count: processedHotels.length,
-            is_mock: isMock
-        };
-    } catch (error) {
-        console.error(`Error processing hotel data for ${cityName}:`, error);
-        return { data: [], count: 0, is_mock: true, error: error.message };
-    }
-};
-
-// Add this function to fetch and integrate real hotel prices
-const integrateRealHotelPrices = async (result, checkInDate, checkOutDate) => {
-    try {
-        // Ensure result and result.cost exist before proceeding
-        if (!result || !result.cost) {
-            return {
-                flight: 0,
-                hotel: 0,
-                total: 0,
-                is_real_price: false,
-                is_flight_real_price: false
-            };
-        }
-        
-        // Start with original cost and mark as estimated
-        const updatedCost = {
-            flight: result.cost.flight || 0,
-            hotel: result.cost.hotel || 0,
-            total: result.cost.total || 0,
-            is_real_price: false,
-            is_flight_real_price: false
-        };
-        
-        // Attempt to get flight data if the API supports it
-        try {
-            const departureAirport = result.departureLocation;
-            const destinationAirport = getCityAirportCode(result.city);
-            const flightResult = await searchRoundtripFlights(
-                departureAirport, 
-                destinationAirport, 
-                checkInDate, 
-                checkOutDate
-            ).catch(error => {
-                console.warn(`Couldn't get flight data for ${result.city}:`, error);
-                return null;
-            });
-            
-            if (flightResult?.flights?.length > 0) {
-                updatedCost.flight = Math.round(flightResult.flights[0].price);
-                updatedCost.is_flight_real_price = true;
-                
-                // Store detailed flight info on the result object
-                result.realFlightData = flightResult.flights[0];
-            }
-        } catch (flightError) {
-            console.warn(`Flight data retrieval failed for ${result.city}:`, flightError);
-        }
-        
-        // Recalculate total
-        updatedCost.total = updatedCost.hotel + updatedCost.flight;
-        
-        return updatedCost;
-    } catch (error) {
-        console.warn(`Couldn't get real prices for ${result.city}:`, error);
-        return result.cost;
-    }
-};
-
-// Simple helper to map city names to airport codes
-const getCityAirportCode = (cityName) => {
-    const cityToAirport = {
-        'New York': 'JFK',
-        'London': 'LHR',
-        'Paris': 'CDG',
-        'Tokyo': 'HND',
-        'Chicago': 'ORD',
-        'Los Angeles': 'LAX',
-        'Dallas': 'DFW',
-        'Manila': 'MNL',
-        'Berlin': 'BER',
-        'Bangkok': 'BKK',
-        'Mumbai': 'BOM',
-        'Sydney': 'SYD',
-        'Miami': 'MIA'
-    };
-    return cityToAirport[cityName] || cityName;
-};
-
-// Add the missing searchRoundtripFlights function
-const searchRoundtripFlights = async (departure, destination, date, returnDate) => {
-    try {
-        console.log(`Searching flights from ${departure} to ${destination}`);
-        
-        // Try to use the Sky-Scrapper API for real flight data
-        const url = new URL(`${API_CONFIG.baseUrl}/api/v1/flights/searchFlights`);
-        
-        url.searchParams.append('departure', departure);
-        url.searchParams.append('arrival', destination);
-        url.searchParams.append('date', date);
-        url.searchParams.append('returnDate', returnDate);
-        url.searchParams.append('adults', '2');
-        url.searchParams.append('currency', 'USD');
-        
-        try {
-            const response = await fetchWithRetry(url.toString(), {
-                method: 'GET',
-                headers: API_HEADERS
-            });
-            
-            if (response.ok) {
-                const flightData = await response.json();
-                
-                if (flightData?.data?.length > 0) {
-                    // Format API response to match our expected structure
-                    return {
-                        flights: flightData.data.map(flight => ({
-                            price: flight.price || Math.floor(Math.random() * 300) + 200,
-                            legs: flight.legs || [{
-                                departureTime: flight.departureTime || new Date(date).toISOString(),
-                                arrivalTime: flight.arrivalTime || new Date(new Date(date).getTime() + 5 * 60 * 60 * 1000).toISOString(),
-                                duration: flight.duration || 300, // 5 hours in minutes
-                                stopCount: flight.stopCount || Math.floor(Math.random() * 2),
-                                segments: flight.segments || [{
-                                    airlineName: flight.airline || "SkyAir",
-                                    flightNumber: flight.flightNumber || `SA${Math.floor(Math.random() * 1000)}`,
-                                    airlineLogo: flight.airlineLogo || null
-                                }]
-                            }],
-                            deepLink: flight.deepLink || null
-                        }))
-                    };
-                }
-            }
-        } catch (apiError) {
-            console.warn('API flight search failed, falling back to mock data:', apiError);
-        }
-        
-        // Fall back to mock data if API call fails
-        return {
-            flights: [
-                {
-                    price: Math.floor(Math.random() * 300) + 200,
-                    legs: [{
-                        departureTime: new Date(date).toISOString(),
-                        arrivalTime: new Date(new Date(date).getTime() + 5 * 60 * 60 * 1000).toISOString(),
-                        duration: 300, // 5 hours in minutes
-                        stopCount: Math.floor(Math.random() * 2),
-                        segments: [{
-                            airlineName: "SkyAir",
-                            flightNumber: `SA${Math.floor(Math.random() * 1000)}`,
-                            airlineLogo: null
-                        }]
-                    }],
-                    deepLink: null
-                }
-            ]
-        };
-    } catch (error) {
-        console.error(`Flight search error: ${error.message}`);
-        throw error;
-    }
-};
 
 
 
