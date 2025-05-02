@@ -29,31 +29,31 @@ const delay = async (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
 };
 
-// Enhanced utility function for API retry mechanism with exponential backoff
+
 const fetchWithRetry = async (url, options, retries = 3) => {
-    // Reset rate limit window if needed
+   
     if (Date.now() - API_RATE_LIMIT.windowStartTime > API_RATE_LIMIT.timeWindow) {
         console.log('Resetting rate limit window');
         API_RATE_LIMIT.requestCount = 0;
         API_RATE_LIMIT.windowStartTime = Date.now();
     }
     
-    // Check if we're about to exceed rate limit
+    
     if (API_RATE_LIMIT.requestCount >= API_RATE_LIMIT.requestsPerMinute) {
         const waitTime = API_RATE_LIMIT.timeWindow - (Date.now() - API_RATE_LIMIT.windowStartTime) + 1000;
         console.warn(`Rate limit approached (${API_RATE_LIMIT.requestCount} requests). Waiting ${waitTime}ms before continuing.`);
         await delay(waitTime > 0 ? waitTime : 2000);
         
-        // Reset after waiting
+        
         API_RATE_LIMIT.requestCount = 0;
         API_RATE_LIMIT.windowStartTime = Date.now();
     }
     
-    // Track this request
+    
     API_RATE_LIMIT.requestCount++;
     
     let lastError;
-    let backoffDelay = 1000; // Start with 1 second
+    let backoffDelay = 1000; 
     
     for (let i = 0; i < retries; i++) {
         try {
@@ -62,7 +62,7 @@ const fetchWithRetry = async (url, options, retries = 3) => {
             
             const response = await fetch(url, options);
             
-            // Handle different response status codes
+            
             if (response.status === 200) {
                 return response;
             } else if (response.status === 403) {
@@ -70,17 +70,17 @@ const fetchWithRetry = async (url, options, retries = 3) => {
                 validateApiKey();
                 throw new Error(`API access forbidden (403). Please check API key validity and permissions.`);
             } else if (response.status === 429) {
-                // Too Many Requests - use exponential backoff
+                
                 console.warn(`429 Too Many Requests received. Implementing exponential backoff.`);
                 await delay(backoffDelay);
-                backoffDelay *= 2; // Double the delay for next retry
-                continue; // Try again after waiting
+                backoffDelay *= 2; 
+                continue; 
             } else if (response.status === 404) {
                 console.warn(`404 Not Found for URL: ${url.toString().substring(0, 100)}...`);
-                return response; // Return the 404 response for handling by the calling function
+                return response; 
             } else {
                 console.warn(`Unexpected status: ${response.status} for URL: ${url.toString().substring(0, 100)}...`);
-                // For other status codes, throw an error to trigger retry
+                
                 throw new Error(`API returned status ${response.status}`);
             }
         } catch (err) {
@@ -92,36 +92,36 @@ const fetchWithRetry = async (url, options, retries = 3) => {
                 throw err;
             }
             
-            // Exponential backoff with jitter for network errors
+            
             const jitter = Math.random() * 500;
             const waitTime = backoffDelay + jitter;
             console.log(`Waiting ${waitTime}ms before retry ${i+2}`);
             await delay(waitTime);
-            backoffDelay *= 2; // Double the delay for next retry
+            backoffDelay *= 2; 
         }
     }
     
     throw lastError;
 };
 
-// Function to validate API key and log diagnostic information
+
 const validateApiKey = () => {
     console.log(`Current API key: ${API_HEADERS['x-rapidapi-key'].substring(0, 8)}...`);
     console.log(`API host: ${API_HEADERS['x-rapidapi-host']}`);
     
-    // Check if key appears valid (basic format check)
+    
     if (!API_HEADERS['x-rapidapi-key'] || API_HEADERS['x-rapidapi-key'].length < 20) {
         console.error('API key appears to be invalid or missing');
     }
 };
 
-// Location ID cache to minimize API calls
+
 const locationIdCache = {};
 
-// Enhanced function to get location ID from Sky-Scrapper API with better error handling
+
 const getLocationIdFromAPI = async (cityName) => {
     try {
-        // Check cache first
+       
         if (locationIdCache[cityName]) {
             console.log(`Using cached location ID for ${cityName}: ${locationIdCache[cityName]}`);
             return locationIdCache[cityName];
@@ -153,11 +153,11 @@ const getLocationIdFromAPI = async (cityName) => {
             throw new Error(`No location found for ${cityName}`);
         }
         
-        // Find the first city-type result
+       
         const cityResult = data.data.find(loc => loc.type === "CITY") || data.data[0];
         const locationId = cityResult.entityId;
         
-        // Cache the result
+        
         locationIdCache[cityName] = locationId;
         
         console.log(`Found location ID for ${cityName}: ${locationId}`);
@@ -165,19 +165,19 @@ const getLocationIdFromAPI = async (cityName) => {
         
     } catch (error) {
         console.error(`Error getting location ID for ${cityName}:`, error);
-        // Fall back to the helper function
+        
         return getLocationIdForCity(cityName);
     }
 };
 
-// Helper function to map city names to location IDs
+
 const getLocationIdForCity = (cityName) => {
     const cityIdMap = {
-        'New York': '27537542', // Using Sky-Scrapper entityId for New York
-        'London': '27544008',   // Using Sky-Scrapper entityId for London
-        'Paris': '27539733',    // Using Sky-Scrapper entityId for Paris
-        'Tokyo': '27542059',    // Using Sky-Scrapper entityId for Tokyo
-        'Chicago': '27538539',  // Using Sky-Scrapper entityId for Chicago
+        'New York': '27537542', 
+        'London': '27544008',  
+        'Paris': '27539733',    
+        'Tokyo': '27542059',    
+        'Chicago': '27538539',  
         'Los Angeles': '27544994',
         'Dallas': '27536671',
         'Manila': '27536917',
@@ -186,18 +186,17 @@ const getLocationIdForCity = (cityName) => {
         'Mumbai': '27539729',
         'Sydney': '27544067'
     };
-    
-    // If we have a direct mapping, use it
+
     if (cityIdMap[cityName]) {
         return cityIdMap[cityName];
     }
     
-    // Otherwise return a fallback (could be improved with a geocoding service)
+   
     console.log(`No location ID mapping for ${cityName}, using fallback`);
-    return cityName; // Use the name as a fallback search term
+    return cityName; 
 };
 
-// Auth0 Configuration
+
 let auth0Client;
 let user;
 
@@ -233,7 +232,7 @@ const signOut = async () => {
     }
 };
 
-// Client-Side Recommendation Engine
+
 const DESTINATION_GENERATOR = {
     regions: {
         northAmerica: { flightBase: 300, hotelBase: 80, codePrefix: 'NA', multiplier: 1.0, name: 'North America' },
@@ -324,24 +323,21 @@ const TravelPlanner = {
 };
 
 const calculateDistance = (fromIATA, toIATA) => {
-    // Placeholder function to calculate distance between two IATA codes
-    // In a real-world scenario, you would use an API or a database to get the actual distance
+
+    
     const distances = {
         'LON': { 'NYC': 5567, 'PAR': 344, 'BER': 930, 'MAD': 1264, 'ROM': 1434 },
-        // Add more distances as needed
+       
     };
     return distances[fromIATA]?.[toIATA] || 0;
 };
 
 const estimateFlightCost = (distance) => {
-    // Simple estimation based on distance
-    const costPerKm = 0.1; // Example cost per kilometer
+
+    const costPerKm = 0.1; 
     return distance * costPerKm;
 };
 
-// API Functions
-
-// New function to get SkyId for an airport
 const getAirportSkyId = async (airportCode) => {
     try {
         const url = new URL(`${API_CONFIG.baseUrl}/api/v1/flights/searchAirport`);
@@ -364,14 +360,14 @@ const getAirportSkyId = async (airportCode) => {
             return airport.skyId;
         }
         
-        return airportCode; // fallback to using the code itself
+        return airportCode; 
     } catch (error) {
         console.error(`Error getting SkyId for ${airportCode}:`, error);
-        return airportCode; // fallback
+        return airportCode; 
     }
 };
 
-// New function to get entity ID for an airport
+
 const getEntityIdForAirport = async (airportCode) => {
     try {
         const url = new URL(`${API_CONFIG.baseUrl}/api/v1/flights/searchAirport`);
@@ -394,31 +390,28 @@ const getEntityIdForAirport = async (airportCode) => {
             return airport.entityId;
         }
         
-        // Fallback to common airport entityIds
+     
         const entityIdMap = {
-            'JFK': '27537542', // New York
-            'LHR': '27544008', // London
-            'CDG': '27539733'  // Paris
+            'JFK': '27537542', 
+            'LHR': '27544008', 
+            'CDG': '27539733'  
         };
         
-        return entityIdMap[airportCode] || '27537542'; // fallback to NYC if unknown
+        return entityIdMap[airportCode] || '27537542'; 
     } catch (error) {
         console.error(`Error getting entity ID for ${airportCode}:`, error);
-        return '27537542'; // Default to NYC entity ID
+        return '27537542'; 
     }
 };
 
-// Replace fetchHotelData function
 const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
     try {
-        // Get the proper location ID first
+       
         const entityId = await getLocationIdFromAPI(cityName);
         console.log(`Using entity ID for ${cityName}: ${entityId}`);
         
-        // Use search endpoint with the correct parameters
         const url = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
         
-        // Set required parameters for search endpoint
         url.searchParams.append('entityId', entityId);
         url.searchParams.append('checkin', checkInDate);
         url.searchParams.append('checkout', checkOutDate);
@@ -442,13 +435,12 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
         }
 
         const propertyData = await response.json();
-        console.log('Property API Response:', propertyData); // Debug log
+        console.log('Property API Response:', propertyData); 
         
         if (!propertyData || !propertyData.data || propertyData.data.hotels.length === 0) {
             throw new Error(`No properties found for ${cityName}`);
         }
         
-        // Process hotel data to ensure IDs are properly extracted
         const processedHotels = propertyData.data.hotels.map(hotel => {
             // Enhanced ID extraction with fallbacks
             const hotelId = [hotel?.id, hotel?.hotelId, hotel?.hotel_id, hotel?.hotel?.id]
@@ -475,23 +467,22 @@ const fetchHotelData = async (cityName, budget, checkInDate, checkOutDate) => {
 
     } catch (error) {
         console.error('Hotel data fetch error:', error);
-        // Fall back to mock data
+        
         return createMockHotelData(cityName);
     }
 };
 
-// Update verifyHotelIds function
 const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
     try {
         console.log(`Searching for properties in: ${location}`);
         
-        // Get the proper location ID first
+     
         const entityId = await getLocationIdFromAPI(location);
         
-        // Use search endpoint with correct parameters
+
         const url = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
         
-        // Set required parameters
+
         url.searchParams.append('entityId', entityId);
         url.searchParams.append('checkin', checkInDate);
         url.searchParams.append('checkout', checkOutDate);
@@ -515,10 +506,9 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         }
 
         const propertyData = await response.json();
-        console.log('Property API Response:', propertyData); // Debug log
+        console.log('Property API Response:', propertyData); 
         
         if (!propertyData || !propertyData.data || propertyData.data.hotels.length === 0) {
-            // Fall back to coordinate search if available, or mock data
             return await tryCoordinateSearch(location, checkInDate, checkOutDate);
         }
         
@@ -529,22 +519,21 @@ const verifyHotelIds = async (location, checkInDate, checkOutDate) => {
         
     } catch (error) {
         console.error('Property verification error:', error);
-        // Always return mock data instead of throwing again
+       
         return createMockHotelData(location);
     }
 };
 
-// Update searchDestinationByCountry to use entity IDs
 const searchDestinationByCountry = async (location, checkInDate, checkOutDate) => {
     try {
-        // Use location_id from API
+   
         const entityId = await getLocationIdFromAPI(location);
         console.log(`Using entity ID for alternate search: ${entityId}`);
         
-        // Use search endpoint with correct parameters
+       
         const url = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
         
-        // Set required parameters
+    
         url.searchParams.append('entityId', entityId);
         url.searchParams.append('checkin', checkInDate);
         url.searchParams.append('checkout', checkOutDate);
@@ -569,27 +558,25 @@ const searchDestinationByCountry = async (location, checkInDate, checkOutDate) =
         const propertyData = await response.json();
         
         if (!propertyData || !propertyData.data || propertyData.data.hotels.length === 0) {
-            // Try to create mock data as final fallback
+
             return createMockHotelData(location);
         }
         
-        // Return in standard format
         return {
             data: propertyData.data.hotels,
             count: propertyData.data.hotels.length
         };
     } catch (error) {
         console.error('Alternative search error:', error);
-        // Final fallback - create mock data
+  
         return createMockHotelData(location);
     }
 };
 
-// Create mock hotel data as final fallback
 const createMockHotelData = (location) => {
     console.log(`Creating mock data for ${location}`);
     
-    // Generate more realistic prices based on different city tiers
+
     const cityTiers = {
         'New York': 250,
         'London': 220,
@@ -602,15 +589,15 @@ const createMockHotelData = (location) => {
         'Mumbai': 90
     };
     
-    const basePrice = cityTiers[location] || 120; // Default price if city not in list
-    const variability = 0.3; // 30% random variation
+    const basePrice = cityTiers[location] || 120; 
+    const variability = 0.3; 
     
     const hotels = [
         {
             hotel_id: `mock-${location.replace(/\s/g, '-').toLowerCase()}-1`,
             hotel_name: `${location} Grand Hotel`,
             address: `123 Main Street, ${location}`,
-            review_score: (Math.random() * 2 + 7).toFixed(1), // Score between 7.0-9.0
+            review_score: (Math.random() * 2 + 7).toFixed(1), 
             price: Math.floor(basePrice * (1 + Math.random() * variability))
         },
         {
@@ -635,16 +622,15 @@ const createMockHotelData = (location) => {
     };
 };
 
-// Update tryCoordinateSearch to use Sky-Scrapper's getNearByAirports
 const tryCoordinateSearch = async (location, checkInDate, checkOutDate) => {
     try {
-        // Try to get location ID from API first
+      
         const entityId = await getLocationIdFromAPI(location);
         
         if (entityId) {
             console.log(`Found location ID for ${location}: ${entityId}`);
             
-            // Use the location ID directly with search endpoint
+         
             const url = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotels`);
             
             url.searchParams.append('entityId', entityId);
@@ -673,10 +659,10 @@ const tryCoordinateSearch = async (location, checkInDate, checkOutDate) => {
             }
         }
         
-        // Fall back to nearby airports search if we have coordinates
+   
         const coordinates = getLocationIdForCity(location);
         if (coordinates && coordinates.includes(',')) {
-            // Looks like we have coordinates
+      
             const [longitude, latitude] = coordinates.split(',');
             
             console.log(`Trying nearby search for ${location}: ${latitude}, ${longitude}`);
@@ -686,17 +672,16 @@ const tryCoordinateSearch = async (location, checkInDate, checkOutDate) => {
         console.error('Coordinate search failed:', error);
     }
     
-    // Fall back to mock data
+
     console.log(`No properties found for ${location}, falling back to mock data`);
     return createMockHotelData(location);
 };
 
-// Add missing searchHotelsByCoordinates function
 const searchHotelsByCoordinates = async (latitude, longitude, checkInDate, checkOutDate) => {
     try {
         console.log(`Searching for hotels by coordinates: lat=${latitude}, lon=${longitude}`);
         
-        // Use search API with coordinates
+ 
         const url = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/searchHotelsByCoordinates`);
         
         url.searchParams.append('latitude', latitude);
@@ -709,7 +694,7 @@ const searchHotelsByCoordinates = async (latitude, longitude, checkInDate, check
         url.searchParams.append('currency', API_CONFIG.defaultParams.currency);
         url.searchParams.append('market', API_CONFIG.defaultParams.market);
         url.searchParams.append('countryCode', API_CONFIG.defaultParams.countryCode);
-        url.searchParams.append('radius', '30');  // 30 km radius
+        url.searchParams.append('radius', '30'); 
         
         console.log('Hotel search by coordinates URL:', url.toString());
         
@@ -735,15 +720,14 @@ const searchHotelsByCoordinates = async (latitude, longitude, checkInDate, check
         
     } catch (error) {
         console.error('Hotel search by coordinates failed:', error);
-        // Return mock data for the area as fallback
+    
         return createMockHotelData(`Location (${latitude},${longitude})`);
     }
 };
 
-// Update personalizeContent function to handle errors better
 const personalizeContent = async (user) => {
     try {
-        // Get input values from the form
+     
         const inputs = {
             checkInDate: document.getElementById('holidayDate').value,
             checkOutDate: document.getElementById('returnDate').value,
@@ -751,10 +735,10 @@ const personalizeContent = async (user) => {
             budget: parseInt(document.getElementById('budget').value) || 1500
         };
         
-        // Validate inputs
+  
         validateDates(inputs.checkInDate, inputs.checkOutDate);
         
-        // Find destinations based on budget and dates
+   
         const recommendations = TravelPlanner.findDestinations(
             inputs.budget,
             inputs.checkInDate,
@@ -762,7 +746,7 @@ const personalizeContent = async (user) => {
             inputs.departureLocation
         );
         
-        // Process each recommendation to add hotel data
+       
         const results = [];
         let successCount = 0;
         
@@ -770,10 +754,10 @@ const personalizeContent = async (user) => {
             try {
                 console.log(`Processing recommendation for ${rec.city}`);
                 
-                // Fetch hotels for this destination
+               
                 const hotels = await fetchHotelData(
                     rec.city,
-                    inputs.budget * 0.6, // Allocate 60% of budget for hotel
+                    inputs.budget * 0.6, 
                     inputs.checkInDate,
                     inputs.checkOutDate
                 );
@@ -781,16 +765,16 @@ const personalizeContent = async (user) => {
                 if (hotels && hotels.data && hotels.data.length > 0) {
                     const firstHotel = hotels.data[0];
                     
-                    // Extract hotel details - ensure proper address extraction
+                 
                     const hotelName = firstHotel.hotel_name || 'Hotel';
                     const hotelAddress = firstHotel.address || `${rec.city}, Unknown Address`;
                     const reviewScore = firstHotel.review_score || 'N/A';
                     
-                    // Try to get hotel photo - only if we have a valid hotel ID
+               
                     let photoUrl = null;
                     let ratings = null;
                     
-                    // Enhanced validation for hotel ID
+                   
                     if (firstHotel.hotel_id && isValidHotelId(String(firstHotel.hotel_id))) {
                         try {
                             photoUrl = await fetchHotelPhotos(firstHotel.hotel_id);
@@ -802,16 +786,15 @@ const personalizeContent = async (user) => {
                             ratings = await fetchHotelRatings(firstHotel.hotel_id);
                         } catch (ratingError) {
                             console.warn(`Could not fetch ratings for ${hotelName}:`, ratingError);
-                            // Provide fallback ratings
+                           
                             ratings = createMockRatingData(firstHotel.hotel_id);
                         }
                     } else {
-                        // Generate mock ratings if hotel_id is missing or invalid
+                     
                         ratings = createMockRatingData('missing-id');
                         console.warn(`Missing or invalid hotel ID for ${rec.city}`, firstHotel);
                     }
                     
-                    // Create result with initial cost estimate and departure location
                     const resultWithHotel = {
                         ...rec,
                         hotels: hotels,
@@ -833,19 +816,18 @@ const personalizeContent = async (user) => {
                         }
                     };
                     
-                    // Try to get real hotel price and update the cost
+                  
                     resultWithHotel.cost = await integrateRealHotelPrices(
                         resultWithHotel, 
                         inputs.checkInDate, 
                         inputs.checkOutDate
                     );
                     
-                    // Add to results with hotel info
                     results.push(resultWithHotel);
                     
                     successCount++;
                 } else {
-                    // Should not reach here with our improved code
+                    
                     results.push({
                         ...rec,
                         departureLocation: inputs.departureLocation,
@@ -863,7 +845,7 @@ const personalizeContent = async (user) => {
                 
             } catch (error) {
                 console.error(`Error processing ${rec.city}:`, error);
-                // Add city to results with error info
+                
                 results.push({
                     ...rec,
                     departureLocation: inputs.departureLocation,
@@ -882,7 +864,7 @@ const personalizeContent = async (user) => {
                 });
             }
             
-            // If we have 3 successful results, that's enough
+            
             if (successCount >= 3) break;
         }
 
@@ -894,7 +876,7 @@ const personalizeContent = async (user) => {
     }
 };
 
-// Auth State Management
+
 const updateAuthState = async () => {
     try {
         const isAuthed = await auth0Client.isAuthenticated();
@@ -915,8 +897,8 @@ const updateAuthState = async () => {
 
         const signOutButton = document.getElementById('signOutBtn');
         if (signOutButton) {
-            console.log("Sign-out button found:", signOutButton); // Debug log
-            signOutButton.style.display = 'block'; // Always display the sign-out button
+            console.log("Sign-out button found:", signOutButton); 
+            signOutButton.style.display = 'block'; 
         } else {
             console.warn("Sign-out button with ID 'signOutBtn' not found. Please check the HTML.");
         }
@@ -925,7 +907,6 @@ const updateAuthState = async () => {
     }
 };
 
-// Handle Auth0 redirect callback
 const generateRandomState = () => {
     const state = btoa(Math.random().toString(36).substring(2));
     console.log("Generated state:", state);
@@ -936,11 +917,11 @@ const handleAuth0Redirect = async () => {
     try {
         const query = window.location.search;
         if (query.includes('code=') || query.includes('error=')) {
-            // Store current URL state before handling redirect
+            
             const currentState = new URLSearchParams(window.location.search).get('state');
             console.log('Current state from URL:', currentState);
             
-            // Get stored state from session storage
+            
             const storedState = sessionStorage.getItem('auth_state');
             console.log('Stored state:', storedState);
 
@@ -949,10 +930,10 @@ const handleAuth0Redirect = async () => {
                 throw new Error('Invalid state - Authentication attempt may have been compromised');
             }
 
-            // Handle the redirect callback
+            
             await auth0Client.handleRedirectCallback();
             
-            // Clear state and redirect params after successful validation
+            
             sessionStorage.removeItem('auth_state');
             window.history.replaceState({}, document.title, window.location.pathname);
         }
@@ -960,12 +941,11 @@ const handleAuth0Redirect = async () => {
         console.error("Redirect error:", error);
         sessionStorage.removeItem('auth_state');
         showError('Authentication failed. Please try again.', true);
-        // Redirect to home page after error
+        
         window.location.replace(window.location.origin);
     }
 };
 
-// Add session validation check
 const validateSession = async () => {
     try {
         const token = await auth0Client.getTokenSilently();
@@ -993,7 +973,7 @@ const handlePotentialRedirect = async () => {
     if (urlParams.has('code')) {
         try {
             await handleAuth0Redirect();
-            // After successful authentication, update UI
+            
             await updateAuthState();
             window.location.href = "https://hwoolen03.github.io/indexsignedin";
         } catch (error) {
@@ -1021,7 +1001,6 @@ const triggerFireworks = () => {
     }
 };
 
-// Main Initialization
 const initializeApp = async () => {
     try {
         await configureClient();
@@ -1037,14 +1016,13 @@ const initializeApp = async () => {
         showError('Failed to initialize application', true);
     }
 };
-
 const setupEventListeners = () => {
     const addAuthHandler = (id, connection) => {
         const btn = document.getElementById(id);
         if (btn) {
             btn.addEventListener('click', async () => {
                 try {
-                    // Store state before redirect
+                    
                     const state = generateRandomState();
                     sessionStorage.setItem('auth_state', state);
                     console.log('Storing state before redirect:', state);
@@ -1053,7 +1031,7 @@ const setupEventListeners = () => {
                         connection,
                         authorizationParams: {
                             state: state,
-                            redirect_uri: window.location.origin // Match the configuration
+                            redirect_uri: window.location.origin 
                         }
                     });
                 } catch (error) {
@@ -1064,7 +1042,6 @@ const setupEventListeners = () => {
             });
         }
     };
-    
     addAuthHandler('btn-login-github', 'github');
     addAuthHandler('btn-login-google', 'google');
     addAuthHandler('btn-login-figma', 'figma');
@@ -1073,17 +1050,15 @@ const setupEventListeners = () => {
     document.getElementById('findMyHolidayButton')?.addEventListener('click', async () => {
         try {
             showLoading(true);
-            triggerFireworks(); // Trigger fireworks animation
+            triggerFireworks(); 
             
-            // Make sure user is defined, use empty object as fallback
+            
             const userData = user || {};
             const results = await personalizeContent(userData);
             
             if (!results || results.length === 0) {
                 throw new Error("No suitable destinations found for your criteria");
-            }
-            
-            // Display results using template literals properly
+            } 
             const resultsElement = document.getElementById('results');
             if (resultsElement) {
                 resultsElement.innerHTML = results.map(result => `
@@ -1168,8 +1143,7 @@ const setupEventListeners = () => {
                         ${result.hotels?.is_mock ? `<p class="note">Note: Using estimated hotel data</p>` : ''}
                     </div>
                 `).join('');
-                
-                // Add some CSS for better section separation
+       
                 const style = document.createElement('style');
                 style.textContent = `
                     .destination-card {
@@ -1237,8 +1211,7 @@ const setupEventListeners = () => {
             showLoading(false);
         }
     });
-}; // Properly close the setupEventListeners function
-
+}; 
 document.addEventListener('DOMContentLoaded', () => {
     if (!document.getElementById('errorMessage')) {
         const errorDiv = document.createElement('div');
@@ -1269,7 +1242,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(resultsDiv);
     }
     
-    // Initialize the application
+   
     initializeApp().then(() => {
         if (window.performance?.navigation?.type === 2) {
             sessionStorage.removeItem('auth_state');
@@ -1277,7 +1250,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
 window.addEventListener('load', async () => {
     try {
         await auth0Client.checkSession();
@@ -1287,8 +1259,6 @@ window.addEventListener('load', async () => {
         document.body.classList.add('unauthenticated');
     }
 });
-
-// Add the missing validateDates function and showError/showLoading functions
 const validateDates = (checkInDate, checkOutDate) => {
     if (!checkInDate || !checkOutDate) {
         throw new Error('Please select check-in and check-out dates');
@@ -1309,7 +1279,6 @@ const validateDates = (checkInDate, checkOutDate) => {
     
     return true;
 };
-
 const showError = (message, isImportant = false) => {
     const errorElement = document.getElementById('errorMessage');
     if (errorElement) {
@@ -1325,37 +1294,25 @@ const showError = (message, isImportant = false) => {
         console.error(message);
     }
 };
-
 const showLoading = (isLoading = true) => {
     const loader = document.getElementById('loader');
     const results = document.getElementById('results');
     if (loader) loader.style.display = isLoading ? 'block' : 'none';
     if (results) results.style.display = isLoading ? 'none' : 'block';
 };
-
-// Add this function to validate hotel IDs
 const isValidHotelId = (hotelId) => {
     if (!hotelId) return false;
 
-    // Check if it's a string or can be converted to a string
+   
     const idStr = String(hotelId).trim();
 
-    // Basic validation - ensure the ID isn't empty and has reasonable length
     return idStr.length > 0 && idStr.length < 100;
 };
-
-/**
- * Process hotel search response to standardize format
- * @param {Object} apiResponse - The raw API response
- * @param {string} cityName - The city name for this search
- * @param {boolean} isMock - Whether this is mock data
- * @returns {Object} Standardized hotel data response
- */
 const processHotelSearchResponse = (apiResponse, cityName, isMock = false) => {
     try {
         console.log(`Processing hotel data for ${cityName}`);
         
-        // Handle different response formats
+       
         let hotelData = [];
         
         if (apiResponse?.data?.hotels && Array.isArray(apiResponse.data.hotels)) {
@@ -1370,9 +1327,8 @@ const processHotelSearchResponse = (apiResponse, cityName, isMock = false) => {
             return { data: [], count: 0, is_mock: true, error: 'Invalid data format' };
         }
         
-        // Standardize and clean hotel objects
+       
         const processedHotels = hotelData.map(hotel => {
-            // Ensure hotel is not null/undefined before accessing its properties
             if (!hotel) return {
                 hotel_id: `mock-${cityName}-${Math.random().toString(36).substring(2, 7)}`,
                 hotel_name: `${cityName} Hotel`,
@@ -1402,11 +1358,9 @@ const processHotelSearchResponse = (apiResponse, cityName, isMock = false) => {
         return { data: [], count: 0, is_mock: true, error: error.message };
     }
 };
-
-// Add this function to fetch and integrate real hotel prices
 const integrateRealHotelPrices = async (result, checkInDate, checkOutDate) => {
     try {
-        // Ensure result and result.cost exist before proceeding
+        
         if (!result || !result.cost) {
             return {
                 flight: 0,
@@ -1417,7 +1371,6 @@ const integrateRealHotelPrices = async (result, checkInDate, checkOutDate) => {
             };
         }
         
-        // Start with original cost and mark as estimated
         const updatedCost = {
             flight: result.cost.flight || 0,
             hotel: result.cost.hotel || 0,
@@ -1426,7 +1379,6 @@ const integrateRealHotelPrices = async (result, checkInDate, checkOutDate) => {
             is_flight_real_price: false
         };
         
-        // Attempt to get flight data if the API supports it
         try {
             const departureAirport = result.departureLocation;
             const destinationAirport = getCityAirportCode(result.city);
@@ -1444,14 +1396,13 @@ const integrateRealHotelPrices = async (result, checkInDate, checkOutDate) => {
                 updatedCost.flight = Math.round(flightResult.flights[0].price);
                 updatedCost.is_flight_real_price = true;
                 
-                // Store detailed flight info on the result object
                 result.realFlightData = flightResult.flights[0];
             }
         } catch (flightError) {
             console.warn(`Flight data retrieval failed for ${result.city}:`, flightError);
         }
         
-        // Recalculate total
+        
         updatedCost.total = updatedCost.hotel + updatedCost.flight;
         
         return updatedCost;
@@ -1461,7 +1412,6 @@ const integrateRealHotelPrices = async (result, checkInDate, checkOutDate) => {
     }
 };
 
-// Simple helper to map city names to airport codes
 const getCityAirportCode = (cityName) => {
     const cityToAirport = {
         'New York': 'JFK',
@@ -1481,12 +1431,10 @@ const getCityAirportCode = (cityName) => {
     return cityToAirport[cityName] || cityName;
 };
 
-// Add the missing searchRoundtripFlights function
 const searchRoundtripFlights = async (departure, destination, date, returnDate) => {
     try {
         console.log(`Searching flights from ${departure} to ${destination}`);
         
-        // Try to use the Sky-Scrapper API for real flight data
         const url = new URL(`${API_CONFIG.baseUrl}/api/v1/flights/searchFlights`);
         
         url.searchParams.append('departure', departure);
@@ -1506,7 +1454,6 @@ const searchRoundtripFlights = async (departure, destination, date, returnDate) 
                 const flightData = await response.json();
                 
                 if (flightData?.data?.length > 0) {
-                    // Format API response to match our expected structure
                     return {
                         flights: flightData.data.map(flight => ({
                             price: flight.price || Math.floor(Math.random() * 300) + 200,
@@ -1530,7 +1477,6 @@ const searchRoundtripFlights = async (departure, destination, date, returnDate) 
             console.warn('API flight search failed, falling back to mock data:', apiError);
         }
         
-        // Fall back to mock data if API call fails
         return {
             flights: [
                 {
@@ -1538,7 +1484,7 @@ const searchRoundtripFlights = async (departure, destination, date, returnDate) 
                     legs: [{
                         departureTime: new Date(date).toISOString(),
                         arrivalTime: new Date(new Date(date).getTime() + 5 * 60 * 60 * 1000).toISOString(),
-                        duration: 300, // 5 hours in minutes
+                        duration: 300, 
                         stopCount: Math.floor(Math.random() * 2),
                         segments: [{
                             airlineName: "SkyAir",
@@ -1555,8 +1501,6 @@ const searchRoundtripFlights = async (departure, destination, date, returnDate) 
         throw error;
     }
 };
-
-// Function to fetch hotel photos using the hotel ID
 const fetchHotelPhotos = async (hotelId) => {
     try {
         console.log(`Fetching photos for hotel ID: ${hotelId}`);
@@ -1580,23 +1524,20 @@ const fetchHotelPhotos = async (hotelId) => {
             return photoData.data[0].url_max || photoData.data[0].url;
         }
         
-        // Fallback to a placeholder image
         return 'https://placehold.co/600x400?text=No+Hotel+Image';
     } catch (error) {
         console.error(`Error fetching hotel photos for ${hotelId}:`, error);
-        // Return a placeholder image URL
         return 'https://placehold.co/600x400?text=No+Hotel+Image';
     }
 };
 
-// Function to fetch hotel ratings and reviews
 const fetchHotelRatings = async (hotelId) => {
     try {
         console.log(`Fetching ratings for hotel ID: ${hotelId}`);
         
         const url = new URL(`${API_CONFIG.baseUrl}/api/v1/hotels/getHotelReviews`);
         url.searchParams.append('hotelId', hotelId);
-        url.searchParams.append('limit', '5'); // Fetch up to 5 reviews
+        url.searchParams.append('limit', '5'); 
         
         const response = await fetchWithRetry(url.toString(), {
             method: 'GET',
@@ -1627,26 +1568,21 @@ const fetchHotelRatings = async (hotelId) => {
                     cons: review.cons || 'Nothing to complain about',
                     average_score: review.average_score || (Math.random() * 2 + 7).toFixed(1),
                     date: review.date || new Date().toISOString().split('T')[0]
-                })) : createMockReviews(3) // Create 3 mock reviews if none exist
+                })) : createMockReviews(3) 
             };
         }
         
-        // If no data or unexpected format, fall back to mock data
         return createMockRatingData(hotelId);
     } catch (error) {
         console.error(`Error fetching hotel ratings for ${hotelId}:`, error);
         return createMockRatingData(hotelId);
     }
 };
-
-// Create mock rating data as fallback
 const createMockRatingData = (hotelId) => {
     console.log(`Creating mock rating data for hotel ID: ${hotelId}`);
-    
-    // Generate an overall score between 7.0 and 9.0
+     
     const overallScore = (Math.random() * 2 + 7).toFixed(1);
     
-    // Generate scores for different categories
     const categories = [
         { name: 'Cleanliness', score: (Math.random() * 2 + 7).toFixed(1) },
         { name: 'Service', score: (Math.random() * 2 + 7).toFixed(1) },
@@ -1654,8 +1590,6 @@ const createMockRatingData = (hotelId) => {
         { name: 'Value', score: (Math.random() * 2 + 7).toFixed(1) },
         { name: 'Comfort', score: (Math.random() * 2 + 7).toFixed(1) }
     ];
-    
-    // Create mock reviews
     const reviews = createMockReviews(3);
     
     return {
@@ -1665,8 +1599,6 @@ const createMockRatingData = (hotelId) => {
         reviews: reviews
     };
 };
-
-// Helper function to create mock reviews
 const createMockReviews = (count) => {
     const reviewTitles = [
         'Great stay!', 
@@ -1711,7 +1643,6 @@ const createMockReviews = (count) => {
     
     return reviews;
 };
-
 document.addEventListener('DOMContentLoaded', () => {
     if (!document.getElementById('errorMessage')) {
         const errorDiv = document.createElement('div');
@@ -1742,7 +1673,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(resultsDiv);
     }
     
-    // Initialize the application
     initializeApp().then(() => {
         if (window.performance?.navigation?.type === 2) {
             sessionStorage.removeItem('auth_state');

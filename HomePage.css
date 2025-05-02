@@ -1,4 +1,4 @@
-/* Existing styles */
+
 body {
     margin: 0;
     padding: 0;
@@ -9,7 +9,7 @@ body {
     background-repeat: no-repeat;
     min-height: 100vh;
     overflow-x: hidden;
-    position: relative; /* Ensure the pseudo-element is positioned correctly */
+    position: relative; 
 }
 
 body::before {
@@ -42,7 +42,7 @@ header {
 }
 
 .logo {
-    width: 80px; /* Adjusted logo size */
+    width: 80px; 
     height: auto;
 }
 
@@ -51,17 +51,17 @@ h1 {
     color: whitesmoke;
     margin-top: 40px;
     font-family: Georgia, 'Times New Roman', Times, serif;
-    white-space: nowrap; /* Prevent text wrapping */
+    white-space: nowrap; 
 }
 
-/* Button Styling */
+
 .center-button-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: column; /* Stack items vertically */
+    flex-direction: column; 
     height: 80vh;
-    text-align: center; /* Ensure text is centered */
+    text-align: center; 
     padding: 0 1rem;
 }
 
@@ -88,7 +88,7 @@ h2 {
     background: rgba(231, 76, 60, 0.3) !important;
 }
 
-/* Add this to ensure proper visibility control */
+
 .auth-button.hidden {
     display: none !important;
 }
@@ -111,18 +111,19 @@ h2 {
     color: whitesmoke;
 }
 
-/* Auth Buttons Styling */
+
+
 .auth-buttons {
     display: flex;
-    justify-content: flex-end; /* Changed from center to flex-end */
+    justify-content: flex-end; 
     flex-wrap: wrap;
     gap: 10px;
     margin-top: 2rem;
     width: 100%;
-    padding-right: 2rem; /* Added padding to prevent sticking to the edge */
+    padding-right: 2rem; 
 }
 
-/* Update auth buttons to match "Find My Holiday" button */
+
 .auth-button {
     background-color: transparent;
     border: 2px solid white;
@@ -140,29 +141,27 @@ h2 {
     color: black;
 }
 
-/* Force auth buttons visibility control */
 .auth-buttons {
   display: flex !important;
   gap: 10px;
-  justify-content: flex-end !important; /* Ensure right alignment */
+  justify-content: flex-end !important; 
 }
 
 #btn-login-github,
 #btn-login-google,
 #btn-login-figma {
-  display: block !important; /* Override any hiding */
+  display: block !important; 
   opacity: 1 !important;
   visibility: visible !important;
   margin: 0.5rem;
 }
 
-/* Only hide when authed */
+
 .authenticated .auth-buttons [id^="btn-login-"],
 .unauthenticated #btn-logout {
   display: none !important;
 }
 
-/* Responsive Design */
 @media (max-width: 1200px) {
     h2 {
         font-size: 4rem;
@@ -240,8 +239,8 @@ h2 {
     
     .auth-buttons {
         flex-direction: column;
-        align-items: flex-end; /* Changed from center to flex-end */
-        padding-right: 1rem; /* Smaller padding for small screens */
+        align-items: flex-end; 
+        padding-right: 1rem; 
     }
 }
 

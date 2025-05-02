@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("✅ DOMContentLoaded event fired");
 
-    // Ensure Auth0 SDK is available
     if (!window.createAuth0Client) {
         console.error("Auth0 SDK failed to load.");
         document.body.innerHTML = `
@@ -11,14 +10,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Auth0 Configuration
     let auth0Client = null;
     const config = {
         domain: "dev-h4hncqco2n4yrt6z.us.auth0.com",
         client_id: "eUlv5NFe6rjQbLztvS8MsikdIlznueaU",
-        redirect_uri: "https://hwoolen03.github.io/indexsignedin", // Keep consistent
-        cacheLocation: "localstorage", // Store session in local storage
-        useRefreshTokens: true // Allows using refresh tokens to maintain the session
+        redirect_uri: "https://hwoolen03.github.io/indexsignedin", 
+        cacheLocation: "localstorage", 
+        useRefreshTokens: true 
     };
 
     try {
@@ -29,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Handle Authentication Redirect
+    
     const handleAuthRedirect = async () => {
         const query = window.location.search;
         if (query.includes("code=") && query.includes("state=")) {
@@ -56,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Authentication Handlers
+   
     const loginHandlers = {
         github: () => {
             const state = generateRandomState();
@@ -108,20 +106,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Helper functions for generating state, nonce, and code challenge
+
     const generateRandomState = () => {
-        const state = btoa(Math.random().toString(36).substring(2)); // Base64-encoded random string
+        const state = btoa(Math.random().toString(36).substring(2)); 
         console.log("Generated state:", state);
         return state;
     };
 
     const generateRandomNonce = () => {
-        return btoa(Math.random().toString(36).substring(2)); // Base64-encoded random string
+        return btoa(Math.random().toString(36).substring(2)); 
     };
 
     const generateCodeChallenge = () => {
         const codeVerifier = Math.random().toString(36).substring(2);
-        return btoa(codeVerifier); // Base64-encoded code verifier
+        return btoa(codeVerifier); 
     };
 
     const logoutHandler = () => {
@@ -177,8 +175,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     try {
-        await handleAuthRedirect();  // Handle any potential redirect callback
-        initializeApp();  // Initialize app event listeners
+        await handleAuthRedirect();  
+        initializeApp();  
     } catch (error) {
         console.error("🚨 Application initialization failed:", error);
     }
